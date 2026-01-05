@@ -7,9 +7,7 @@ We actively support the following versions of excel2md:
 | Version | Supported          |
 | ------- | ------------------ |
 | 1.7.x   | :white_check_mark: |
-| 1.6.x   | :white_check_mark: |
-| 1.5.x   | :warning: Limited  |
-| < 1.5   | :x:                |
+| < 1.7   | :x:                |
 
 ## Reporting a Vulnerability
 
