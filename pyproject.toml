@@ -2,10 +2,34 @@
 name = "excel2md"
 version = "1.7.0"
 description = "Excel to Markdown converter with CSV markdown output support"
+readme = "README.md"
 requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Elvez"}
+]
+keywords = ["excel", "markdown", "converter", "csv", "openpyxl", "xlsx", "documentation"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Documentation",
+    "Topic :: Text Processing :: Markup :: Markdown",
+    "Topic :: Utilities",
+]
 dependencies = [
     "openpyxl>=3.1.5",
 ]
+
+[project.urls]
+Homepage = "https://github.com/elvez/excel2md"
+Repository = "https://github.com/elvez/excel2md"
+Issues = "https://github.com/elvez/excel2md/issues"
 
 [project.optional-dependencies]
 test = [
