@@ -265,16 +265,7 @@ python3 v1.7/excel_to_md.py --help
 
 このプロジェクトはMITライセンスの下でライセンスされています - 詳細は [LICENSE](LICENSE) ファイルをご覧ください。
 
-## 作者
-
-(c) 2025 Elvez
-
 ## リンク
 
 - [リポジトリ](https://github.com/elvez/excel2md)
 - [Issues](https://github.com/elvez/excel2md/issues)
-- [PyPI Package](https://pypi.org/project/excel2md/) (計画中)
-
----
-
-**注記**: これは最新版（v1.7）です。以前のバージョンは参照用に別ディレクトリで管理されています。
