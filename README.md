@@ -138,7 +138,7 @@ python3 v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-include-description
 
 ### CSVマークダウン出力
 
-```markdown
+````markdown
 # CSV出力: sample.xlsx
 
 ## 概要
@@ -168,7 +168,7 @@ python3 v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-include-description
 - **生成日時**: 2025-01-05 10:00:00
 - **元Excelファイル**: sample.xlsx
 - **検証ステータス**: OK
-```
+````
 
 ## バージョン履歴
 
