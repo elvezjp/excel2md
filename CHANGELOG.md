@@ -1,13 +1,13 @@
-# Changelog
+# 変更履歴
 
-All notable changes to this project will be documented in this file.
+このプロジェクトに対するすべての重要な変更はこのファイルに記録されます。
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+フォーマットは [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) に基づいており、
+このプロジェクトは [セマンティックバージョニング](https://semver.org/spec/v2.0.0.html) に準拠しています。
 
 ## [1.7.0] - 2025-12-25
 
-### Added
+### 追加
 - **CSVマークダウンでのMermaid出力対応**
   - `--mermaid-enabled` オプションがCSVマークダウンでも有効に
   - `mermaid_detect_mode="shapes"` の場合のみ対応（Excelの図形からフローチャート抽出）
@@ -20,12 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 複数ファイルを変換・結合する際のトークン数削減に対応
   - デフォルトは `true`（従来通り概要セクションを出力）
 
-### Changed
+### 変更
 - v1.6との後方互換性を維持
 
 ## [1.6.0] - 2025-11-18
 
-### Added
+### 追加
 - **ハイパーリンク平文出力モード（inline_plain）**
   - `--hyperlink-mode inline_plain` オプションを追加
   - セル内のハイパーリンクを平文形式で出力: `表示テキスト (URL)`
@@ -39,12 +39,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 各シートファイルには、シート名、仕様バージョン、元ファイル名を記載
   - シートごとに独立した脚注番号を使用
 
-### Changed
+### 変更
 - v1.5との後方互換性を維持
 
 ## [1.5.0] - 2025-11-11
 
-### Added
+### 追加
 - **CSVマークダウン出力機能（デフォルト有効）**
   - ファイル名形式: `{basename}_csv.md`
   - 各シートの印刷領域をCSVコードブロックとして記載
@@ -63,12 +63,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `--csv-apply-merge-policy` / `--no-csv-apply-merge-policy`: CSV抽出時にmerge_policyを適用するか
   - `--csv-normalize-values` / `--no-csv-normalize-values`: CSV値に数値正規化を適用するか
 
-### Changed
+### 変更
 - v1.4との後方互換性を維持
 
 ## [1.4.0] - 2025-11-08
 
-### Added
+### 追加
 - **Mermaidフローチャート変換機能**
   - 列名ベース検出: `From` / `To` / `Label` 列を検出してフローチャート化
   - ヒューリスティック検出: テーブル構造から自動判定
@@ -83,7 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.3.0] - 2025-11-08
 
-### Added
+### 追加
 - **基本機能の実装**
   - 最大長方形分解アルゴリズム（ヒストグラム法＋彫り抜き法）
   - 印刷領域と空セル判定
@@ -102,24 +102,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `--hyperlink-mode`: ハイパーリンクの出力方法
   - `--footnote-scope`: 脚注番号の採番スコープ
 
-### Technical Details
+### 技術詳細
 - Python 3.9以上をサポート
 - openpyxl 3.1.5以上を依存ライブラリとして使用
 - `read_only=True, data_only=True` モードで安全なファイル読み込み
 
-## Links
+## リンク
 
-- [Repository](https://github.com/elvez/excel2md)
-- [Issues](https://github.com/elvez/excel2md/issues)
+- [リポジトリ](https://github.com/elvez/excel2md)
+- [Issue](https://github.com/elvez/excel2md/issues)
 
 ---
 
-## Version Comparison
+## バージョン比較
 
-| Version | Key Features |
-|---------|--------------|
-| 1.7.0   | CSVマークダウンモード拡張（Mermaid出力、説明文除外） |
-| 1.6.0   | ハイパーリンク平文出力、シート分割出力 |
-| 1.5.0   | CSVマークダウン出力 |
-| 1.4.0   | Mermaidフローチャート変換 |
-| 1.3.0   | 基本実装 |
+| バージョン | 主な機能 |
+|------------|----------|
+| 1.7.0      | CSVマークダウンモード拡張（Mermaid出力、説明文除外） |
+| 1.6.0      | ハイパーリンク平文出力、シート分割出力 |
+| 1.5.0      | CSVマークダウン出力 |
+| 1.4.0      | Mermaidフローチャート変換 |
+| 1.3.0      | 基本実装 |
