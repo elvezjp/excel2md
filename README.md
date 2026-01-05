@@ -224,6 +224,15 @@ python3 v1.7/excel_to_md.py --help
 - 既存のコードスタイルに従ってください
 - 新機能にはテストを追加してください
 
+## 問い合わせ先
+
+バグ報告や質問については、以下までご連絡ください。
+
+- **メールアドレス**: info@elvez.co.jp
+- **宛先**: 株式会社エルブズ
+
+GitHub Issuesでの報告も可能です: [GitHub Issues](https://github.com/elvez/excel2md/issues)
+
 ## セキュリティ
 
 セキュリティに関する懸念は [SECURITY.md](SECURITY.md) をご確認ください。
