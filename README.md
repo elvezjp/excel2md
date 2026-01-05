@@ -14,7 +14,38 @@ Excel → Markdown 変換ツール。Excelブック（.xlsx/.xlsm）を読み取
 - **シート分割出力**: シートごとに個別ファイルを生成可能
 - **カスタマイズ可能**: 書式、配置、データ処理の詳細設定が可能
 
-## インストール
+## ユースケース
+
+- **ドキュメント生成**: Excel仕様書をMarkdownに変換
+- **AI/LLM処理**: トークン効率に最適化されたCSVマークダウン形式
+- **フローチャート抽出**: Excel図形から図を抽出
+- **データ移行**: ExcelデータをポータブルなMarkdown形式にエクスポート
+- **バージョン管理**: Excelの変更をテキストベース形式で追跡
+
+## ドキュメント
+
+- [CHANGELOG.md](CHANGELOG.md) - バージョン履歴
+- [CONTRIBUTING.md](CONTRIBUTING.md) - コントリビューション方法
+- [SECURITY.md](SECURITY.md) - セキュリティポリシーとベストプラクティス
+- [v1.7/spec.md](v1.7/spec.md) - 技術仕様書
+
+## プロジェクト構成
+
+```
+excel2md/
+├── v1.7/
+│   ├── excel_to_md.py      # メイン変換プログラム（最新版）
+│   ├── spec.md             # 仕様書
+│   └── tests/              # テストスイート
+├── pyproject.toml          # プロジェクトメタデータ
+├── LICENSE                 # MITライセンス
+├── README.md               # このファイル
+├── CONTRIBUTING.md         # コントリビューションガイド
+├── SECURITY.md             # セキュリティポリシー
+└── CHANGELOG.md            # バージョン履歴
+```
+
+## クイックスタート
 
 ### 必要環境
 
@@ -32,8 +63,6 @@ pip install openpyxl
 ```bash
 uv pip install openpyxl
 ```
-
-## クイックスタート
 
 ### 基本的な使い方
 
@@ -169,62 +198,6 @@ python3 v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-include-description
 - **元Excelファイル**: sample.xlsx
 - **検証ステータス**: OK
 ````
-
-## バージョン履歴
-
-### v1.7 (2025-12-25)
-- CSVマークダウンモード拡張（Mermaid対応）
-- `--csv-include-description` オプション追加（トークン数削減）
-- CSVマークダウンで `--mermaid-enabled` がshapesモードで有効に
-
-### v1.6 (2025-11-18)
-- `--hyperlink-mode inline_plain` 追加（平文リンク出力）
-- `--split-by-sheet` 追加（シート別ファイル出力）
-
-### v1.5 (2025-11-11)
-- CSVマークダウン出力機能を導入
-- 検証メタデータ生成機能
-- バッチ処理サポート強化
-
-### v1.4 (2025-11-08)
-- Mermaidフローチャート変換追加
-- 図形、列ヘッダ、ヒューリスティック検出対応
-
-### v1.3 (2025-11-08)
-- 初回リリース（コア機能実装）
-- 最大長方形分解アルゴリズム
-- 印刷領域処理とテーブル検出
-
-## プロジェクト構成
-
-```
-excel2md/
-├── v1.7/
-│   ├── excel_to_md.py      # メイン変換プログラム（最新版）
-│   ├── spec.md             # 仕様書
-│   └── tests/              # テストスイート
-├── pyproject.toml          # プロジェクトメタデータ
-├── LICENSE                 # MITライセンス
-├── README.md               # このファイル
-├── CONTRIBUTING.md         # コントリビューションガイド
-├── SECURITY.md             # セキュリティポリシー
-└── CHANGELOG.md            # 詳細なバージョン履歴
-```
-
-## ドキュメント
-
-- [CHANGELOG.md](CHANGELOG.md) - 詳細なバージョン履歴
-- [CONTRIBUTING.md](CONTRIBUTING.md) - コントリビューション方法
-- [SECURITY.md](SECURITY.md) - セキュリティポリシーとベストプラクティス
-- [v1.7/spec.md](v1.7/spec.md) - 技術仕様書
-
-## ユースケース
-
-- **ドキュメント生成**: Excel仕様書をMarkdownに変換
-- **AI/LLM処理**: トークン効率に最適化されたCSVマークダウン形式
-- **フローチャート抽出**: Excel図形から図を抽出
-- **データ移行**: ExcelデータをポータブルなMarkdown形式にエクスポート
-- **バージョン管理**: Excelの変更をテキストベース形式で追跡
 
 ## 高度なオプション
 
