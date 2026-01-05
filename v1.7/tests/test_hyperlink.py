@@ -98,12 +98,12 @@ class TestHyperlinkInfo:
         """HI004: mailto: hyperlink."""
         cell = create_mock_cell(
             value="Email us",
-            hyperlink_target="mailto:test@example.com"
+            hyperlink_target="mailto:user@example.com"
         )
         result = hyperlink_info(cell)
 
         assert result is not None
-        assert result['target'] == "mailto:test@example.com"
+        assert result['target'] == "mailto:user@example.com"
 
     def test_http_link(self):
         """HTTP URL hyperlink."""
@@ -170,7 +170,7 @@ class TestIsValidUrl:
 
     def test_vu003_mailto(self):
         """VU003: mailto: URL is valid."""
-        assert is_valid_url("mailto:a@b.com") is True
+        assert is_valid_url("mailto:user@example.com") is True
 
     def test_vu004_file_url(self):
         """VU004: file:// URL is valid."""

@@ -2349,7 +2349,7 @@ v1.7/
 |----------|------|--------|------|
 | VU001 | "https://example.com" | True | HTTPS URL |
 | VU002 | "http://example.com" | True | HTTP URL |
-| VU003 | "mailto:a@b.com" | True | mailto |
+| VU003 | "mailto:user@example.com" | True | mailto |
 | VU004 | "file:///path" | True | file URL |
 | VU005 | "./relative" | True | 相対パス |
 | VU006 | "javascript:..." | False | 無効なプロトコル |
