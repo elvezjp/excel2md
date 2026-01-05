@@ -1,134 +1,134 @@
-# Contributing to excel2md
+# excel2md への貢献
 
-Thank you for your interest in contributing to excel2md! This document provides guidelines for contributing to the project.
+このドキュメントでは、プロジェクトへの貢献に関するガイドラインを説明します。
 
-## How to Contribute
+## 貢献の方法
 
-### Reporting Bugs
+### バグの報告
 
-If you find a bug, please create an issue on GitHub with the following information:
+バグを発見した場合は、以下の情報を含めて GitHub で Issue を作成してください：
 
-- A clear and descriptive title
-- Steps to reproduce the issue
-- Expected behavior
-- Actual behavior
-- Sample Excel file (if possible)
-- Version of excel2md and Python
-- Operating system
+- 明確で説明的なタイトル
+- 問題を再現する手順
+- 期待される動作
+- 実際の動作
+- サンプルの Excel ファイル（可能であれば）
+- excel2md と Python のバージョン
+- オペレーティングシステム
 
-### Suggesting Enhancements
+### 機能改善の提案
 
-Enhancement suggestions are welcome! Please create an issue with:
+機能改善の提案を歓迎します！以下の内容で Issue を作成してください：
 
-- A clear and descriptive title
-- Detailed description of the proposed feature
-- Use cases and benefits
-- Any relevant examples or mockups
+- 明確で説明的なタイトル
+- 提案する機能の詳細な説明
+- ユースケースとメリット
+- 関連する例やモックアップ
 
-### Pull Requests
+### プルリクエスト
 
-1. **Fork the repository** and create your branch from `main`
+1. **リポジトリをフォーク**し、`main` からブランチを作成（ユーザ名/日付YYYYMMDD-内容）
    ```bash
-   git checkout -b feature/your-feature-name
+   git checkout -b user/20260105-fix-feature
    ```
 
-2. **Follow the coding style** of the existing codebase
-   - Use meaningful variable and function names
-   - Add comments for complex logic
-   - Follow PEP 8 style guidelines
+2. 既存のコードベースの**コーディングスタイルに従う**
+   - 意味のある変数名と関数名を使用
+   - 複雑なロジックにはコメントを追加
+   - PEP 8 スタイルガイドラインに従う
 
-3. **Write tests** for your changes
+3. 変更に対する**テストを作成**
    ```bash
-   # Run tests
+   # テストを実行
    pytest v1.7/tests
 
-   # Run tests with coverage
+   # カバレッジ付きでテストを実行
    pytest v1.7/tests --cov=v1.7 --cov-report=html
    ```
 
-4. **Update documentation** if needed
-   - Update README.md for user-facing changes
-   - Update spec.md for specification changes
-   - Add examples if introducing new features
+4. 必要に応じて**ドキュメントを更新**
+   - ユーザー向けの変更は README.md を更新
+   - 仕様の変更は spec.md を更新
+   - 新機能を導入する場合は例を追加
 
-5. **Commit your changes** with clear commit messages
+5. 明確なコミットメッセージで**変更をコミット**
    ```bash
    git commit -m "Add feature: description of your changes"
    ```
 
-6. **Push to your fork** and submit a pull request
+6. **フォークにプッシュ**してプルリクエストを送信
    ```bash
-   git push origin feature/your-feature-name
+   git push origin user/20260105-fix-feature
    ```
 
-7. **Wait for review** - maintainers will review your PR and may request changes
+7. **レビューを待つ** - メンテナーが PR をレビューし、変更を依頼する場合があります
 
-## Development Setup
+## 開発環境のセットアップ
 
-### Prerequisites
+### 前提条件
 
-- Python 3.9 or higher
-- pip or uv package manager
+- Python 3.9 以上
+- pip または uv パッケージマネージャー
 
-### Installation
+### インストール
 
 ```bash
-# Clone your fork
+# フォークをクローン
 git clone https://github.com/YOUR-USERNAME/excel2md.git
 cd excel2md
 
-# Install dependencies
+# 依存関係をインストール
 pip install openpyxl
 
-# Install development dependencies
+# 開発用依存関係をインストール
 pip install pytest pytest-cov
 ```
 
-### Running Tests
+### テストの実行
 
 ```bash
-# Run all tests
+# すべてのテストを実行
 pytest v1.7/tests
 
-# Run specific test file
+# 特定のテストファイルを実行
 pytest v1.7/tests/test_csv_markdown.py
 
-# Run with coverage
+# カバレッジ付きで実行
 pytest v1.7/tests --cov=v1.7 --cov-report=html
 ```
 
-### Testing Your Changes
+### 変更のテスト
 
-Before submitting a PR, please ensure:
+PR を送信する前に、以下を確認してください：
 
-1. All existing tests pass
-2. New tests are added for new features
-3. Code coverage is maintained or improved
-4. The tool works correctly with various Excel files
+1. 既存のすべてのテストがパスすること
+2. 新機能には新しいテストが追加されていること
+3. コードカバレッジが維持または改善されていること
+4. ツールがさまざまな Excel ファイルで正しく動作すること
 
-## Coding Guidelines
+## コーディングガイドライン
 
-### Python Style
+### Python スタイル
 
-- Follow PEP 8 style guidelines
-- Use type hints where appropriate
-- Maximum line length: 100 characters (flexible for long strings)
-- Use meaningful variable names
+- PEP 8 スタイルガイドラインに従う
+- 適切な場所で型ヒントを使用
+- 最大行長: 100 文字（長い文字列については柔軟に対応）
+- 意味のある変数名を使用
 
-### Documentation
+### ドキュメント
 
-- Add docstrings to all public functions and classes
-- Use clear and concise language
-- Include examples in docstrings where helpful
+- すべてのパブリック関数とクラスに docstring を追加
+- 明確で簡潔な言葉を使用
+- 役立つ場合は docstring に例を含める
 
-### Commit Messages
+### コミットメッセージ
 
-- Use present tense ("Add feature" not "Added feature")
-- Use imperative mood ("Move cursor to..." not "Moves cursor to...")
-- Limit the first line to 72 characters or less
-- Reference issues and pull requests when relevant
+- 現在形を使用（「Added feature」ではなく「Add feature」）
+- 命令形を使用（「Moves cursor to...」ではなく「Move cursor to...」）
+- 最初の行は 72 文字以下に制限
+- 関連する場合は Issue とプルリクエストを参照
 
-Example:
+例：
 ```
 Add CSV markdown description exclusion option
 
@@ -139,37 +139,29 @@ Add CSV markdown description exclusion option
 Closes #123
 ```
 
-## Version Management
+## バージョン管理
 
-This project maintains multiple versions:
+貢献する際は：
+- 最新バージョン（`v1.7/`）に焦点を当てる
+- 可能な限り後方互換性を維持する
+- 破壊的変更は明確にドキュメント化する
 
-- `v1.7/`: Latest version with all features
-- `v1.6/`: Previous version (for reference)
-- `v1.5/`: Previous version (for reference)
+## コードレビュープロセス
 
-When contributing:
-- Focus on the latest version (`v1.7/`)
-- Maintain backward compatibility when possible
-- Document breaking changes clearly
+1. メンテナーがプルリクエストをレビューします
+2. 変更の依頼や質問がある場合があります
+3. 承認されると、PR がマージされます
+4. 貢献はリリースノートで謝辞を記載します
 
-## Code Review Process
+## コミュニティガイドライン
 
-1. A maintainer will review your pull request
-2. They may request changes or ask questions
-3. Once approved, your PR will be merged
-4. Your contribution will be acknowledged in release notes
+- 敬意を持ち、包括的であること
+- 建設的なフィードバックを提供すること
+- 可能な場合は他の人を助けること
+- 行動規範に従うこと
 
-## Community Guidelines
+## ご質問
 
-- Be respectful and inclusive
-- Provide constructive feedback
-- Help others when possible
-- Follow the code of conduct
-
-## Questions?
-
-If you have questions about contributing, feel free to:
-- Create an issue with the "question" label
-- Reach out to the maintainers
-
-Thank you for contributing to excel2md!
+貢献についてご質問がある場合は、お気軽に：
+- 「question」ラベルを付けて Issue を作成
+- メンテナーに連絡
