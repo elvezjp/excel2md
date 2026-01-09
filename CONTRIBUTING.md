@@ -40,10 +40,10 @@
 3. 変更に対する**テストを作成**
    ```bash
    # テストを実行
-   pytest v1.7/tests
+   uv run pytest v1.7/tests
 
    # カバレッジ付きでテストを実行
-   pytest v1.7/tests --cov=v1.7 --cov-report=html
+   uv run pytest v1.7/tests --cov=v1.7 --cov-report=html
    ```
 
 4. 必要に応じて**ドキュメントを更新**
@@ -68,33 +68,34 @@
 ### 前提条件
 
 - Python 3.9 以上
-- pip または uv パッケージマネージャー
+- uv パッケージマネージャー
 
 ### インストール
 
 ```bash
+# uv をインストール（未インストールの場合）
+# 詳細: https://docs.astral.sh/uv/getting-started/installation/
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
 # フォークをクローン
 git clone https://github.com/YOUR-USERNAME/excel2md.git
 cd excel2md
 
-# 依存関係をインストール
-pip install openpyxl
-
-# 開発用依存関係をインストール
-pip install pytest pytest-cov
+# 依存関係をインストール（テスト用依存関係を含む）
+uv sync --extra test
 ```
 
 ### テストの実行
 
 ```bash
 # すべてのテストを実行
-pytest v1.7/tests
+uv run pytest v1.7/tests
 
 # 特定のテストファイルを実行
-pytest v1.7/tests/test_csv_markdown.py
+uv run pytest v1.7/tests/test_csv_markdown.py
 
 # カバレッジ付きで実行
-pytest v1.7/tests --cov=v1.7 --cov-report=html
+uv run pytest v1.7/tests --cov=v1.7 --cov-report=html
 ```
 
 ### 変更のテスト

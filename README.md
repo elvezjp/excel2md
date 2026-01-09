@@ -29,45 +29,27 @@ Excel → Markdown 変換ツール。Excelブック（.xlsx/.xlsm）を読み取
 - [SECURITY.md](SECURITY.md) - セキュリティポリシーとベストプラクティス
 - [v1.7/spec.md](v1.7/spec.md) - 技術仕様書
 
-## プロジェクト構成
-
-```
-excel2md/
-├── v1.7/
-│   ├── excel_to_md.py      # メイン変換プログラム（最新版）
-│   ├── spec.md             # 仕様書
-│   └── tests/              # テストスイート
-├── pyproject.toml          # プロジェクトメタデータ
-├── LICENSE                 # MITライセンス
-├── README.md               # このファイル
-├── CONTRIBUTING.md         # コントリビューションガイド
-├── SECURITY.md             # セキュリティポリシー
-└── CHANGELOG.md            # バージョン履歴
-```
-
-## クイックスタート
+## セットアップ
 
 ### 必要環境
 
 - Python 3.9 以上
-- openpyxl 3.1.5 以上
+- [uv](https://docs.astral.sh/uv/) パッケージマネージャー
 
 ### 依存関係のインストール
 
 ```bash
-pip install openpyxl
+# uv をインストール（未インストールの場合）
+# 詳細: https://docs.astral.sh/uv/getting-started/installation/
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+uv sync
 ```
 
-または uv を使用:
+## 使い方
 
 ```bash
-uv pip install openpyxl
-```
-
-### 基本的な使い方
-
-```bash
-python3 v1.7/excel_to_md.py input.xlsx -o output.md
+uv run python v1.7/excel_to_md.py input.xlsx -o output.md
 ```
 
 これにより以下が生成されます:
@@ -78,27 +60,27 @@ python3 v1.7/excel_to_md.py input.xlsx -o output.md
 
 **Mermaidフローチャート対応で変換:**
 ```bash
-python3 v1.7/excel_to_md.py input.xlsx -o output.md --mermaid-enabled
+uv run python v1.7/excel_to_md.py input.xlsx -o output.md --mermaid-enabled
 ```
 
 **シートごとに個別ファイルを生成:**
 ```bash
-python3 v1.7/excel_to_md.py input.xlsx -o output.md --split-by-sheet
+uv run python v1.7/excel_to_md.py input.xlsx -o output.md --split-by-sheet
 ```
 
 **標準Markdownのみ出力（CSV出力なし）:**
 ```bash
-python3 v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-markdown-enabled
+uv run python v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-markdown-enabled
 ```
 
 **平文ハイパーリンク（Markdown記法なし）:**
 ```bash
-python3 v1.7/excel_to_md.py input.xlsx -o output.md --hyperlink-mode inline_plain
+uv run python v1.7/excel_to_md.py input.xlsx -o output.md --hyperlink-mode inline_plain
 ```
 
 **トークン数削減（CSV概要セクション除外）:**
 ```bash
-python3 v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-include-description
+uv run python v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-include-description
 ```
 
 ## 主要オプション
@@ -204,7 +186,7 @@ python3 v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-include-description
 全オプションの一覧:
 
 ```bash
-python3 v1.7/excel_to_md.py --help
+uv run python v1.7/excel_to_md.py --help
 ```
 
 主な高度なオプション:
@@ -215,23 +197,22 @@ python3 v1.7/excel_to_md.py --help
 - 非表示行/列ポリシー
 - ロケール固有のフォーマット
 
-## コントリビューション
 
-コントリビューションを歓迎します！詳細は [CONTRIBUTING.md](CONTRIBUTING.md) をご覧ください。
+## ディレクトリ構成
 
-- バグ報告は [GitHub Issues](https://github.com/elvez/excel2md/issues) へ
-- 改善のためのプルリクエストを提出
-- 既存のコードスタイルに従ってください
-- 新機能にはテストを追加してください
-
-## 問い合わせ先
-
-バグ報告や質問については、以下までご連絡ください。
-
-- **メールアドレス**: info@elvez.co.jp
-- **宛先**: 株式会社エルブズ
-
-GitHub Issuesでの報告も可能です: [GitHub Issues](https://github.com/elvez/excel2md/issues)
+```
+excel2md/
+├── v1.7/
+│   ├── excel_to_md.py      # メイン変換プログラム（最新版）
+│   ├── spec.md             # 仕様書
+│   └── tests/              # テストスイート
+├── pyproject.toml          # プロジェクトメタデータ
+├── LICENSE                 # MITライセンス
+├── README.md               # このファイル
+├── CONTRIBUTING.md         # コントリビューションガイド
+├── SECURITY.md             # セキュリティポリシー
+└── CHANGELOG.md            # バージョン履歴
+```
 
 ## セキュリティ
 
@@ -243,6 +224,19 @@ GitHub Issuesでの報告も可能です: [GitHub Issues](https://github.com/elv
 - Excelマクロは実行しません
 - Markdown出力をサニタイズしてインジェクションを防止
 
+## コントリビューション
+
+コントリビューションを歓迎します！詳細は [CONTRIBUTING.md](CONTRIBUTING.md) をご覧ください。
+
+- バグ報告は [GitHub Issues](https://github.com/elvez/excel2md/issues) へ
+- 改善のためのプルリクエストを提出
+- 既存のコードスタイルに従ってください
+- 新機能にはテストを追加してください
+
+## 変更履歴
+
+詳細は [CHANGELOG.md](CHANGELOG.md) を参照してください。
+
 ## 開発の背景
 
 本ツールは、日本語の開発文書・仕様書を対象とした開発支援AI **IXV（イクシブ）** の開発過程で生まれた小さな実用品です。
@@ -253,7 +247,7 @@ IXVでは、システム開発における日本語の文書について、理�
 
 MIT License - 詳細は [LICENSE](LICENSE) を参照してください。
 
-## リンク
+## 問い合わせ先
 
-- [リポジトリ](https://github.com/elvez/excel2md)
-- [Issues](https://github.com/elvez/excel2md/issues)
+- **メールアドレス**: info@elvez.co.jp
+- **宛先**: 株式会社エルブズ
