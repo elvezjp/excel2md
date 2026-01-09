@@ -45,7 +45,7 @@ excel2md/
 └── CHANGELOG.md            # バージョン履歴
 ```
 
-## クイックスタート
+## セットアップ
 
 ### 必要環境
 
@@ -55,19 +55,17 @@ excel2md/
 ### 依存関係のインストール
 
 ```bash
-pip install openpyxl
+# uv をインストール（未インストールの場合）
+# 詳細: https://docs.astral.sh/uv/getting-started/installation/
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+uv sync
 ```
 
-または uv を使用:
+## 使い方
 
 ```bash
-uv pip install openpyxl
-```
-
-### 基本的な使い方
-
-```bash
-python3 v1.7/excel_to_md.py input.xlsx -o output.md
+uv run python v1.7/excel_to_md.py input.xlsx -o output.md
 ```
 
 これにより以下が生成されます:
@@ -78,27 +76,27 @@ python3 v1.7/excel_to_md.py input.xlsx -o output.md
 
 **Mermaidフローチャート対応で変換:**
 ```bash
-python3 v1.7/excel_to_md.py input.xlsx -o output.md --mermaid-enabled
+uv run python v1.7/excel_to_md.py input.xlsx -o output.md --mermaid-enabled
 ```
 
 **シートごとに個別ファイルを生成:**
 ```bash
-python3 v1.7/excel_to_md.py input.xlsx -o output.md --split-by-sheet
+uv run python v1.7/excel_to_md.py input.xlsx -o output.md --split-by-sheet
 ```
 
 **標準Markdownのみ出力（CSV出力なし）:**
 ```bash
-python3 v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-markdown-enabled
+uv run python v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-markdown-enabled
 ```
 
 **平文ハイパーリンク（Markdown記法なし）:**
 ```bash
-python3 v1.7/excel_to_md.py input.xlsx -o output.md --hyperlink-mode inline_plain
+uv run python v1.7/excel_to_md.py input.xlsx -o output.md --hyperlink-mode inline_plain
 ```
 
 **トークン数削減（CSV概要セクション除外）:**
 ```bash
-python3 v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-include-description
+uv run python v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-include-description
 ```
 
 ## 主要オプション
@@ -204,7 +202,7 @@ python3 v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-include-description
 全オプションの一覧:
 
 ```bash
-python3 v1.7/excel_to_md.py --help
+uv run python v1.7/excel_to_md.py --help
 ```
 
 主な高度なオプション:
