@@ -9,6 +9,7 @@ Excel → Markdown 変換ツール。Excelブック（.xlsx/.xlsm）を読み取
 
 - **スマートテーブル検出**: Excel印刷領域を自動検出してMarkdownテーブルに変換
 - **CSVマークダウン出力**: シート全体をCSV形式で出力（検証用メタデータ付き）
+- **画像抽出**: Excelファイル内の画像を外部ファイルとして抽出し、Markdownリンク形式で出力
 - **Mermaidフローチャート**: Excel図形やテーブルからMermaid図を生成
 - **ハイパーリンク対応**: 複数の出力モード（インライン、脚注、平文）
 - **シート分割出力**: シートごとに個別ファイルを生成可能
@@ -55,8 +56,16 @@ uv run python v1.7/excel_to_md.py input.xlsx -o output.md
 これにより以下が生成されます:
 - `output.md` - 標準Markdownテーブル形式
 - `input_csv.md` - CSVマークダウン形式（デフォルトで有効）
+- `input/` - 抽出された画像ファイルが保存されるディレクトリ（画像がある場合）
 
 ### よく使う例
+
+**画像を含むExcelファイルを変換:**
+```bash
+uv run python v1.7/excel_to_md.py input.xlsx -o output.md
+# 画像は input/ ディレクトリに自動抽出されます
+# 例: input/Sheet1_img_1.png, input/Sheet1_img_2.jpg
+```
 
 **Mermaidフローチャート対応で変換:**
 ```bash
@@ -167,9 +176,9 @@ uv run python v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-include-descr
 ## Sheet1
 
 ```csv
-品目,数量,備考
-りんご,10,発注先
-みかん,5,
+品目,数量,備考,ロゴ
+りんご,10,発注先,![Company Logo](sample/Sheet1_img_1.png)
+みかん,5,,
 ```
 
 ---
@@ -180,6 +189,31 @@ uv run python v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-include-descr
 - **元Excelファイル**: sample.xlsx
 - **検証ステータス**: OK
 ````
+
+### 画像抽出の動作
+
+Excelファイルに画像が含まれている場合:
+
+1. **画像の自動抽出**: 各シートの画像が外部ファイルとして保存されます
+   - ファイル名形式: `{シート名}_img_{連番}.{拡張子}`
+   - 例: `Sheet1_img_1.png`, `Sheet1_img_2.jpg`
+
+2. **保存場所**: Markdownファイル名をベースにしたサブディレクトリ
+   - 例: `input.xlsx` → `input/` ディレクトリ
+
+3. **Markdownリンク**: 画像が配置されているセルにMarkdown画像リンクを生成
+   - 形式: `![代替テキスト](相対パス)`
+   - セル値がある場合は代替テキストとして使用
+   - セル値がない場合は `Image at A1` のように自動生成
+
+4. **対応形式**: PNG, JPEG, GIF
+
+**例:**
+
+Excelのセル位置 (B2) に会社ロゴ画像がある場合:
+- 画像ファイル: `input/Sheet1_img_1.png` として保存
+- CSV出力: `![Company Logo](input/Sheet1_img_1.png)`
+- セルに "Company Logo" というテキストがあれば代替テキストとして使用
 
 ## 高度なオプション
 
