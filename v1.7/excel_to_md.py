@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Excel -> Markdown Converter
-Spec Compliance: v1.7 (CSV Markdown Mode Extensions)
+Spec Compliance: v1.7 (CSV Markdown Mode Extensions + Image Extraction)
 File: excel_to_md.py
 
 更新点（v1.7 / 2025-12-25）:
@@ -10,6 +10,10 @@ File: excel_to_md.py
   - --csv-include-description: 概要セクション（説明文）の出力を制御（デフォルト: ON）
   - CSVマークダウンでも --mermaid-enabled が有効に（mermaid_detect_mode="shapes" の場合のみ）
   - 複数ファイルを変換・結合する際のトークン数削減に対応
+- 画像抽出機能を追加（v1.7 extension）
+  - Excelファイル内の画像を外部ファイルとして抽出
+  - 画像が配置されているセルには、Markdownリンク形式でパスを出力
+  - CSV Markdownモードでも画像リンクが有効
 
 更新点（v1.6 / 2025-11-XX）:
 - ハイパーリンク平文出力モード（inline_plain）を追加
@@ -2148,6 +2152,86 @@ def make_markdown_table(md_rows, header_detection=True, align_detect=True, align
         lines.append("| " + " | ".join(row) + " |")
     return "\n".join(lines)
 
+# ===== Image extraction functions (v1.7 extension) =====
+def extract_images_from_sheet(ws, output_dir: Path, sheet_name: str, md_basename: str, opts) -> Dict[Tuple[int, int], str]:
+    """Extract images from worksheet and save to files.
+    
+    Args:
+        ws: openpyxl worksheet
+        output_dir: Directory to save image files
+        sheet_name: Sheet name for file naming
+        md_basename: Base name of markdown file (used as folder name)
+        opts: Options dictionary
+    
+    Returns:
+        Dict mapping (row, col) to relative image path
+    """
+    cell_to_image = {}
+    
+    if not hasattr(ws, '_images') or not ws._images:
+        return cell_to_image
+    
+    # Create subdirectory using md filename
+    images_dir = output_dir / md_basename
+    images_dir.mkdir(parents=True, exist_ok=True)
+    
+    sanitized_sheet = sanitize_sheet_name(sheet_name)
+    
+    for img_idx, img in enumerate(ws._images, start=1):
+        try:
+            # Get image data
+            img_data = img._data()
+            
+            # Determine file extension from image format
+            ext = "png"  # default
+            if hasattr(img, 'format'):
+                ext = img.format.lower()
+            elif hasattr(img, '_data'):
+                # Try to detect from image data
+                if img_data.startswith(b'\x89PNG'):
+                    ext = "png"
+                elif img_data.startswith(b'\xff\xd8\xff'):
+                    ext = "jpg"
+                elif img_data.startswith(b'GIF'):
+                    ext = "gif"
+            
+            # Generate filename
+            img_filename = f"{sanitized_sheet}_img_{img_idx}.{ext}"
+            img_path = images_dir / img_filename
+            
+            # Save image file
+            with open(img_path, 'wb') as f:
+                f.write(img_data)
+            
+            # Get anchor position (cell location)
+            if hasattr(img, 'anchor'):
+                anchor = img.anchor
+                # anchor can be different types (OneCellAnchor, TwoCellAnchor, etc.)
+                if hasattr(anchor, '_from'):
+                    # TwoCellAnchor has _from attribute
+                    cell_ref = anchor._from
+                    row = cell_ref.row + 1  # openpyxl uses 0-based, Excel uses 1-based
+                    col = cell_ref.col + 1
+                elif hasattr(anchor, 'row') and hasattr(anchor, 'col'):
+                    # Some anchors have direct row/col
+                    row = anchor.row + 1
+                    col = anchor.col + 1
+                else:
+                    # Try to parse anchor string if it exists
+                    continue
+                
+                # Store relative path from output directory
+                relative_path = f"{md_basename}/{img_filename}"
+                cell_to_image[(row, col)] = relative_path
+                
+                info(f"Extracted image to {relative_path} at cell ({row}, {col})")
+        
+        except Exception as e:
+            warn(f"Failed to extract image {img_idx}: {e}")
+            continue
+    
+    return cell_to_image
+
 # ===== CSV output functions (v1.5) =====
 def sanitize_sheet_name(sheet_name: str) -> str:
     """Sanitize sheet name for use in filenames per spec §3.2.2."""
@@ -2367,7 +2451,7 @@ def write_csv_markdown(wb, csv_data_dict, excel_file_basename, opts, output_dir)
         warn(f"Failed to write CSV markdown file: {e}")
         return None
 
-def extract_print_area_for_csv(ws, area, opts, merged_lookup):
+def extract_print_area_for_csv(ws, area, opts, merged_lookup, cell_to_image=None):
     """Extract all cell values from print area for CSV output per spec §3.2.2.
 
     Args:
@@ -2375,16 +2459,33 @@ def extract_print_area_for_csv(ws, area, opts, merged_lookup):
         area: Print area tuple (min_row, min_col, max_row, max_col) (1-based)
         opts: Options dictionary
         merged_lookup: Merged cell lookup (only includes cells within print area)
+        cell_to_image: Dict mapping (row, col) to image path (optional)
 
     Returns:
         List of lists (rows of cell values)
     """
     min_row, min_col, max_row, max_col = area
+    if cell_to_image is None:
+        cell_to_image = {}
     rows = []
 
     for R in range(min_row, max_row + 1):
         row_vals = []
         for C in range(min_col, max_col + 1):
+            # Check if this cell has an image
+            if (R, C) in cell_to_image:
+                # Use markdown image link
+                img_path = cell_to_image[(R, C)]
+                # Get cell value for alt text
+                cell = ws.cell(row=R, column=C)
+                alt_text = cell_display_value(cell, opts).strip()
+                if not alt_text:
+                    alt_text = f"Image at {a1_from_rc(R, C)}"
+                # Create markdown image link
+                md_link = f"![{alt_text}]({img_path})"
+                row_vals.append(md_link)
+                continue
+            
             cell = ws.cell(row=R, column=C)
 
             # Handle merged cells per spec §3.2.2
@@ -2670,11 +2771,14 @@ def run(input_path: str, output_path: Optional[str], args):
         # CSV markdown data collection per spec §⑫ (v1.5)
         # v1.5 only outputs CSV markdown format, not raw CSV files
         if opts.get("csv_markdown_enabled", True):
+            # Extract images from sheet first (v1.7 extension)
+            cell_to_image = extract_images_from_sheet(ws, Path(csv_output_dir), sname, csv_basename, opts)
+            
             # Collect CSV data for markdown output
             for union_area in unioned:
                 merged_lookup = build_merged_lookup(ws, union_area)
                 try:
-                    csv_rows = extract_print_area_for_csv(ws, union_area, opts, merged_lookup)
+                    csv_rows = extract_print_area_for_csv(ws, union_area, opts, merged_lookup, cell_to_image)
                     if csv_rows:
                         # Store both CSV rows and Excel range info
                         excel_range = coords_to_excel_range(*union_area)
