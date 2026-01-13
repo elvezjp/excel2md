@@ -2154,24 +2154,34 @@ def make_markdown_table(md_rows, header_detection=True, align_detect=True, align
 
 # ===== Image extraction functions (v1.7 extension) =====
 def extract_images_from_sheet(ws, output_dir: Path, sheet_name: str, md_basename: str, opts) -> Dict[Tuple[int, int], str]:
-    """Extract images from worksheet and save to files.
+    """Extract images from worksheet and save to external files.
+    
+    This function processes all images in the worksheet, saves them to a subdirectory,
+    and returns a mapping of cell coordinates to image paths for Markdown link generation.
     
     Args:
-        ws: openpyxl worksheet
-        output_dir: Directory to save image files
-        sheet_name: Sheet name for file naming
-        md_basename: Base name of markdown file (used as folder name)
-        opts: Options dictionary
+        ws: openpyxl worksheet object containing images
+        output_dir: Base directory where images will be saved
+        sheet_name: Name of the current sheet (used in filename generation)
+        md_basename: Base name of the markdown file (used as subdirectory name)
+        opts: Options dictionary (for future extensibility)
     
     Returns:
-        Dict mapping (row, col) to relative image path
+        Dict mapping (row, col) tuples to relative image paths.
+        Keys are 1-based Excel coordinates, values are paths relative to output_dir.
+    
+    Note:
+        - Images are saved in a subdirectory named after md_basename
+        - Filename format: {sanitized_sheet_name}_img_{index}.{extension}
+        - Supports PNG, JPG, and GIF formats
     """
     cell_to_image = {}
     
+    # Early return if worksheet has no images
     if not hasattr(ws, '_images') or not ws._images:
         return cell_to_image
     
-    # Create subdirectory using md filename
+    # Create subdirectory for images (named after markdown file)
     images_dir = output_dir / md_basename
     images_dir.mkdir(parents=True, exist_ok=True)
     
@@ -2179,52 +2189,62 @@ def extract_images_from_sheet(ws, output_dir: Path, sheet_name: str, md_basename
     
     for img_idx, img in enumerate(ws._images, start=1):
         try:
-            # Get image data
+            # Extract raw image data from openpyxl image object
             img_data = img._data()
             
             # Determine file extension from image format
-            ext = "png"  # default
+            # Priority: 1) format attribute, 2) magic bytes detection
+            file_extension = "png"  # default fallback
             if hasattr(img, 'format'):
-                ext = img.format.lower()
+                file_extension = img.format.lower()
             elif hasattr(img, '_data'):
-                # Try to detect from image data
+                # Detect format from magic bytes (file signatures)
+                # PNG: 89 50 4E 47 (\x89PNG)
+                # JPEG: FF D8 FF
+                # GIF: 47 49 46 (GIF)
                 if img_data.startswith(b'\x89PNG'):
-                    ext = "png"
+                    file_extension = "png"
                 elif img_data.startswith(b'\xff\xd8\xff'):
-                    ext = "jpg"
+                    file_extension = "jpg"
                 elif img_data.startswith(b'GIF'):
-                    ext = "gif"
+                    file_extension = "gif"
             
-            # Generate filename
-            img_filename = f"{sanitized_sheet}_img_{img_idx}.{ext}"
+            # Generate unique filename for this image
+            img_filename = f"{sanitized_sheet}_img_{img_idx}.{file_extension}"
             img_path = images_dir / img_filename
             
-            # Save image file
+            # Write image data to file
             with open(img_path, 'wb') as f:
                 f.write(img_data)
             
-            # Get anchor position (cell location)
+            # Extract cell position from image anchor
+            # Different anchor types store position information differently
             if hasattr(img, 'anchor'):
                 anchor = img.anchor
-                # anchor can be different types (OneCellAnchor, TwoCellAnchor, etc.)
+                cell_row = None
+                cell_col = None
+                
+                # TwoCellAnchor: has _from attribute with row/col
                 if hasattr(anchor, '_from'):
-                    # TwoCellAnchor has _from attribute
                     cell_ref = anchor._from
-                    row = cell_ref.row + 1  # openpyxl uses 0-based, Excel uses 1-based
-                    col = cell_ref.col + 1
+                    # Convert from 0-based (openpyxl) to 1-based (Excel)
+                    cell_row = cell_ref.row + 1
+                    cell_col = cell_ref.col + 1
+                # OneCellAnchor or other types: may have direct row/col
                 elif hasattr(anchor, 'row') and hasattr(anchor, 'col'):
-                    # Some anchors have direct row/col
-                    row = anchor.row + 1
-                    col = anchor.col + 1
+                    # Convert from 0-based to 1-based
+                    cell_row = anchor.row + 1
+                    cell_col = anchor.col + 1
                 else:
-                    # Try to parse anchor string if it exists
+                    # Unknown anchor type - skip this image
+                    warn(f"Unknown anchor type for image {img_idx}, skipping position detection")
                     continue
                 
-                # Store relative path from output directory
+                # Store mapping with relative path (for portability)
                 relative_path = f"{md_basename}/{img_filename}"
-                cell_to_image[(row, col)] = relative_path
+                cell_to_image[(cell_row, cell_col)] = relative_path
                 
-                info(f"Extracted image to {relative_path} at cell ({row}, {col})")
+                info(f"Extracted image to {relative_path} at cell ({cell_row}, {cell_col})")
         
         except Exception as e:
             warn(f"Failed to extract image {img_idx}: {e}")
@@ -2453,16 +2473,22 @@ def write_csv_markdown(wb, csv_data_dict, excel_file_basename, opts, output_dir)
 
 def extract_print_area_for_csv(ws, area, opts, merged_lookup, cell_to_image=None):
     """Extract all cell values from print area for CSV output per spec §3.2.2.
+    
+    This function processes cells within the specified print area and extracts their
+    values for CSV markdown output. If a cell contains an image (indicated by
+    cell_to_image mapping), a Markdown image link is generated instead of the cell value.
 
     Args:
         ws: Worksheet object
         area: Print area tuple (min_row, min_col, max_row, max_col) (1-based)
-        opts: Options dictionary
+        opts: Options dictionary for value formatting
         merged_lookup: Merged cell lookup (only includes cells within print area)
-        cell_to_image: Dict mapping (row, col) to image path (optional)
+        cell_to_image: Optional dict mapping (row, col) to image paths.
+                       If provided, cells with images will output Markdown image links.
 
     Returns:
-        List of lists (rows of cell values)
+        List of lists (rows of cell values), where each inner list represents
+        a row of cells in the print area.
     """
     min_row, min_col, max_row, max_col = area
     if cell_to_image is None:
@@ -2472,18 +2498,22 @@ def extract_print_area_for_csv(ws, area, opts, merged_lookup, cell_to_image=None
     for R in range(min_row, max_row + 1):
         row_vals = []
         for C in range(min_col, max_col + 1):
-            # Check if this cell has an image
+            # Check if this cell contains an image
+            # If so, generate Markdown image link instead of cell value
             if (R, C) in cell_to_image:
-                # Use markdown image link
                 img_path = cell_to_image[(R, C)]
-                # Get cell value for alt text
+                
+                # Get cell value for alt text (accessibility)
                 cell = ws.cell(row=R, column=C)
                 alt_text = cell_display_value(cell, opts).strip()
+                
+                # Fallback to cell reference if no meaningful alt text
                 if not alt_text:
                     alt_text = f"Image at {a1_from_rc(R, C)}"
-                # Create markdown image link
-                md_link = f"![{alt_text}]({img_path})"
-                row_vals.append(md_link)
+                
+                # Create Markdown image link: ![alt text](path)
+                md_image_link = f"![{alt_text}]({img_path})"
+                row_vals.append(md_image_link)
                 continue
             
             cell = ws.cell(row=R, column=C)
