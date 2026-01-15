@@ -2172,6 +2172,10 @@ def extract_images_from_xlsx_drawing(xlsx_path: str, ws, output_dir: Path, sheet
     Returns:
         Dict mapping (row, col) tuples to relative image paths.
         Keys are 1-based Excel coordinates.
+        
+    Note:
+        - Images are saved in a subdirectory named {md_basename}_images
+        - Filename format: {sanitized_sheet_name}_img_{index}.{extension}
     """
     cell_to_image = {}
 
@@ -2275,7 +2279,7 @@ def extract_images_from_xlsx_drawing(xlsx_path: str, ws, output_dir: Path, sheet
         }
 
         # Create output directory
-        images_dir = output_dir / md_basename
+        images_dir = output_dir / f"{md_basename}_images"
         images_dir.mkdir(parents=True, exist_ok=True)
         sanitized_sheet = sanitize_sheet_name(sheet_name)
 
@@ -2340,7 +2344,7 @@ def extract_images_from_xlsx_drawing(xlsx_path: str, ws, output_dir: Path, sheet
                 with open(img_path, 'wb') as f:
                     f.write(img_data)
 
-                relative_path = f"{md_basename}/{img_filename}"
+                relative_path = f"{md_basename}_images/{img_filename}"
                 cell_to_image[(cell_row, cell_col)] = relative_path
 
                 info(f"Extracted image to {relative_path} at cell ({cell_row}, {cell_col})")
@@ -2377,7 +2381,7 @@ def extract_images_from_sheet(ws, output_dir: Path, sheet_name: str, md_basename
         Keys are 1-based Excel coordinates, values are paths relative to output_dir.
 
     Note:
-        - Images are saved in a subdirectory named after md_basename
+        - Images are saved in a subdirectory named {md_basename}_images
         - Filename format: {sanitized_sheet_name}_img_{index}.{extension}
         - Supports PNG, JPG, GIF, and other common image formats
     """
@@ -2395,8 +2399,8 @@ def extract_images_from_sheet(ws, output_dir: Path, sheet_name: str, md_basename
     if not hasattr(ws, '_images') or not ws._images:
         return cell_to_image
 
-    # Create subdirectory for images (named after markdown file)
-    images_dir = output_dir / md_basename
+    # Create subdirectory for images (named after markdown file with _images suffix)
+    images_dir = output_dir / f"{md_basename}_images"
     images_dir.mkdir(parents=True, exist_ok=True)
 
     sanitized_sheet = sanitize_sheet_name(sheet_name)
@@ -2455,7 +2459,7 @@ def extract_images_from_sheet(ws, output_dir: Path, sheet_name: str, md_basename
                     continue
 
                 # Store mapping with relative path (for portability)
-                relative_path = f"{md_basename}/{img_filename}"
+                relative_path = f"{md_basename}_images/{img_filename}"
                 cell_to_image[(cell_row, cell_col)] = relative_path
 
                 info(f"Extracted image to {relative_path} at cell ({cell_row}, {cell_col})")
