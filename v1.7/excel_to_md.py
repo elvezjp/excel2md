@@ -2730,7 +2730,9 @@ def extract_print_area_for_csv(ws, area, opts, merged_lookup, cell_to_image=None
                     alt_text = f"Image at {a1_from_rc(R, C)}"
                 
                 # Create Markdown image link: ![alt text](path)
-                md_image_link = f"![{alt_text}]({img_path})"
+                # Encode only specific characters that break Markdown links
+                encoded_path = img_path.replace('%', '%25').replace(' ', '%20').replace('(', '%28').replace(')', '%29').replace('#', '%23')
+                md_image_link = f"![{alt_text}]({encoded_path})"
                 row_vals.append(md_image_link)
                 continue
             
