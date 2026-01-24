@@ -56,14 +56,26 @@ class TestExtractImagesFromSheet:
         assert result == {}
 
     def test_creates_subdirectory(self, tmp_path):
-        """Should create subdirectory named after markdown file."""
+        """Should create subdirectory named after markdown file with _images suffix."""
+        # Create mock image to trigger directory creation
+        mock_img = Mock()
+        mock_img._data = Mock(return_value=b'\x89PNG\r\n\x1a\n' + b'fake png data')
+        mock_img.format = 'png'
+
+        mock_anchor = Mock()
+        mock_from = Mock()
+        mock_from.row = 0
+        mock_from.col = 0
+        mock_anchor._from = mock_from
+        mock_img.anchor = mock_anchor
+
         ws = Mock()
-        ws._images = []
+        ws._images = [mock_img]
         md_basename = "my_output"
 
         extract_images_from_sheet(ws, tmp_path, "Sheet1", md_basename, {})
 
-        expected_dir = tmp_path / md_basename
+        expected_dir = tmp_path / f"{md_basename}_images"
         assert expected_dir.exists()
         assert expected_dir.is_dir()
 
@@ -92,20 +104,19 @@ class TestExtractImagesFromSheet:
         assert len(result) == 1
         # Cell position should be 1-based
         assert (1, 1) in result
-        # Path should be relative
-        assert result[(1, 1)] == "output/TestSheet_img_1.png"
+        # Path should be relative with _images suffix
+        assert result[(1, 1)] == "output_images/TestSheet_img_1.png"
 
         # Verify file was created
-        img_file = tmp_path / "output" / "TestSheet_img_1.png"
+        img_file = tmp_path / "output_images" / "TestSheet_img_1.png"
         assert img_file.exists()
 
     def test_jpg_image_detection_from_magic_bytes(self, tmp_path):
         """Test JPEG format detection from magic bytes."""
-        mock_img = Mock()
+        # Create mock without format attribute using spec
+        mock_img = Mock(spec=['_data', 'anchor'])
         # JPEG magic bytes: FF D8 FF
         mock_img._data = Mock(return_value=b'\xff\xd8\xff\xe0' + b'fake jpeg data')
-        # No format attribute - should detect from magic bytes
-        delattr(type(mock_img), 'format')
 
         mock_anchor = Mock()
         mock_from = Mock()
@@ -120,17 +131,17 @@ class TestExtractImagesFromSheet:
         result = extract_images_from_sheet(ws, tmp_path, "Sheet1", "out", {})
 
         assert (2, 2) in result
-        assert result[(2, 2)] == "out/Sheet1_img_1.jpg"
+        assert result[(2, 2)] == "out_images/Sheet1_img_1.jpg"
 
-        img_file = tmp_path / "out" / "Sheet1_img_1.jpg"
+        img_file = tmp_path / "out_images" / "Sheet1_img_1.jpg"
         assert img_file.exists()
 
     def test_gif_image_detection_from_magic_bytes(self, tmp_path):
         """Test GIF format detection from magic bytes."""
-        mock_img = Mock()
+        # Create mock without format attribute using spec
+        mock_img = Mock(spec=['_data', 'anchor'])
         # GIF magic bytes: GIF
         mock_img._data = Mock(return_value=b'GIF89a' + b'fake gif data')
-        delattr(type(mock_img), 'format')
 
         mock_anchor = Mock()
         mock_from = Mock()
@@ -144,7 +155,7 @@ class TestExtractImagesFromSheet:
 
         result = extract_images_from_sheet(ws, tmp_path, "Sheet1", "out", {})
 
-        assert result[(1, 1)] == "out/Sheet1_img_1.gif"
+        assert result[(1, 1)] == "out_images/Sheet1_img_1.gif"
 
     def test_multiple_images(self, tmp_path):
         """Test extraction of multiple images."""
@@ -183,9 +194,8 @@ class TestExtractImagesFromSheet:
         mock_img._data = Mock(return_value=b'\x89PNG' + b'data')
         mock_img.format = 'png'
 
-        # Mock anchor without _from but with direct row/col
-        mock_anchor = Mock()
-        delattr(type(mock_anchor), '_from')  # Remove _from attribute
+        # Mock anchor without _from but with direct row/col using spec
+        mock_anchor = Mock(spec=['row', 'col'])
         mock_anchor.row = 3  # 0-based
         mock_anchor.col = 4  # 0-based
         mock_img.anchor = mock_anchor
@@ -236,7 +246,7 @@ class TestExtractImagesFromSheet:
         result = extract_images_from_sheet(ws, tmp_path, "Sheet/With:Special*Chars", "out", {})
 
         # Check that file was created with sanitized name
-        img_file = tmp_path / "out" / "Sheet_With_Special_Chars_img_1.png"
+        img_file = tmp_path / "out_images" / "Sheet_With_Special_Chars_img_1.png"
         assert img_file.exists()
 
     def test_image_extraction_exception_handling(self, tmp_path):
@@ -256,10 +266,9 @@ class TestExtractImagesFromSheet:
 
     def test_default_png_extension_fallback(self, tmp_path):
         """Unknown format should default to PNG extension."""
-        mock_img = Mock()
+        # Create mock without format attribute using spec
+        mock_img = Mock(spec=['_data', 'anchor'])
         mock_img._data = Mock(return_value=b'unknown format data')
-        # No format attribute and no recognizable magic bytes
-        delattr(type(mock_img), 'format')
 
         mock_anchor = Mock()
         mock_from = Mock()
@@ -274,7 +283,7 @@ class TestExtractImagesFromSheet:
         result = extract_images_from_sheet(ws, tmp_path, "Sheet", "out", {})
 
         # Should use .png as default
-        assert result[(1, 1)] == "out/Sheet_img_1.png"
+        assert result[(1, 1)] == "out_images/Sheet_img_1.png"
 
 
 # ============================================================
@@ -419,12 +428,24 @@ class TestImageExtractionIntegration:
 
     def test_path_creation_with_nested_structure(self, tmp_path):
         """Should create nested directory structure correctly."""
+        # Create mock image to trigger directory creation
+        mock_img = Mock()
+        mock_img._data = Mock(return_value=b'\x89PNG\r\n\x1a\n' + b'fake png data')
+        mock_img.format = 'png'
+
+        mock_anchor = Mock()
+        mock_from = Mock()
+        mock_from.row = 0
+        mock_from.col = 0
+        mock_anchor._from = mock_from
+        mock_img.anchor = mock_anchor
+
         ws = Mock()
-        ws._images = []
+        ws._images = [mock_img]
 
         nested_basename = "nested/output/file"
         extract_images_from_sheet(ws, tmp_path, "Sheet", nested_basename, {})
 
-        # Should create nested directory
-        expected_dir = tmp_path / nested_basename
+        # Should create nested directory with _images suffix
+        expected_dir = tmp_path / f"{nested_basename}_images"
         assert expected_dir.exists()
