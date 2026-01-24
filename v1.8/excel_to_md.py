@@ -2894,6 +2894,9 @@ def run(input_path: str, output_path: Optional[str], args):
         "csv_markdown_enabled": getattr(args, "csv_markdown_enabled", True),
         "csv_include_metadata": getattr(args, "csv_include_metadata", True),
         "csv_include_description": getattr(args, "csv_include_description", True),  # v1.7
+
+        # Image extraction options (v1.8)
+        "image_extraction": getattr(args, "image_extraction", True),
     }
 
     # Prepare for CSV markdown output (v1.5 spec §⑫)
