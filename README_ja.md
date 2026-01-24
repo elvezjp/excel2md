@@ -55,30 +55,33 @@ uv sync
 ## 使い方
 
 ```bash
-uv run python v1.8/excel_to_md.py input.xlsx -o output.md
+uv run python v1.8/excel_to_md.py input.xlsx
 ```
-
 これにより以下が生成されます:
-- `output.md` - 標準Markdownテーブル形式
-- `input_csv.md` - CSVマークダウン形式（デフォルトで有効）
+- `input_csv.md`: CSVマークダウン形式（デフォルト）
+- `input_images/`: 画像ディレクトリ（画像がある場合）
+
+**注意**
+- 出力ファイル名とディレクトリ名は入力ファイル名をベースに決定されます（例: `input.xlsx` → `input_csv.md`, `input_images/`）
+- 入力ファイルと同じディレクトリに出力されます（`--csv-output-dir` で変更可能）
 
 ### よく使う例
 
-**画像抽出付きで変換:**
-```bash
-uv run python v1.8/excel_to_md.py input.xlsx -o output.md
-# 画像は input_images/ ディレクトリに自動抽出されます
-# 例: input_images/Sheet1_img_1.png, input_images/Sheet1_img_2.jpg
-```
-
 **Mermaidフローチャート対応で変換:**
 ```bash
-uv run python v1.8/excel_to_md.py input.xlsx -o output.md --mermaid-enabled
+uv run python v1.8/excel_to_md.py input.xlsx --mermaid-enabled
 ```
 
 **シートごとに個別ファイルを生成:**
 ```bash
-uv run python v1.8/excel_to_md.py input.xlsx -o output.md --split-by-sheet
+uv run python v1.8/excel_to_md.py input.xlsx --split-by-sheet
+```
+
+**CSVマークダウンの出力先を指定:**
+```bash
+uv run python v1.8/excel_to_md.py input.xlsx --csv-output-dir ./output
+# CSVマークダウン: ./output/input_csv.md
+# 画像: ./output/input_images/
 ```
 
 **標準Markdownのみ出力（CSV出力なし）:**
@@ -88,12 +91,12 @@ uv run python v1.8/excel_to_md.py input.xlsx -o output.md --no-csv-markdown-enab
 
 **平文ハイパーリンク（Markdown記法なし）:**
 ```bash
-uv run python v1.8/excel_to_md.py input.xlsx -o output.md --hyperlink-mode inline_plain
+uv run python v1.8/excel_to_md.py input.xlsx --hyperlink-mode inline_plain
 ```
 
 **トークン数削減（CSV概要セクション除外）:**
 ```bash
-uv run python v1.8/excel_to_md.py input.xlsx -o output.md --no-csv-include-description
+uv run python v1.8/excel_to_md.py input.xlsx --no-csv-include-description
 ```
 
 ## 主要オプション
@@ -102,12 +105,12 @@ uv run python v1.8/excel_to_md.py input.xlsx -o output.md --no-csv-include-descr
 
 | オプション | デフォルト | 説明 |
 |--------|---------|-------------|
-| `-o`, `--output` | - | 出力ファイルパス |
 | `--split-by-sheet` | false | シートごとに個別ファイルを生成 |
 | `--csv-markdown-enabled` | true | CSVマークダウン出力を有効化 |
+| `--csv-output-dir` | 入力ファイルと同じ | CSVマークダウンの出力先ディレクトリ |
 | `--csv-include-description` | true | CSV出力に概要セクションを含める |
 | `--csv-include-metadata` | true | CSV出力に検証メタデータを含める |
-| `--image-extraction` | true | 画像抽出を有効化 |
+| `-o`, `--output` | - | 標準Markdownの出力ファイルパス |
 
 ### ハイパーリンク形式
 
@@ -203,8 +206,10 @@ Excelファイル内の画像は自動的に処理されます:
    - ファイル名形式: `{シート名}_img_{連番}.{拡張子}`
    - 例: `Sheet1_img_1.png`, `Sheet1_img_2.jpg`
 
-2. **保存場所**: Markdownファイル名をベースにしたサブディレクトリ
+2. **保存場所**: CSVマークダウンと同じディレクトリに出力
+   - ディレクトリ名: `{入力ファイル名}_images/`
    - 例: `input.xlsx` → `input_images/` ディレクトリ
+   - `--csv-output-dir` オプションで出力先を変更可能
 
 3. **Markdownリンク**: 画像が配置されているセルにMarkdown画像リンクを生成
    - 形式: `![代替テキスト](相対パス)`
