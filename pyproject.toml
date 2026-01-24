@@ -1,6 +1,6 @@
 [project]
 name = "excel2md"
-version = "1.7.0"
+version = "1.8.0"
 description = "Excel to Markdown converter with CSV markdown output support"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -38,7 +38,7 @@ test = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["v1.7/tests"]
+testpaths = ["v1.8/tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -49,8 +49,8 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["v1.7"]
-omit = ["v1.7/tests/*"]
+source = ["v1.8"]
+omit = ["v1.8/tests/*"]
 
 [tool.coverage.report]
 exclude_lines = [

@@ -14,6 +14,7 @@ Excel to Markdown converter. Reads Excel workbooks (.xlsx/.xlsm) and automatical
 
 - **Smart Table Detection**: Automatically detects Excel print areas and converts them to Markdown tables
 - **CSV Markdown Output**: Exports entire sheets in CSV format with validation metadata
+- **Image Extraction** (v1.8): Extracts images from Excel files and outputs them as Markdown image links
 - **Mermaid Flowcharts**: Generates Mermaid diagrams from Excel shapes and tables
 - **Hyperlink Support**: Multiple output modes (inline, footnote, plain text)
 - **Split by Sheet**: Generate individual files per sheet
@@ -32,7 +33,8 @@ Excel to Markdown converter. Reads Excel workbooks (.xlsx/.xlsm) and automatical
 - [CHANGELOG.md](CHANGELOG.md) - Version history
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
 - [SECURITY.md](SECURITY.md) - Security policy and best practices
-- [v1.7/spec.md](v1.7/spec.md) - Technical specification
+- [v1.8/spec.md](v1.8/spec.md) - Technical specification (v1.8 with image extraction)
+- [v1.7/spec.md](v1.7/spec.md) - Technical specification (v1.7)
 
 ## Setup
 
@@ -54,38 +56,48 @@ uv sync
 ## Usage
 
 ```bash
-uv run python v1.7/excel_to_md.py input.xlsx -o output.md
+uv run python v1.8/excel_to_md.py input.xlsx
 ```
-
 This generates:
-- `output.md` - Standard Markdown table format
-- `input_csv.md` - CSV markdown format (enabled by default)
+- `input_csv.md`: CSV markdown format (default)
+- `input_images/`: Image directory (if images exist)
+
+**Note**
+- Output filenames and directories are based on input filename (e.g., `input.xlsx` → `input_csv.md`, `input_images/`)
+- Output is saved in the same directory as input file (use `--csv-output-dir` to change)
 
 ### Common Examples
 
 **Convert with Mermaid flowchart support:**
 ```bash
-uv run python v1.7/excel_to_md.py input.xlsx -o output.md --mermaid-enabled
+uv run python v1.8/excel_to_md.py input.xlsx --mermaid-enabled
 ```
 
 **Generate individual files per sheet:**
 ```bash
-uv run python v1.7/excel_to_md.py input.xlsx -o output.md --split-by-sheet
+uv run python v1.8/excel_to_md.py input.xlsx --split-by-sheet
+```
+
+**Specify CSV markdown output directory:**
+```bash
+uv run python v1.8/excel_to_md.py input.xlsx --csv-output-dir ./output
+# CSV markdown: ./output/input_csv.md
+# Images: ./output/input_images/
 ```
 
 **Output standard Markdown only (no CSV output):**
 ```bash
-uv run python v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-markdown-enabled
+uv run python v1.8/excel_to_md.py input.xlsx -o output.md --no-csv-markdown-enabled
 ```
 
 **Plain text hyperlinks (no Markdown syntax):**
 ```bash
-uv run python v1.7/excel_to_md.py input.xlsx -o output.md --hyperlink-mode inline_plain
+uv run python v1.8/excel_to_md.py input.xlsx --hyperlink-mode inline_plain
 ```
 
 **Reduce token count (exclude CSV summary section):**
 ```bash
-uv run python v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-include-description
+uv run python v1.8/excel_to_md.py input.xlsx --no-csv-include-description
 ```
 
 ## Key Options
@@ -94,11 +106,13 @@ uv run python v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-include-descr
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `-o`, `--output` | - | Output file path |
 | `--split-by-sheet` | false | Generate individual files per sheet |
 | `--csv-markdown-enabled` | true | Enable CSV markdown output |
+| `--csv-output-dir` | Same as input | Output directory for CSV markdown and images |
 | `--csv-include-description` | true | Include summary section in CSV output |
 | `--csv-include-metadata` | true | Include validation metadata in CSV output |
+| `--image-extraction` | true | Enable image extraction |
+| `-o`, `--output` | - | Output file path for standard Markdown |
 
 ### Hyperlink Formats
 
@@ -186,12 +200,39 @@ Orange,5,
 - **Validation status**: OK
 ````
 
+### Image Extraction
+
+Images in Excel files are automatically processed:
+
+1. **Automatic Extraction**: Images from each sheet are saved as external files
+   - Filename format: `{sheet_name}_img_{number}.{extension}`
+   - Example: `Sheet1_img_1.png`, `Sheet1_img_2.jpg`
+
+2. **Save Location**: Output to same directory as CSV markdown
+   - Directory name: `{input_filename}_images/`
+   - Example: `input.xlsx` → `input_images/` directory
+   - Use `--csv-output-dir` option to change output location
+
+3. **Markdown Links**: Generates Markdown image links for cells with images
+   - Format: `![alt text](relative_path)`
+   - Uses cell value as alt text if available
+   - Auto-generates alt text like `Image at A1` if cell is empty
+
+4. **Supported Formats**: PNG, JPEG, GIF
+
+**Example:**
+
+If a company logo image is at cell position (B2):
+- Image file: saved as `input_images/Sheet1_img_1.png`
+- CSV output: `![Company Logo](input_images/Sheet1_img_1.png)`
+- Cell text "Company Logo" is used as alt text
+
 ## Advanced Options
 
 List all options:
 
 ```bash
-uv run python v1.7/excel_to_md.py --help
+uv run python v1.8/excel_to_md.py --help
 ```
 
 Key advanced options:
@@ -206,10 +247,14 @@ Key advanced options:
 
 ```
 excel2md/
-├── v1.7/
-│   ├── excel_to_md.py      # Main conversion program (latest version)
-│   ├── spec.md             # Specification
-│   └── tests/              # Test suite
+├── v1.8/                       # Latest version
+│   ├── excel_to_md.py          # Main conversion program
+│   ├── spec.md                 # Specification
+│   └── tests/                  # Test suite
+├── v1.7/                       # Previous version
+│   ├── excel_to_md.py          # Main conversion program
+│   ├── spec.md                 # Specification
+│   └── tests/                  # Test suite
 ├── pyproject.toml          # Project metadata
 ├── LICENSE                 # MIT License
 ├── README.md               # This file

@@ -14,6 +14,7 @@ Excel → Markdown 変換ツール。Excelブック（.xlsx/.xlsm）を読み取
 
 - **スマートテーブル検出**: Excel印刷領域を自動検出してMarkdownテーブルに変換
 - **CSVマークダウン出力**: シート全体をCSV形式で出力（検証用メタデータ付き）
+- **画像抽出** (v1.8): Excelファイル内の画像を外部ファイルとして抽出し、Markdownリンク形式で出力
 - **Mermaidフローチャート**: Excel図形やテーブルからMermaid図を生成
 - **ハイパーリンク対応**: 複数の出力モード（インライン、脚注、平文）
 - **シート分割出力**: シートごとに個別ファイルを生成可能
@@ -32,7 +33,7 @@ Excel → Markdown 変換ツール。Excelブック（.xlsx/.xlsm）を読み取
 - [CHANGELOG.md](CHANGELOG.md) - バージョン履歴
 - [CONTRIBUTING.md](CONTRIBUTING.md) - コントリビューション方法
 - [SECURITY.md](SECURITY.md) - セキュリティポリシーとベストプラクティス
-- [v1.7/spec.md](v1.7/spec.md) - 技術仕様書
+- [v1.8/spec.md](v1.8/spec.md) - 技術仕様書（v1.8）
 
 ## セットアップ
 
@@ -54,38 +55,48 @@ uv sync
 ## 使い方
 
 ```bash
-uv run python v1.7/excel_to_md.py input.xlsx -o output.md
+uv run python v1.8/excel_to_md.py input.xlsx
 ```
-
 これにより以下が生成されます:
-- `output.md` - 標準Markdownテーブル形式
-- `input_csv.md` - CSVマークダウン形式（デフォルトで有効）
+- `input_csv.md`: CSVマークダウン形式（デフォルト）
+- `input_images/`: 画像ディレクトリ（画像がある場合）
+
+**注意**
+- 出力ファイル名とディレクトリ名は入力ファイル名をベースに決定されます（例: `input.xlsx` → `input_csv.md`, `input_images/`）
+- 入力ファイルと同じディレクトリに出力されます（`--csv-output-dir` で変更可能）
 
 ### よく使う例
 
 **Mermaidフローチャート対応で変換:**
 ```bash
-uv run python v1.7/excel_to_md.py input.xlsx -o output.md --mermaid-enabled
+uv run python v1.8/excel_to_md.py input.xlsx --mermaid-enabled
 ```
 
 **シートごとに個別ファイルを生成:**
 ```bash
-uv run python v1.7/excel_to_md.py input.xlsx -o output.md --split-by-sheet
+uv run python v1.8/excel_to_md.py input.xlsx --split-by-sheet
+```
+
+**CSVマークダウンの出力先を指定:**
+```bash
+uv run python v1.8/excel_to_md.py input.xlsx --csv-output-dir ./output
+# CSVマークダウン: ./output/input_csv.md
+# 画像: ./output/input_images/
 ```
 
 **標準Markdownのみ出力（CSV出力なし）:**
 ```bash
-uv run python v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-markdown-enabled
+uv run python v1.8/excel_to_md.py input.xlsx -o output.md --no-csv-markdown-enabled
 ```
 
 **平文ハイパーリンク（Markdown記法なし）:**
 ```bash
-uv run python v1.7/excel_to_md.py input.xlsx -o output.md --hyperlink-mode inline_plain
+uv run python v1.8/excel_to_md.py input.xlsx --hyperlink-mode inline_plain
 ```
 
 **トークン数削減（CSV概要セクション除外）:**
 ```bash
-uv run python v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-include-description
+uv run python v1.8/excel_to_md.py input.xlsx --no-csv-include-description
 ```
 
 ## 主要オプション
@@ -94,11 +105,12 @@ uv run python v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-include-descr
 
 | オプション | デフォルト | 説明 |
 |--------|---------|-------------|
-| `-o`, `--output` | - | 出力ファイルパス |
 | `--split-by-sheet` | false | シートごとに個別ファイルを生成 |
 | `--csv-markdown-enabled` | true | CSVマークダウン出力を有効化 |
+| `--csv-output-dir` | 入力ファイルと同じ | CSVマークダウンの出力先ディレクトリ |
 | `--csv-include-description` | true | CSV出力に概要セクションを含める |
 | `--csv-include-metadata` | true | CSV出力に検証メタデータを含める |
+| `-o`, `--output` | - | 標準Markdownの出力ファイルパス |
 
 ### ハイパーリンク形式
 
@@ -186,12 +198,39 @@ uv run python v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-include-descr
 - **検証ステータス**: OK
 ````
 
+### 画像抽出
+
+Excelファイル内の画像は自動的に処理されます:
+
+1. **自動抽出**: 各シートの画像が外部ファイルとして保存されます
+   - ファイル名形式: `{シート名}_img_{連番}.{拡張子}`
+   - 例: `Sheet1_img_1.png`, `Sheet1_img_2.jpg`
+
+2. **保存場所**: CSVマークダウンと同じディレクトリに出力
+   - ディレクトリ名: `{入力ファイル名}_images/`
+   - 例: `input.xlsx` → `input_images/` ディレクトリ
+   - `--csv-output-dir` オプションで出力先を変更可能
+
+3. **Markdownリンク**: 画像が配置されているセルにMarkdown画像リンクを生成
+   - 形式: `![代替テキスト](相対パス)`
+   - セル値がある場合は代替テキストとして使用
+   - セル値がない場合は `Image at A1` のように自動生成
+
+4. **対応形式**: PNG, JPEG, GIF
+
+**例:**
+
+Excelのセル位置 (B2) に会社ロゴ画像がある場合:
+- 画像ファイル: `input_images/Sheet1_img_1.png` として保存
+- CSV出力: `![Company Logo](input_images/Sheet1_img_1.png)`
+- セルに "Company Logo" というテキストがあれば代替テキストとして使用
+
 ## 高度なオプション
 
 全オプションの一覧:
 
 ```bash
-uv run python v1.7/excel_to_md.py --help
+uv run python v1.8/excel_to_md.py --help
 ```
 
 主な高度なオプション:
@@ -207,10 +246,14 @@ uv run python v1.7/excel_to_md.py --help
 
 ```
 excel2md/
-├── v1.7/
-│   ├── excel_to_md.py      # メイン変換プログラム（最新版）
-│   ├── spec.md             # 仕様書
-│   └── tests/              # テストスイート
+├── v1.8/                       # 最新バージョン
+│   ├── excel_to_md.py          # メイン変換プログラム
+│   ├── spec.md                 # 仕様書
+│   └── tests/                  # テストスイート
+├── v1.7/                       # 旧バージョン
+│   ├── excel_to_md.py          # メイン変換プログラム
+│   ├── spec.md                 # 仕様書
+│   └── tests/                  # テストスイート
 ├── pyproject.toml          # プロジェクトメタデータ
 ├── LICENSE                 # MITライセンス
 ├── README.md               # このファイル
