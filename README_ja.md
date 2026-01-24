@@ -107,6 +107,7 @@ uv run python v1.8/excel_to_md.py input.xlsx -o output.md --no-csv-include-descr
 | `--csv-markdown-enabled` | true | CSVマークダウン出力を有効化 |
 | `--csv-include-description` | true | CSV出力に概要セクションを含める |
 | `--csv-include-metadata` | true | CSV出力に検証メタデータを含める |
+| `--image-extraction` | true | 画像抽出を有効化 |
 
 ### ハイパーリンク形式
 

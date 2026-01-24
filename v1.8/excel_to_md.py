@@ -3024,7 +3024,9 @@ def run(input_path: str, output_path: Optional[str], args):
         # v1.5 only outputs CSV markdown format, not raw CSV files
         if opts.get("csv_markdown_enabled", True):
             # Extract images from sheet first (v1.8)
-            cell_to_image = extract_images_from_sheet(ws, Path(csv_output_dir), sname, csv_basename, opts, xlsx_path=input_path)
+            cell_to_image = {}
+            if opts.get("image_extraction", True):
+                cell_to_image = extract_images_from_sheet(ws, Path(csv_output_dir), sname, csv_basename, opts, xlsx_path=input_path)
 
             # Collect CSV data for markdown output
             for union_area in unioned:
@@ -3205,6 +3207,10 @@ def build_argparser():
     p.add_argument("--no-csv-include-metadata", dest="csv_include_metadata", action="store_false")
     p.add_argument("--csv-include-description", action="store_true", default=True, help="Include description section in CSV markdown output (default: True)")
     p.add_argument("--no-csv-include-description", dest="csv_include_description", action="store_false")
+
+    # Image extraction options (v1.8)
+    p.add_argument("--image-extraction", action="store_true", default=True, help="Enable image extraction from Excel (default: True)")
+    p.add_argument("--no-image-extraction", dest="image_extraction", action="store_false")
 
     # Sheet output options
     p.add_argument("--split-by-sheet", action="store_true", default=False, help="Split output by sheet (generate separate file for each sheet)")

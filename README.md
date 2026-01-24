@@ -108,6 +108,7 @@ uv run python v1.8/excel_to_md.py input.xlsx -o output.md --no-csv-include-descr
 | `--csv-markdown-enabled` | true | Enable CSV markdown output |
 | `--csv-include-description` | true | Include summary section in CSV output |
 | `--csv-include-metadata` | true | Include validation metadata in CSV output |
+| `--image-extraction` | true | Enable image extraction |
 
 ### Hyperlink Formats
 
