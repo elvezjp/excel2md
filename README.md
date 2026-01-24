@@ -14,6 +14,7 @@ Excel to Markdown converter. Reads Excel workbooks (.xlsx/.xlsm) and automatical
 
 - **Smart Table Detection**: Automatically detects Excel print areas and converts them to Markdown tables
 - **CSV Markdown Output**: Exports entire sheets in CSV format with validation metadata
+- **Image Extraction** (v1.8): Extracts images from Excel files and outputs them as Markdown image links
 - **Mermaid Flowcharts**: Generates Mermaid diagrams from Excel shapes and tables
 - **Hyperlink Support**: Multiple output modes (inline, footnote, plain text)
 - **Split by Sheet**: Generate individual files per sheet
@@ -32,7 +33,8 @@ Excel to Markdown converter. Reads Excel workbooks (.xlsx/.xlsm) and automatical
 - [CHANGELOG.md](CHANGELOG.md) - Version history
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
 - [SECURITY.md](SECURITY.md) - Security policy and best practices
-- [v1.7/spec.md](v1.7/spec.md) - Technical specification
+- [v1.8/spec.md](v1.8/spec.md) - Technical specification (v1.8 with image extraction)
+- [v1.7/spec.md](v1.7/spec.md) - Technical specification (v1.7)
 
 ## Setup
 
@@ -62,6 +64,13 @@ This generates:
 - `input_csv.md` - CSV markdown format (enabled by default)
 
 ### Common Examples
+
+**Convert Excel with image extraction (v1.8):**
+```bash
+uv run python v1.8/excel_to_md.py input.xlsx -o output.md
+# Images are automatically extracted to input_images/ directory
+# Example: input_images/Sheet1_img_1.png, input_images/Sheet1_img_2.jpg
+```
 
 **Convert with Mermaid flowchart support:**
 ```bash
@@ -186,6 +195,31 @@ Orange,5,
 - **Validation status**: OK
 ````
 
+### Image Extraction (v1.8)
+
+When using v1.8, images in Excel files are automatically processed:
+
+1. **Automatic Extraction**: Images from each sheet are saved as external files
+   - Filename format: `{sheet_name}_img_{number}.{extension}`
+   - Example: `Sheet1_img_1.png`, `Sheet1_img_2.jpg`
+
+2. **Save Location**: Subdirectory based on Markdown filename
+   - Example: `input.xlsx` → `input_images/` directory
+
+3. **Markdown Links**: Generates Markdown image links for cells with images
+   - Format: `![alt text](relative_path)`
+   - Uses cell value as alt text if available
+   - Auto-generates alt text like `Image at A1` if cell is empty
+
+4. **Supported Formats**: PNG, JPEG, GIF
+
+**Example:**
+
+If a company logo image is at cell position (B2):
+- Image file: saved as `input_images/Sheet1_img_1.png`
+- CSV output: `![Company Logo](input_images/Sheet1_img_1.png)`
+- Cell text "Company Logo" is used as alt text
+
 ## Advanced Options
 
 List all options:
@@ -206,8 +240,12 @@ Key advanced options:
 
 ```
 excel2md/
+├── v1.8/
+│   ├── excel_to_md.py      # Main conversion program (with image extraction)
+│   ├── spec.md             # Specification
+│   └── tests/              # Test suite
 ├── v1.7/
-│   ├── excel_to_md.py      # Main conversion program (latest version)
+│   ├── excel_to_md.py      # Main conversion program (stable version)
 │   ├── spec.md             # Specification
 │   └── tests/              # Test suite
 ├── pyproject.toml          # Project metadata

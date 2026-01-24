@@ -14,6 +14,7 @@ Excel → Markdown 変換ツール。Excelブック（.xlsx/.xlsm）を読み取
 
 - **スマートテーブル検出**: Excel印刷領域を自動検出してMarkdownテーブルに変換
 - **CSVマークダウン出力**: シート全体をCSV形式で出力（検証用メタデータ付き）
+- **画像抽出** (v1.8): Excelファイル内の画像を外部ファイルとして抽出し、Markdownリンク形式で出力
 - **Mermaidフローチャート**: Excel図形やテーブルからMermaid図を生成
 - **ハイパーリンク対応**: 複数の出力モード（インライン、脚注、平文）
 - **シート分割出力**: シートごとに個別ファイルを生成可能
@@ -32,7 +33,8 @@ Excel → Markdown 変換ツール。Excelブック（.xlsx/.xlsm）を読み取
 - [CHANGELOG.md](CHANGELOG.md) - バージョン履歴
 - [CONTRIBUTING.md](CONTRIBUTING.md) - コントリビューション方法
 - [SECURITY.md](SECURITY.md) - セキュリティポリシーとベストプラクティス
-- [v1.7/spec.md](v1.7/spec.md) - 技術仕様書
+- [v1.8/spec.md](v1.8/spec.md) - 技術仕様書（v1.8 画像抽出機能付き）
+- [v1.7/spec.md](v1.7/spec.md) - 技術仕様書（v1.7）
 
 ## セットアップ
 
@@ -62,6 +64,13 @@ uv run python v1.7/excel_to_md.py input.xlsx -o output.md
 - `input_csv.md` - CSVマークダウン形式（デフォルトで有効）
 
 ### よく使う例
+
+**画像抽出付きで変換（v1.8）:**
+```bash
+uv run python v1.8/excel_to_md.py input.xlsx -o output.md
+# 画像は input_images/ ディレクトリに自動抽出されます
+# 例: input_images/Sheet1_img_1.png, input_images/Sheet1_img_2.jpg
+```
 
 **Mermaidフローチャート対応で変換:**
 ```bash
@@ -186,6 +195,31 @@ uv run python v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-include-descr
 - **検証ステータス**: OK
 ````
 
+### 画像抽出（v1.8）
+
+v1.8を使用すると、Excelファイル内の画像が自動的に処理されます:
+
+1. **自動抽出**: 各シートの画像が外部ファイルとして保存されます
+   - ファイル名形式: `{シート名}_img_{連番}.{拡張子}`
+   - 例: `Sheet1_img_1.png`, `Sheet1_img_2.jpg`
+
+2. **保存場所**: Markdownファイル名をベースにしたサブディレクトリ
+   - 例: `input.xlsx` → `input_images/` ディレクトリ
+
+3. **Markdownリンク**: 画像が配置されているセルにMarkdown画像リンクを生成
+   - 形式: `![代替テキスト](相対パス)`
+   - セル値がある場合は代替テキストとして使用
+   - セル値がない場合は `Image at A1` のように自動生成
+
+4. **対応形式**: PNG, JPEG, GIF
+
+**例:**
+
+Excelのセル位置 (B2) に会社ロゴ画像がある場合:
+- 画像ファイル: `input_images/Sheet1_img_1.png` として保存
+- CSV出力: `![Company Logo](input_images/Sheet1_img_1.png)`
+- セルに "Company Logo" というテキストがあれば代替テキストとして使用
+
 ## 高度なオプション
 
 全オプションの一覧:
@@ -207,8 +241,12 @@ uv run python v1.7/excel_to_md.py --help
 
 ```
 excel2md/
+├── v1.8/
+│   ├── excel_to_md.py      # メイン変換プログラム（画像抽出機能付き）
+│   ├── spec.md             # 仕様書
+│   └── tests/              # テストスイート
 ├── v1.7/
-│   ├── excel_to_md.py      # メイン変換プログラム（最新版）
+│   ├── excel_to_md.py      # メイン変換プログラム（安定版）
 │   ├── spec.md             # 仕様書
 │   └── tests/              # テストスイート
 ├── pyproject.toml          # プロジェクトメタデータ
