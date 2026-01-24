@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 CSV Markdown Verification Script
-Spec Compliance: v1.6 (CSV Markdown Verification)
 File: verify_csv_markdown.py
 
 検証スクリプト - CSVマークダウンファイルの検証

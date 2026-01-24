@@ -1,8 +1,14 @@
 # -*- coding: utf-8 -*-
 """
 Excel -> Markdown Converter
-Spec Compliance: v1.7 (CSV Markdown Mode Extensions + Image Extraction)
 File: excel_to_md.py
+
+更新点（v1.8）:
+- v1.7の全機能を継承（CSVマークダウンモード拡張）
+- 画像抽出機能を追加
+  - Excelファイル内の画像を外部ファイルとして抽出
+  - 画像が配置されているセルには、Markdownリンク形式でパスを出力
+  - CSV Markdownモードでも画像リンクが有効
 
 更新点（v1.7 / 2025-12-25）:
 - v1.6の全機能を継承（ハイパーリンク平文出力モード、シート分割出力機能）
@@ -10,10 +16,6 @@ File: excel_to_md.py
   - --csv-include-description: 概要セクション（説明文）の出力を制御（デフォルト: ON）
   - CSVマークダウンでも --mermaid-enabled が有効に（mermaid_detect_mode="shapes" の場合のみ）
   - 複数ファイルを変換・結合する際のトークン数削減に対応
-- 画像抽出機能を追加（v1.7 extension）
-  - Excelファイル内の画像を外部ファイルとして抽出
-  - 画像が配置されているセルには、Markdownリンク形式でパスを出力
-  - CSV Markdownモードでも画像リンクが有効
 
 更新点（v1.6 / 2025-11-XX）:
 - ハイパーリンク平文出力モード（inline_plain）を追加
@@ -31,7 +33,7 @@ import re
 import unicodedata
 from typing import List, Tuple, Optional, Dict, Set
 
-VERSION = "1.7"  # SPEC version tag
+VERSION = "1.8"  # SPEC version tag
 
 MD_RESERVED_SAFE = r"\\|\||\*|_|~|#|>|\[|\]|\(|\)|\{|\}|\+|\-|\.|!|`"
 MD_ESCAPE_RE = re.compile(MD_RESERVED_SAFE)
@@ -2152,7 +2154,7 @@ def make_markdown_table(md_rows, header_detection=True, align_detect=True, align
         lines.append("| " + " | ".join(row) + " |")
     return "\n".join(lines)
 
-# ===== Image extraction functions (v1.7 extension) =====
+# ===== Image extraction functions (v1.8) =====
 
 def extract_images_from_xlsx_drawing(xlsx_path: str, ws, output_dir: Path, sheet_name: str, md_basename: str, opts) -> Dict[Tuple[int, int], str]:
     """Extract images directly from xlsx ZIP archive using DrawingML.
@@ -2172,7 +2174,7 @@ def extract_images_from_xlsx_drawing(xlsx_path: str, ws, output_dir: Path, sheet
     Returns:
         Dict mapping (row, col) tuples to relative image paths.
         Keys are 1-based Excel coordinates.
-        
+
     Note:
         - Images are saved in a subdirectory named {md_basename}_images
         - Filename format: {sanitized_sheet_name}_img_{index}.{extension}
@@ -2467,7 +2469,7 @@ def extract_images_from_sheet(ws, output_dir: Path, sheet_name: str, md_basename
         except Exception as e:
             warn(f"Failed to extract image {img_idx}: {e}")
             continue
-    
+
     return cell_to_image
 
 # ===== CSV output functions (v1.5) =====
@@ -2691,7 +2693,7 @@ def write_csv_markdown(wb, csv_data_dict, excel_file_basename, opts, output_dir)
 
 def extract_print_area_for_csv(ws, area, opts, merged_lookup, cell_to_image=None):
     """Extract all cell values from print area for CSV output per spec §3.2.2.
-    
+
     This function processes cells within the specified print area and extracts their
     values for CSV markdown output. If a cell contains an image (indicated by
     cell_to_image mapping), a Markdown image link is generated instead of the cell value.
@@ -2720,22 +2722,22 @@ def extract_print_area_for_csv(ws, area, opts, merged_lookup, cell_to_image=None
             # If so, generate Markdown image link instead of cell value
             if (R, C) in cell_to_image:
                 img_path = cell_to_image[(R, C)]
-                
+
                 # Get cell value for alt text (accessibility)
                 cell = ws.cell(row=R, column=C)
                 alt_text = cell_display_value(cell, opts).strip()
-                
+
                 # Fallback to cell reference if no meaningful alt text
                 if not alt_text:
                     alt_text = f"Image at {a1_from_rc(R, C)}"
-                
+
                 # Create Markdown image link: ![alt text](path)
                 # Encode only specific characters that break Markdown links
                 encoded_path = img_path.replace('%', '%25').replace(' ', '%20').replace('(', '%28').replace(')', '%29').replace('#', '%23')
                 md_image_link = f"![{alt_text}]({encoded_path})"
                 row_vals.append(md_image_link)
                 continue
-            
+
             cell = ws.cell(row=R, column=C)
 
             # Handle merged cells per spec §3.2.2
@@ -3021,9 +3023,9 @@ def run(input_path: str, output_path: Optional[str], args):
         # CSV markdown data collection per spec §⑫ (v1.5)
         # v1.5 only outputs CSV markdown format, not raw CSV files
         if opts.get("csv_markdown_enabled", True):
-            # Extract images from sheet first (v1.7 extension)
+            # Extract images from sheet first (v1.8)
             cell_to_image = extract_images_from_sheet(ws, Path(csv_output_dir), sname, csv_basename, opts, xlsx_path=input_path)
-            
+
             # Collect CSV data for markdown output
             for union_area in unioned:
                 merged_lookup = build_merged_lookup(ws, union_area)
