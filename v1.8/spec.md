@@ -1,6 +1,6 @@
-# エクセル→マークダウン変換 仕様書（spec.md / v1.7）
+# エクセル→マークダウン変換 仕様書（spec.md / v1.8）
 
-本書は、v1.6の仕様に**CSVマークダウンモードの拡張機能**（Mermaid出力対応、説明文除外オプション）および**画像抽出機能**を追加した仕様です。
+本書は、v1.7の仕様に**画像抽出機能**を追加した仕様です。
 
 ---
 
@@ -847,7 +847,7 @@ Excel の表示順（左→右のタブ順）で**先頭から末尾まで**処�
 
 ---
 
-## 7.8 画像抽出とMarkdownリンク生成（v1.7拡張）
+## 7.8 画像抽出とMarkdownリンク生成
 
 ### 7.8.1 画像抽出の処理フロー
 
@@ -1095,8 +1095,8 @@ csv_output_dir: null  # null の場合はMarkdownファイルと同じディレ�
 csv_filename_pattern: "{basename}_csv.md"
 csv_normalize_values: true
 csv_include_metadata: true  # 検証用メタデータを末尾に付記
-csv_include_description: true  # 概要セクション（説明文）を出力（v1.7で追加）
-# v1.7: CSVマークダウンでのMermaid出力は mermaid_enabled と mermaid_detect_mode で制御
+csv_include_description: true  # 概要セクション（説明文）を出力
+# CSVマークダウンでのMermaid出力は mermaid_enabled と mermaid_detect_mode で制御
 # mermaid_enabled: true かつ mermaid_detect_mode: shapes の場合にMermaidを出力
 ```
 
@@ -1687,16 +1687,16 @@ def extract_shapes_to_mermaid(xlsx_path: str, ws, grid: Dict[Tuple[int,int], str
 
 ---
 
-# 付録D：単体テスト仕様（v1.7）
+# 付録D：単体テスト仕様
 
 ## D.1 概要
 
-本付録は、`v1.7/excel_to_md.py` の単体テスト仕様を定義する。テストはpytestを使用し、openpyxlのモックまたはメモリ内Workbookを活用して、実際のExcelファイルなしでテスト可能とする。
+本付録は、`v1.8/excel_to_md.py` の単体テスト仕様を定義する。テストはpytestを使用し、openpyxlのモックまたはメモリ内Workbookを活用して、実際のExcelファイルなしでテスト可能とする。
 
 ### D.1.1 テストファイル構成
 
 ```
-v1.7/
+v1.8/
 ├── excel_to_md.py
 ├── verify_csv_markdown.py
 ├── spec.md
@@ -1959,7 +1959,7 @@ def create_mock_cell(value=None, fill_color=None, hyperlink=None, is_date=False)
 ### D.5.1 全テスト実行
 
 ```bash
-cd v1.7
+cd v1.8
 pytest tests/ -v
 ```
 
