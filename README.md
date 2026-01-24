@@ -56,7 +56,7 @@ uv sync
 ## Usage
 
 ```bash
-uv run python v1.7/excel_to_md.py input.xlsx -o output.md
+uv run python v1.8/excel_to_md.py input.xlsx -o output.md
 ```
 
 This generates:
@@ -65,7 +65,7 @@ This generates:
 
 ### Common Examples
 
-**Convert Excel with image extraction (v1.8):**
+**Convert Excel with image extraction:**
 ```bash
 uv run python v1.8/excel_to_md.py input.xlsx -o output.md
 # Images are automatically extracted to input_images/ directory
@@ -74,27 +74,27 @@ uv run python v1.8/excel_to_md.py input.xlsx -o output.md
 
 **Convert with Mermaid flowchart support:**
 ```bash
-uv run python v1.7/excel_to_md.py input.xlsx -o output.md --mermaid-enabled
+uv run python v1.8/excel_to_md.py input.xlsx -o output.md --mermaid-enabled
 ```
 
 **Generate individual files per sheet:**
 ```bash
-uv run python v1.7/excel_to_md.py input.xlsx -o output.md --split-by-sheet
+uv run python v1.8/excel_to_md.py input.xlsx -o output.md --split-by-sheet
 ```
 
 **Output standard Markdown only (no CSV output):**
 ```bash
-uv run python v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-markdown-enabled
+uv run python v1.8/excel_to_md.py input.xlsx -o output.md --no-csv-markdown-enabled
 ```
 
 **Plain text hyperlinks (no Markdown syntax):**
 ```bash
-uv run python v1.7/excel_to_md.py input.xlsx -o output.md --hyperlink-mode inline_plain
+uv run python v1.8/excel_to_md.py input.xlsx -o output.md --hyperlink-mode inline_plain
 ```
 
 **Reduce token count (exclude CSV summary section):**
 ```bash
-uv run python v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-include-description
+uv run python v1.8/excel_to_md.py input.xlsx -o output.md --no-csv-include-description
 ```
 
 ## Key Options
@@ -195,9 +195,9 @@ Orange,5,
 - **Validation status**: OK
 ````
 
-### Image Extraction (v1.8)
+### Image Extraction
 
-When using v1.8, images in Excel files are automatically processed:
+Images in Excel files are automatically processed:
 
 1. **Automatic Extraction**: Images from each sheet are saved as external files
    - Filename format: `{sheet_name}_img_{number}.{extension}`
@@ -225,7 +225,7 @@ If a company logo image is at cell position (B2):
 List all options:
 
 ```bash
-uv run python v1.7/excel_to_md.py --help
+uv run python v1.8/excel_to_md.py --help
 ```
 
 Key advanced options:
@@ -240,14 +240,14 @@ Key advanced options:
 
 ```
 excel2md/
-├── v1.8/
-│   ├── excel_to_md.py      # Main conversion program (with image extraction)
-│   ├── spec.md             # Specification
-│   └── tests/              # Test suite
-├── v1.7/
-│   ├── excel_to_md.py      # Main conversion program (stable version)
-│   ├── spec.md             # Specification
-│   └── tests/              # Test suite
+├── v1.8/                       # Latest version
+│   ├── excel_to_md.py          # Main conversion program
+│   ├── spec.md                 # Specification
+│   └── tests/                  # Test suite
+├── v1.7/                       # Previous version
+│   ├── excel_to_md.py          # Main conversion program
+│   ├── spec.md                 # Specification
+│   └── tests/                  # Test suite
 ├── pyproject.toml          # Project metadata
 ├── LICENSE                 # MIT License
 ├── README.md               # This file

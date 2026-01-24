@@ -33,8 +33,7 @@ Excel → Markdown 変換ツール。Excelブック（.xlsx/.xlsm）を読み取
 - [CHANGELOG.md](CHANGELOG.md) - バージョン履歴
 - [CONTRIBUTING.md](CONTRIBUTING.md) - コントリビューション方法
 - [SECURITY.md](SECURITY.md) - セキュリティポリシーとベストプラクティス
-- [v1.8/spec.md](v1.8/spec.md) - 技術仕様書（v1.8 画像抽出機能付き）
-- [v1.7/spec.md](v1.7/spec.md) - 技術仕様書（v1.7）
+- [v1.8/spec.md](v1.8/spec.md) - 技術仕様書（v1.8）
 
 ## セットアップ
 
@@ -56,7 +55,7 @@ uv sync
 ## 使い方
 
 ```bash
-uv run python v1.7/excel_to_md.py input.xlsx -o output.md
+uv run python v1.8/excel_to_md.py input.xlsx -o output.md
 ```
 
 これにより以下が生成されます:
@@ -65,7 +64,7 @@ uv run python v1.7/excel_to_md.py input.xlsx -o output.md
 
 ### よく使う例
 
-**画像抽出付きで変換（v1.8）:**
+**画像抽出付きで変換:**
 ```bash
 uv run python v1.8/excel_to_md.py input.xlsx -o output.md
 # 画像は input_images/ ディレクトリに自動抽出されます
@@ -74,27 +73,27 @@ uv run python v1.8/excel_to_md.py input.xlsx -o output.md
 
 **Mermaidフローチャート対応で変換:**
 ```bash
-uv run python v1.7/excel_to_md.py input.xlsx -o output.md --mermaid-enabled
+uv run python v1.8/excel_to_md.py input.xlsx -o output.md --mermaid-enabled
 ```
 
 **シートごとに個別ファイルを生成:**
 ```bash
-uv run python v1.7/excel_to_md.py input.xlsx -o output.md --split-by-sheet
+uv run python v1.8/excel_to_md.py input.xlsx -o output.md --split-by-sheet
 ```
 
 **標準Markdownのみ出力（CSV出力なし）:**
 ```bash
-uv run python v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-markdown-enabled
+uv run python v1.8/excel_to_md.py input.xlsx -o output.md --no-csv-markdown-enabled
 ```
 
 **平文ハイパーリンク（Markdown記法なし）:**
 ```bash
-uv run python v1.7/excel_to_md.py input.xlsx -o output.md --hyperlink-mode inline_plain
+uv run python v1.8/excel_to_md.py input.xlsx -o output.md --hyperlink-mode inline_plain
 ```
 
 **トークン数削減（CSV概要セクション除外）:**
 ```bash
-uv run python v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-include-description
+uv run python v1.8/excel_to_md.py input.xlsx -o output.md --no-csv-include-description
 ```
 
 ## 主要オプション
@@ -195,9 +194,9 @@ uv run python v1.7/excel_to_md.py input.xlsx -o output.md --no-csv-include-descr
 - **検証ステータス**: OK
 ````
 
-### 画像抽出（v1.8）
+### 画像抽出
 
-v1.8を使用すると、Excelファイル内の画像が自動的に処理されます:
+Excelファイル内の画像は自動的に処理されます:
 
 1. **自動抽出**: 各シートの画像が外部ファイルとして保存されます
    - ファイル名形式: `{シート名}_img_{連番}.{拡張子}`
@@ -225,7 +224,7 @@ Excelのセル位置 (B2) に会社ロゴ画像がある場合:
 全オプションの一覧:
 
 ```bash
-uv run python v1.7/excel_to_md.py --help
+uv run python v1.8/excel_to_md.py --help
 ```
 
 主な高度なオプション:
@@ -241,14 +240,14 @@ uv run python v1.7/excel_to_md.py --help
 
 ```
 excel2md/
-├── v1.8/
-│   ├── excel_to_md.py      # メイン変換プログラム（画像抽出機能付き）
-│   ├── spec.md             # 仕様書
-│   └── tests/              # テストスイート
-├── v1.7/
-│   ├── excel_to_md.py      # メイン変換プログラム（安定版）
-│   ├── spec.md             # 仕様書
-│   └── tests/              # テストスイート
+├── v1.8/                       # 最新バージョン
+│   ├── excel_to_md.py          # メイン変換プログラム
+│   ├── spec.md                 # 仕様書
+│   └── tests/                  # テストスイート
+├── v1.7/                       # 旧バージョン
+│   ├── excel_to_md.py          # メイン変換プログラム
+│   ├── spec.md                 # 仕様書
+│   └── tests/                  # テストスイート
 ├── pyproject.toml          # プロジェクトメタデータ
 ├── LICENSE                 # MITライセンス
 ├── README.md               # このファイル

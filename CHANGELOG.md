@@ -5,9 +5,7 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/spec/v2.0.0.html) に準拠しています。
 
-## [Unreleased]
-
-## [1.8.0] - Unreleased
+## [1.8.0] - 2026-01-24
 
 ### 追加
 - **画像抽出機能**
