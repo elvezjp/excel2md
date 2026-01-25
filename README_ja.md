@@ -14,7 +14,7 @@ Excel → Markdown 変換ツール。Excelブック（.xlsx/.xlsm）を読み取
 
 - **スマートテーブル検出**: Excel印刷領域を自動検出してMarkdownテーブルに変換
 - **CSVマークダウン出力**: シート全体をCSV形式で出力（検証用メタデータ付き）
-- **画像抽出** (v1.8): Excelファイル内の画像を外部ファイルとして抽出し、Markdownリンク形式で出力
+- **画像抽出**: Excelファイル内の画像を外部ファイルとして抽出し、Markdownリンク形式で出力
 - **Mermaidフローチャート**: Excel図形やテーブルからMermaid図を生成
 - **ハイパーリンク対応**: 複数の出力モード（インライン、脚注、平文）
 - **シート分割出力**: シートごとに個別ファイルを生成可能
@@ -34,6 +34,7 @@ Excel → Markdown 変換ツール。Excelブック（.xlsx/.xlsm）を読み取
 - [CONTRIBUTING.md](CONTRIBUTING.md) - コントリビューション方法
 - [SECURITY.md](SECURITY.md) - セキュリティポリシーとベストプラクティス
 - [v1.8/spec.md](v1.8/spec.md) - 技術仕様書（v1.8）
+- [v1.8/spec.md](v1.7/spec.md) - 技術仕様書（v1.7）
 
 ## セットアップ
 

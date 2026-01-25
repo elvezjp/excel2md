@@ -14,7 +14,7 @@ Excel to Markdown converter. Reads Excel workbooks (.xlsx/.xlsm) and automatical
 
 - **Smart Table Detection**: Automatically detects Excel print areas and converts them to Markdown tables
 - **CSV Markdown Output**: Exports entire sheets in CSV format with validation metadata
-- **Image Extraction** (v1.8): Extracts images from Excel files and outputs them as Markdown image links
+- **Image Extraction**: Extracts images from Excel files and outputs them as Markdown image links
 - **Mermaid Flowcharts**: Generates Mermaid diagrams from Excel shapes and tables
 - **Hyperlink Support**: Multiple output modes (inline, footnote, plain text)
 - **Split by Sheet**: Generate individual files per sheet
@@ -33,7 +33,7 @@ Excel to Markdown converter. Reads Excel workbooks (.xlsx/.xlsm) and automatical
 - [CHANGELOG.md](CHANGELOG.md) - Version history
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
 - [SECURITY.md](SECURITY.md) - Security policy and best practices
-- [v1.8/spec.md](v1.8/spec.md) - Technical specification (v1.8 with image extraction)
+- [v1.8/spec.md](v1.8/spec.md) - Technical specification (v1.8)
 - [v1.7/spec.md](v1.7/spec.md) - Technical specification (v1.7)
 
 ## Setup
