@@ -283,19 +283,41 @@ uv run python v2.0/excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermaid-
 
 ---
 
-## 発見された問題
+## 既知の問題
 
 ### 問題1: 脚注番号の重複
 - **現象**: `--hyperlink-mode footnote` で全リンクの脚注番号が `[^1]` になる
 - **期待**: 各リンクに連番 `[^1]`, `[^2]`, `[^3]`... が付与される
 - **影響**: 脚注が正しく参照されない
+- **原因箇所**: `table_extraction.py` 248行目、258行目
+- **原因**: 脚注番号の計算で `len(footnotes)` を使用しているが、`footnotes` は関数引数で関数内では変化しない。実際に追加される `note_refs` の長さを使うべき
+- **修正案**: `n = footnote_index_start + len(footnotes)` → `n = footnote_index_start + len(note_refs)`
 
 ### 問題2: CSV内の画像リンク
 - **現象**: CSVコードブロック内に画像リンク `![alt](path)` が含まれない
 - **期待**: 画像が配置されたセルに `![alt](test_standard_images/...)` 形式でリンクが出力される
-- **備考**: 画像ファイル自体は正しく抽出されている。仕様の解釈確認が必要
+- **原因箇所**: `runner.py` 233-236行目
+- **原因**: `used_range`（A1:A6）はテキストがある範囲のみで、画像が配置されているB列（col=2）を含まない。CSV出力時に `union_area` の範囲のみをループするため、B列の画像セルは参照されない
+- **修正案**: `cell_to_image` のキーを参照し、画像がある位置を含むように `union_area` を拡張する
+  ```python
+  if cell_to_image:
+      for (img_row, img_col) in cell_to_image.keys():
+          union_area = (min(union_area[0], img_row), min(union_area[1], img_col),
+                        max(union_area[2], img_row), max(union_area[3], img_col))
+  ```
 
 ### 問題3: Shapesモードのコネクタ表現
 - **現象**: shapes検出モードでコネクタが `-.->|inferred|` （破線＋推論ラベル）で出力される
 - **期待**: 実線矢印 `-->` で接続される
-- **備考**: Excelのコネクタ情報が取得できず推論で接続している可能性。仕様確認が必要
+- **原因箇所**: `mermaid_generator.py` 251-252行目
+- **原因**: コネクタの接続情報 (`stCxn`, `endCxn`) は `a:` 名前空間（drawingml/2006/main）にあるが、コードは `xdr:` 名前空間で検索しているため見つからない
+  ```python
+  # 現在（バグ）
+  st = cxn.find(".//xdr:stCxn", _DRAWINGML_NS)
+  ed = cxn.find(".//xdr:endCxn", _DRAWINGML_NS)
+  ```
+- **修正案**:
+  ```python
+  st = cxn.find(".//a:stCxn", _DRAWINGML_NS)
+  ed = cxn.find(".//a:endCxn", _DRAWINGML_NS)
+  ```
