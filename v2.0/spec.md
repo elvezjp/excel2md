@@ -1,1195 +1,670 @@
-# エクセル→マークダウン変換 仕様書（spec.md / v2.0）
+# excel2md v2.0 仕様書
 
+## 1. 目的・概要
+
+### 1.1 目的
+
+本ツールは、Microsoft Excelファイル（.xlsx / .xlsm）をMarkdown形式に変換するCLIツールである。Excelのテーブル、フローチャート図形、埋め込み画像を解析し、構造化されたMarkdownドキュメントとして出力する。
+
+### 1.2 主要機能
+
+| 機能カテゴリ | 機能概要 |
+|-------------|---------|
+| テーブル変換 | Excel表をMarkdownテーブルに変換 |
+| Mermaid生成 | フローチャート図形・テーブルからMermaidコードを自動生成 |
+| 画像抽出 | 埋め込み画像をファイル出力しMarkdownリンクとして参照 |
+| CSV Markdown | 検証可能なCSV形式での出力（メタデータ付） |
+| ハイパーリンク | 多様な形式（インライン、脚注、テキストのみ等）での出力 |
+
+### 1.3 設計思想
+
+- **堅牢性**: エラー発生時も処理を継続し、部分的な出力を確保
+- **柔軟性**: 35以上のオプションによる細かな動作制御
+- **モジュール性**: 機能ごとに分離されたモジュール構成
 
 ---
 
-## 0. 目的
-Excel ブック（.xlsx/.xlsm 等）を読み取り、各シートの**印刷領域**内で「空行・空列」境界により分割された矩形ブロックを**テーブル**とみなして Markdown へ変換する。
-**印刷領域外のセルは処理対象外**であり、出力には含まれない。
-また、デフォルトで各シートの印刷領域をCSV形式のコードブロックとして記載したマークダウンファイル（CSVマークダウン）も出力する。
-さらに、Excelファイル内の画像を外部ファイルとして抽出し、Markdownリンク形式で出力する。
+## 2. モジュール構成
 
----
-
-
-## 0.1 モジュール構成（v2.0）
-
-v2.0では、単一ファイル（約3,200行）をパッケージ構造にモジュール化し、保守性を向上させています。
-
-### ディレクトリ構成
+### 2.1 モジュール一覧
 
 ```
-v2.0/
-├── excel_to_md.py          # 後方互換用エントリーポイント（shim）
-├── verify_csv_markdown.py  # CSV検証スクリプト
-├── excel2md/               # メインパッケージ
-│   ├── __init__.py         # パッケージ初期化・バージョン定義
-│   ├── cli.py              # CLIインターフェース
-│   ├── runner.py           # 実行オーケストレーション
-│   ├── output.py           # ログ出力（warn/info）
-│   ├── workbook_loader.py  # ワークブック読み込み
-│   ├── cell_utils.py       # セル処理ユーティリティ
-│   ├── table_detection.py  # テーブル検出・グリッド生成
-│   ├── table_extraction.py # テーブル抽出・ディスパッチ
-│   ├── table_formatting.py # Markdown整形
-│   ├── mermaid_generator.py# Mermaid生成
-│   ├── image_extraction.py # 画像抽出
-│   └── csv_export.py       # CSVマークダウン出力
-└── tests/                  # テストスイート
-    ├── conftest.py
-    ├── test_cell_utils.py
-    ├── test_table_detection.py
-    ├── test_table_extraction.py
-    ├── test_markdown_output.py
-    ├── test_csv_markdown.py
-    ├── test_mermaid.py
-    ├── test_hyperlink.py
-    └── test_image_extraction.py
+excel2md/
+├── __init__.py           # パッケージ初期化・バージョン定義
+├── cli.py                # CLIエントリーポイント・引数解析
+├── runner.py             # メイン処理オーケストレーション
+├── output.py             # ログ出力ユーティリティ
+├── cell_utils.py         # セル値取得・テキスト正規化
+├── workbook_loader.py    # Excelワークブック読み込み・座標変換
+├── table_detection.py    # テーブル検出・矩形分解
+├── table_extraction.py   # テーブル抽出・セル値取得
+├── table_formatting.py   # テーブル形式判定・Markdown生成
+├── mermaid_generator.py  # Mermaidフローチャート生成
+├── image_extraction.py   # 画像抽出・ファイル出力
+└── csv_export.py         # CSV Markdown出力
 ```
 
-### モジュール依存関係
+### 2.2 モジュール依存関係
 
 ```
 cli.py
-  └── runner.py
-        ├── output.py
-        ├── workbook_loader.py ─────┬── cell_utils.py
-        ├── table_detection.py ─────┤
-        ├── table_extraction.py ────┼── table_detection.py
-        ├── table_formatting.py ────┤
-        ├── mermaid_generator.py ───┘
-        ├── image_extraction.py
-        └── csv_export.py ── cell_utils.py
+  └─→ runner.py
+        ├─→ workbook_loader.py
+        ├─→ table_detection.py
+        │     └─→ cell_utils.py
+        ├─→ table_extraction.py
+        │     └─→ cell_utils.py
+        ├─→ table_formatting.py
+        ├─→ mermaid_generator.py
+        ├─→ image_extraction.py
+        └─→ csv_export.py
+              └─→ output.py
 ```
 
-### 後方互換性
+### 2.3 各モジュールの責務
 
-- `excel_to_md.py` は後方互換shimとして維持
-- 既存のimport文（`from excel_to_md import ...`）はshim経由で動作
-- 新規コードでは直接パッケージを参照することを推奨:
-  ```python
-  from excel2md.cell_utils import format_value, md_escape
-  from excel2md.runner import run
-  ```
-
----
-
-## 1. 対象・前提
-- 対象拡張子：`.xlsx`（必須）/ `.xlsm`（数式は値表示、マクロは無視）
-  ※ `.xls`/`.xlsb` は将来対応（前処理で `.xlsx` 化推奨）
-- 対象：ワークシート（チャート/マクロ/ダイアログ/グラフシートは除外）
-- **印刷領域外のセル**：処理対象外。印刷領域（Print_Area）で定義された範囲外のセルは、値の有無に関わらず出力に含まれない。
-- 出力エンコーディング：UTF-8（NFC 正規化）
-- シート順：Excel 上の並び順
-- 印刷領域未設定時の扱いは §4.2 参照
-
----
-
-## 2. 用語
-- **印刷領域（Print_Area）**：Excel 定義の印刷範囲。離散複数範囲を取り得る。
-- **空セル**：§6.1 の規則で「空」と判定されたセル。
-- **空行/空列**：その行/列内の全セルが空セル。
-- **テーブル領域**：空行・空列で区切られた**連続する矩形**セル範囲。
+| モジュール | 責務 |
+|-----------|------|
+| cli.py | コマンドライン引数の解析、オプション辞書の構築 |
+| runner.py | 処理フロー全体の制御、各モジュールの呼び出し順序管理 |
+| cell_utils.py | セル値の取得、日付・数値・通貨のフォーマット、制御文字除去 |
+| workbook_loader.py | openpyxlによるワークブック読み込み、座標変換（A1形式⇔数値） |
+| table_detection.py | 非空セルの検出、連結成分解析、テーブル境界の特定 |
+| table_extraction.py | テーブルデータの抽出、結合セル処理、ハイパーリンク処理 |
+| table_formatting.py | 出力形式（コード/Mermaid/テキスト/ネスト/テーブル）の判定と生成 |
+| mermaid_generator.py | Mermaidコードの生成（図形検出、ヒューリスティック検出対応） |
+| image_extraction.py | DrawingML解析による画像抽出、ファイル出力 |
+| csv_export.py | CSV形式Markdown出力、検証用メタデータ生成 |
+| output.py | 警告・情報メッセージの標準エラー出力 |
 
 ---
 
 ## 3. 入出力仕様
+
 ### 3.1 入力
-- 必須引数：Excel ファイルパス
-- 設定（CLI/YAML）
-  - `no_print_area_mode`: `"used_range" | "entire_sheet_range" | "skip_sheet"`（既定: `"used_range"`）
-  - `value_mode`: `"display" | "formula" | "both"`（既定: `"display"`）
-  - `merge_policy`: `"expand" | "repeat" | "warn" | "top_left_only"`（既定: `"top_left_only"`）
-  - `hyperlink_mode`: `"inline" | "inline_plain" | "footnote" | "both" | "text_only"`（既定: `"footnote"`）
-    - `"inline"`: Markdown形式（`[表示](URL)`）
-    - `"inline_plain"`: 平文形式（`表示 (URL)`）
-    - `"footnote"`: 脚注形式（通常マークダウンのみ対応）
-    - `"both"`: inline + footnote（通常マークダウンのみ対応）
-    - `"text_only"`: 表示テキストのみ（リンク情報なし）
-  - `header_detection`: `"none" | "first_row" | "heuristic"`（既定: `"first_row"`）
-  - `hidden_policy`: `"ignore" | "include" | "exclude"`（既定: `"ignore"`）
-  - `strip_whitespace`: `true|false`（既定: `true`）
-  - `escape_pipes`: `true|false`（既定: `true`）
-  - `date_format_override`: `null | "YYYY-MM-DD" など`（既定: `null`）
-  - `numeric_thousand_sep`: `"keep" | "remove"`（既定: `"keep"`）
-  - `percent_format`: `"keep" | "numeric"`（既定: `"keep"` *例: 12.3% は "12.3%" 出力*）
-  - `currency_symbol`: `"keep" | "strip"`（既定: `"keep"`）
-  - `detect_dates`: `true|false`（既定: `true`）
-  - `date_default_format`: `"YYYY-MM-DD"`（override が `null` で Excel 表示値が得られない場合に使用）
-  - `align_detection`: `"none" | "numbers_right"`（既定: `"numbers_right"`）
-  - `numbers_right_threshold`: `0〜1`（既定: `0.8`）
-  - `max_sheet_count`: 数値（既定: 無制限）
-  - `max_cells_per_table`: 数値（既定: `200000`）
-  - `sort_tables`: `"document_order"`（既定）
-  - `footnote_scope`: `"book" | "sheet"`（既定: `"book"`）
-  - `locale`: 例 `"ja-JP"`（既定: `"ja-JP"`）
-  - `markdown_escape_level`: `"safe"`（既定）|`"minimal"`|`"aggressive"`
 
-  #### Mermaid 変換関連
-  - （既出の各設定に加えて）
-  - `mermaid_enabled`: `true|false`（既定: `false`）
-  - `mermaid_diagram_type`: `"flowchart" | "sequence" | "state"`（既定: `"flowchart"`）
-  - `mermaid_detect_mode`: `"none" | "column_headers" | "heuristic" | "shapes"`（既定: `"column_headers"`）
-    - `"shapes"`: ExcelのDrawingML（シェイプ/図形）からフローチャートを検出（§⑦''参照）
-  - `mermaid_columns`: オブジェクト（既定: `{"from":"From","to":"To","label":"Label","group":null,"note":null}`）
-  - `mermaid_direction`: `"TD" | "LR" | "BT" | "RL"`（既定: `"TD"`）
-  - `mermaid_keep_source_table`: `true|false`（既定: `true`）
-  - `mermaid_dedupe_edges`: `true|false`（既定: `true`）
-  - `mermaid_node_id_policy`: `"auto" | "shape_id" | "explicit"`（既定: `"auto"`）
-    - `"auto"`: 表示名をサニタイズしてID化（テキストベース、可読性重視）
-    - `"shape_id"`: Excel描画IDをそのまま使用（`s{id}`形式、トレーサビリティ重視、シェイプ検出時のみ有効）
-    - `"explicit"`: テーブルにID列があれば使用（将来拡張）
-  - `mermaid_group_column_behavior`: `"subgraph" | "ignore"`（既定: `"subgraph"`）
-  - `mermaid_heuristic_min_rows`: 数値（既定: `3`）
-  - `mermaid_heuristic_arrow_ratio`: 0〜1（既定: `0.3`）
-  - `mermaid_heuristic_len_median_ratio_min`: 実数（既定: `0.4`）
-  - `mermaid_heuristic_len_median_ratio_max`: 実数（既定: `2.5`）
-    - ※ `heuristic` モードのしきい値デフォルト。設定で上書き可。
-  - `dispatch_skip_code_and_mermaid_on_fallback`: `true|false`（既定: `true`）
-    - フォールバック再評価時に**コード/Mermaid判定をスキップ**する実装向けフラグ（付録A.x参照）。
+#### 3.1.1 対応ファイル形式
 
-  #### CSVマークダウン出力関連
-  - `csv_markdown_enabled`: `true|false`（既定: `true`）
-    - `true` の場合、CSVマークダウンファイル**のみ**を出力する（通常Markdown出力は行わない）
-    - `false` の場合、通常Markdownファイル**のみ**を出力する（CSVマークダウン出力は行わない）
-    - CSVマークダウンは、各シートの印刷領域をCSV形式でコードブロックとして記載したマークダウンファイル
-    - **出力モードは排他的**：両方の形式を同時に出力することはできない（両方必要な場合は2回実行する）
-  - `csv_output_dir`: 文字列（既定: `null`）
-    - CSVマークダウンファイルの出力先ディレクトリ
-    - `null` の場合は入力Excelファイルと同じディレクトリに出力
-  - `csv_apply_merge_policy`: `true|false`（既定: `true`）
-    - `true` の場合、結合セルに `merge_policy` 設定を適用（Markdown出力と同様の処理）
-    - `false` の場合、結合セルの左上セルのみに値を出力し、他のセルは空にする
-  - `csv_normalize_values`: `true|false`（既定: `true`）
-    - `true` の場合、セル値に対してMarkdown出力と同様の正規化を適用（NFC正規化、空白処理等）
-    - `false` の場合、Excel内部の生値をそのまま出力
-  - `csv_include_metadata`: `true|false`（既定: `true`）
-    - `true` の場合、CSVマークダウンの末尾に検証用メタデータ（マークダウン形式）を付記する
-    - メタデータには元のExcel情報、CSV出力情報、検証結果（OK/FAILED）を含む
-    - 検証項目：シート数の一致、各シートの存在確認、各シートの行数・列数の一致
-    - メタデータ形式の詳細は §3.2.2 を参照
-  - `csv_include_description`: `true|false`（既定: `true`）
-    - `true` の場合、CSVマークダウンの冒頭に概要セクション（説明文）を出力する
-    - `false` の場合、概要セクションを省略し、CSVセクションから開始する
-    - 複数ファイルを変換・結合する際に説明文の重複を避け、トークン数を削減したい場合に `false` を指定
-    - 対象箇所：「概要」「ファイル情報」「このファイルについて」「CSV生成方法」「CSV形式の仕様」「検証用メタデータについて」
+| 形式 | 拡張子 | 備考 |
+|------|--------|------|
+| Excel Open XML Workbook | .xlsx | 標準形式 |
+| Excel Open XML Macro-Enabled Workbook | .xlsm | マクロ有効ブック |
+
+#### 3.1.2 主要設定オプション
+
+**印刷領域・範囲制御**
+
+| オプション | 既定値 | 説明 |
+|-----------|--------|------|
+| no_print_area_mode | used_range | 印刷領域未設定時の処理（used_range / entire_sheet_range / skip_sheet） |
+| max_sheet_count | 無制限 | 処理対象シート数の上限 |
+| max_cells_per_table | 200000 | テーブルあたりの最大セル数 |
+| read_only | false | 読み取り専用モード（スタイル情報制限あり） |
+
+**セル値処理**
+
+| オプション | 既定値 | 説明 |
+|-----------|--------|------|
+| value_mode | display | 値取得モード（display / formula / both） |
+| merge_policy | top_left_only | 結合セル処理（top_left_only / repeat / expand / warn） |
+| strip_whitespace | true | 前後空白の除去 |
+| date_format_override | なし | 日付フォーマット強制指定 |
+| date_default_format | YYYY-MM-DD | 日付の既定フォーマット |
+
+**数値処理**
+
+| オプション | 既定値 | 説明 |
+|-----------|--------|------|
+| numeric_thousand_sep | keep | 千単位区切り（keep / remove） |
+| percent_format | keep | パーセント表記（keep / numeric） |
+| currency_symbol | keep | 通貨記号（keep / strip） |
+
+**ハイパーリンク**
+
+| オプション | 既定値 | 説明 |
+|-----------|--------|------|
+| hyperlink_mode | inline | リンク出力形式（inline / inline_plain / footnote / both / text_only） |
+
+**テーブル検出・表示**
+
+| オプション | 既定値 | 説明 |
+|-----------|--------|------|
+| header_detection | true | 先頭行をヘッダーとして検出 |
+| align_detection | true | 数値列の右寄せ検出 |
+| numbers_right_threshold | 0.8 | 右寄せ判定の数値比率閾値 |
+| hidden_policy | ignore | 隠れ行・列の処理（ignore / include / exclude） |
+
+**Mermaid関連**
+
+| オプション | 既定値 | 説明 |
+|-----------|--------|------|
+| mermaid_enabled | false | Mermaid生成の有効化 |
+| mermaid_detect_mode | none | 検出モード（none / column_headers / heuristic / shapes） |
+| mermaid_diagram_type | flowchart | 図の種類（flowchart / sequence / state） |
+| mermaid_direction | TD | フロー方向（TD / LR / BT / RL） |
+| mermaid_keep_source_table | true | 元テーブルも出力 |
+
+**CSV Markdown関連**
+
+| オプション | 既定値 | 説明 |
+|-----------|--------|------|
+| csv_markdown_enabled | true | CSV Markdown形式出力の有効化 |
+| csv_output_dir | なし | CSV出力ディレクトリ |
+| csv_include_metadata | true | 検証用メタデータの付加 |
+| csv_include_description | true | 説明セクションの付加 |
+
+**画像抽出**
+
+| オプション | 既定値 | 説明 |
+|-----------|--------|------|
+| image_extraction | true | 画像抽出の有効化 |
+
+**その他**
+
+| オプション | 既定値 | 説明 |
+|-----------|--------|------|
+| footnote_scope | book | 脚注番号のスコープ（book / sheet） |
+| split_by_sheet | false | シートごとに分割出力 |
 
 ### 3.2 出力
 
-#### 3.2.1 Markdown出力
-- `csv_markdown_enabled=false` の場合に出力される。
-- **ファイル出力形式**：
-  - 通常モード（`--split-by-sheet` なし）：1ブック → 1 Markdown ファイル
-  - シート分割モード（`--split-by-sheet` あり）：1ブック → シートごとに分割された複数のMarkdown ファイル（`{basename}_{sheetname}.md`）
-- 構成：
-  1) ブック情報（ファイル名/シート数/シート名一覧）※シート分割モード時は各ファイルにシート情報のみ
-  2) 各シート章（シート見出し→テーブル順）
-  3) 脚注一覧（`hyperlink_mode` が `"footnote"`/`"both"` のとき）
-- **Mermaid出力**：`mermaid_enabled=true` かつ以下のいずれかの条件を満たす場合、Mermaidコードブロック（```mermaid ... ```）を埋め込む：
-  - テーブルが「フローテーブル」と判定された場合（`mermaid_detect_mode="column_headers"` または `"heuristic"`）
-  - シェイプ（図形）からフローチャートが検出された場合（`mermaid_detect_mode="shapes"`）
-  位置は **Mermaid →（任意で）元テーブル** の順で出力する（`mermaid_keep_source_table` 参照）。
-  - **シェイプ検出とテーブル処理の関係**：`mermaid_detect_mode="shapes"` の場合、シェイプ検出はシート単位で実行されるが、シェイプ検出が成功してもテーブル処理は続行される。1つのシートにシェイプ（フローチャート）とテーブル（データテーブル）の両方が存在する場合、両方を出力する（シェイプ検出のMermaidコード → テーブルのMarkdownの順）。
+#### 3.2.1 CSV Markdown（既定）
 
-#### 3.2.2 CSVマークダウン出力
-- `csv_markdown_enabled=true` の場合に出力される。
-- **ファイル出力形式**：
-  - 通常モード（`--split-by-sheet` なし）：1ブック → 1つのCSVマークダウンファイル（`{basename}_csv.md`）
-  - シート分割モード（`--split-by-sheet` あり）：1ブック → シートごとに分割された複数のCSVマークダウンファイル（`{basename}_{sheetname}_csv.md`）
-- **ファイル構成**：
-  - **概要セクション**（見出しレベル2: `## 概要`）【`csv_include_description=true` の場合のみ出力】：
-    - **ファイル情報**（見出しレベル3: `### ファイル情報`）：
-      - 元のExcelファイル名
-      - シート数
-      - 生成日時
-    - **このファイルについて**（見出しレベル3: `### このファイルについて`）：
-      - このCSVマークダウンファイルの目的と構成を説明する段落テキスト
-      - 記載すべき内容：
-        - AIがExcelの内容を理解できるよう、各シートの印刷領域をCSV形式で出力したファイルである旨
-        - 各シートがマークダウン見出しで区切られ、CSVコードブロックで内容が記載されている旨
-        - ファイル末尾に検証用メタデータセクションがあり、Excel原本との整合性を確認できる旨
-    - **CSV生成方法**（見出しレベル3: `### CSV生成方法`）：
-      - 箇条書きリストで以下の項目を記載：
-        - **出力対象範囲**: 各シートの印刷領域のみを出力（印刷領域外のセルは含まない）
-        - **印刷領域の統合**: 複数の印刷領域がある場合は外接矩形として統合
-        - **テーブル分割なし**: Markdown出力と異なり、空行・空列でテーブル分割せず印刷領域全体を1つのCSVとして出力
-        - **結合セルの処理**: `merge_policy`設定に従って処理（設定値を記載）
-        - **数式の扱い**: `value_mode`設定に従って表示値・数式・両方のいずれかを出力（設定値を記載）
-        - **値の正規化**: `csv_normalize_values`設定に従って正規化処理を適用（設定値を記載）
-    - **CSV形式の仕様**（見出しレベル3: `### CSV形式の仕様`）：
-      - 箇条書きリストで以下の項目を記載：
-        - **区切り文字**: 使用する区切り文字（`csv_delimiter`設定値を記載）
-        - **引用符の使用**: `csv_quoting`設定値に従い、RFC 4180準拠で処理
-        - **セル内改行**: 半角スペースに変換される（1レコード=1行を保証）
-        - **セル内特殊文字**: 区切り文字や引用符は引用符でエスケープされる
-        - **エンコーディング**: 使用するエンコーディング（`csv_encoding`設定値を記載）
-        - **空セルの表現**: 空文字列として出力（空行・空列も含めて出力される）
-        - **ハイパーリンク**: `hyperlink_mode` 設定に従って出力（既定: `inline_plain`）
-          - `inline`: Markdown形式（例: `[表示テキスト](URL)` または `表示テキスト〔→場所〕`）
-          - `inline_plain`: 平文形式（例: `表示テキスト (URL)` または `表示テキスト (→場所)`）
-          - `text_only`: 表示テキストのみ（リンク先情報なし）
-          - `footnote`/`both`: `inline_plain` にフォールバック（WARNログ出力）
-    - **Mermaidフローチャートについて**（見出しレベル3: `### Mermaidフローチャートについて`）【`mermaid_enabled=true` かつ `mermaid_detect_mode="shapes"` の場合のみ】：
-      - 箇条書きリストで以下の項目を記載：
-        - ExcelのShape（図形）を検出し、Mermaid記法のフローチャートとして出力している旨
-        - 各シートのCSVブロックの前に、検出されたShapeがMermaidコードブロックで記載される旨
-        - Shape間の接続（コネクタ）も矢印として表現される旨
-    - **検証用メタデータについて**（見出しレベル3: `### 検証用メタデータについて`）【`csv_include_metadata=true` の場合のみ】：
-      - 箇条書きリストで以下の項目を記載：
-        - このファイルの末尾に「検証用メタデータ」セクションが付記されている旨
-        - メタデータには各シートのExcel原本情報（範囲、行数、列数）とCSV出力結果の比較が含まれる旨
-        - 検証ステータス（OK/FAILED）により、CSVとExcel原本の整合性を確認できる旨
-        - 詳細情報はファイル末尾の「検証用メタデータ」セクションを参照する旨
-    - **概要セクションの区切り**：
-      - 概要セクションの最後に水平線（`---`）を記載し、CSVセクションとの境界を明確にする
-  - **各シートのCSVセクション**：
-    - 見出しレベル2で各シート名を記載（例: `## シート名`）
-    - **Mermaidブロック**【`mermaid_enabled=true` かつ `mermaid_detect_mode="shapes"` の場合のみ】：
-      - シェイプ（図形）からフローチャートを検出し、Mermaidコードブロック（` ```mermaid ... ``` `）を出力
-      - Mermaid検出は §⑦'' の動作に準拠
-      - Mermaidブロックは各シートのCSVコードブロックの**前**に出力される
-      - シェイプが検出されなかったシートではMermaidブロックは出力されない
-      - **注意**: `mermaid_detect_mode` が `column_headers` または `heuristic` の場合、CSVマークダウンではMermaid出力はスキップされる（WARNログを出力）。これはCSVマークダウンがテーブル分割を行わないため。
-    - シート内容のCSV（コードブロック ` ```csv ... ``` ` で囲む）
-    - 各シートセクションは見出しレベル2で統一し、概要セクション（レベル2）と同じ階層にする
-  - **検証用メタデータセクション**（`csv_include_metadata=true` の場合）：
-    - CSVマークダウンファイルの末尾に、マークダウン形式で検証メタデータを追記
-    - 後からプログラムで出力結果を検証するために使用
-    - **メタデータの形式**（マークダウン構造として記載）：
-      - 区切り線: `---`
-      - 見出し（レベル2）: `## 検証用メタデータ`
-      - 基本情報（箇条書きリスト）:
-        - `- **生成日時**: YYYY-MM-DD HH:MM:SS`
-        - `- **元Excelファイル**: {filename}`
-        - `- **CSVマークダウンファイル**: {csv_filename}`
-        - `- **CSVモード**: {csv_markdown}` (固定値)
-        - `- **検証フェーズ**: {phase_number} ({phase_description})`
-      - 空行
-      - 各シートの検証結果（見出しレベル3 + 箇条書きリスト）:
-        - シート見出し: `### シート: {sheet_name}`
-        - シート情報（箇条書きリスト）:
-          - `- **Excel範囲**: {range}` (例: A1:D10)
-          - `- **Excel行数**: {rows}`
-          - `- **Excel列数**: {cols}`
-          - `- **CSV行数**: {rows}`
-          - `- **CSV列数**: {cols}`
-          - `- **セル総数**: {count}`
-          - `- **ステータス**: OK` または `- **ステータス**: FAILED`
-          - エラーがある場合、エラー詳細を箇条書きで追記: `- **エラー**: {error_message}`
-        - 空行
-      - 全体の検証結果（見出しレベル3 + 箇条書きリスト）:
-        - 見出し: `### 全体の検証結果`
-        - 総セル数: `- **総セル数**: {total}`
-        - 検証結果: `- **検証ステータス**: OK` または `- **検証ステータス**: FAILED`
-        - 失敗時のエラー一覧（該当する場合のみ、箇条書きリストで列挙）:
-          - エラー見出し（太字）: `- **エラー一覧**:`
-          - 各エラーをネストした箇条書きリストで列挙: `  - {error_message}`
-- **出力対象範囲**：
-  - `csv_output_range="print_area"`（現バージョンでは固定）：各シートの印刷領域を出力対象とする。
-  - 印刷領域内のすべてのセルを含む矩形範囲を出力（空行・空列も含む）。
-  - 複数の印刷範囲がある場合は、最小の外接矩形（bounding box）を出力範囲とする。
-  - 印刷領域未設定のシートは `no_print_area_mode` に従って処理される（`skip_sheet` の場合はCSV出力もスキップ）。
-- **セル値の処理**：
-  - `csv_apply_merge_policy=true` の場合、結合セルは `merge_policy` に従って処理される（Markdown出力と同様）。
-  - `csv_normalize_values=true` の場合、セル値は以下の正規化が適用される：
-    - NFC正規化
-    - `strip_whitespace=true` の場合、前後の空白を除去
-    - `date_format_override` / `numeric_thousand_sep` / `percent_format` / `currency_symbol` などの設定を適用
-  - `csv_normalize_values=false` の場合、Excel内部の値をそのまま出力（数式は `value_mode` に従う）。
-  - **セル内改行の処理**（CSVマークダウン専用）：
-    - CSVマークダウン出力では、セル内の改行文字（`\n`, `\r\n`, `\r`）を**半角スペース（` `）に変換**する
-    - 理由：
-      - AIの読解を容易にするため
-      - 1レコード=1物理行の視覚的一貫性を保つため
-      - メタデータの行数とCSVコードブロックの行数を一致させるため
-    - この処理は、CSVマークダウンファイル（`{basename}_csv.md`）の出力時のみ適用される
-    - 通常のCSVファイル出力では適用されない（将来的にCSVファイル出力機能が追加された場合の注記）
-  - **CSV特殊文字の処理**（RFC 4180準拠）：
-    - セル内に区切り文字（`,`）が含まれる場合、セル全体を引用符（`"`）で囲む
-    - セル内に引用符（`"`）が含まれる場合、引用符を2つ重ねる（`""`）にエスケープし、セル全体を引用符で囲む
-    - Pythonの標準`csv`モジュールを使用して正しくエスケープ処理を行う
-    - 注：セル内改行は上記の通り半角スペースに変換されるため、引用符で囲む必要はない
-- **ハイパーリンクの扱い**：
-  - CSVマークダウンでは `hyperlink_mode` 設定に従ってハイパーリンクを処理する（既定: `inline_plain`）：
-    - `inline`: Markdown形式で出力（例: `[表示テキスト](URL)` または `表示テキスト〔→場所〕`）
-    - `inline_plain`: 平文形式で出力（例: `表示テキスト (URL)` または `表示テキスト (→場所)`）
-    - `text_only`: 表示テキストのみを出力（リンク先情報なし）
-    - `footnote`/`both`: 脚注形式は非対応のため `inline_plain` にフォールバックし、WARNログを出力
-  - CSVマークダウンは脚注をサポートしないため、`footnote`/`both` モードは使用できない。
-- **エンコーディング**：
-  - `csv_encoding` で指定されたエンコーディングで出力（既定: `utf-8`）。
-  - BOM（Byte Order Mark）は出力しない（マークダウンファイルとして扱うため）。
-- **エラーハンドリング**：
-  - CSVマークダウン出力に失敗した場合（書き込みエラー、エンコーディングエラー等）は **WARN** を記録し、Markdown出力は継続する。
+csv_markdown_enabled=true（既定）時の出力形式。
 
-#### 3.2.2.1 CSVマークダウン出力制御オプション一覧
+**構成**
+1. 概要セクション
+   - ファイル情報
+   - CSV生成方法の説明
+   - CSV形式の仕様説明
+   - 検証メタデータの説明
+2. CSVデータセクション（シートごと）
+   - シート見出し
+   - CSVコードブロック
+   - 画像リンク（該当する場合）
+3. 検証用メタデータ（オプション）
 
-| オプション | デフォルト | 説明 |
-|-----------|----------|------|
-| `--csv-include-description` | ON | 概要セクション（説明文）を出力に含める |
-| `--csv-include-metadata` | ON | 検証用メタデータを出力に含める |
-| `--mermaid-enabled` | OFF | Mermaidフローチャートを出力に含める（`mermaid_detect_mode="shapes"`の場合のみ有効） |
+**CSV形式仕様**
+- 区切り文字: カンマ（,）
+- 引用符: RFC 4180準拠
+- セル内改行: スペースに変換（1行=1レコード）
+- エンコーディング: UTF-8
+- 空セル: 空文字列
 
-**ユースケース**:
-- 複数の設計書を変換・結合してAIに渡す際に、説明文とメタデータを省略してトークン数を削減
-- フローチャートを含む設計書をCSVマークダウン形式で出力する際に `--mermaid-enabled --mermaid-detect-mode shapes` を指定
+#### 3.2.2 通常Markdown
+
+csv_markdown_enabled=false 時の出力形式。
+
+**構成**
+1. ドキュメントヘッダー（ファイル名、仕様バージョン、シート情報）
+2. シートセクション（シートごとの見出しとテーブル）
+3. 脚注セクション（ハイパーリンク等の脚注）
+
+**テーブル表現**
+- GFM（GitHub Flavored Markdown）テーブル形式
+- ヘッダー行、区切り行、データ行で構成
+- 列アラインメント（左寄せ/右寄せ）対応
 
 ---
 
-## 4. 処理フロー（①〜⑪の統合定義）
-### ① ファイルを開き、シート一覧を取得
-ブックを read-only で開き、**総シート数/シート名**を取得。出力冒頭に記載。
+## 4. 処理フロー
 
-### ② シート走査順を確定
-Excel の表示順（左→右のタブ順）で**先頭から末尾まで**処理。
+### 4.1 全体処理フロー
 
-### ③ シートの印刷領域を取得
-- `Print_Area` を取得。**複数範囲**可。
-- **印刷領域の取得方法**：
-  - Excelの`Print_Area`設定から取得する。`Print_Area`は以下のいずれかの形式で格納されている：
-    - **文字列形式**：単一範囲を表す文字列（例：`"$A$1:$Z$100"` または `"'Sheet1'!$A$1:$Z$100"`）
-    - **イテラブル形式**：複数範囲を表すリストまたはタプル
-  - **シート名を含む範囲文字列の処理**：
-    - 範囲文字列にシート名が含まれている場合（例：`"'処理フロー'!$A$1:$BJ$910"`）、`!`記号の**後ろの部分**（範囲部分）のみを抽出して使用する。
-    - 例：`"'Sheet1'!$A$1:$Z$100"` → `"$A$1:$Z$100"`を抽出
-    - 理由：座標変換処理では、シート名を含まない範囲文字列を期待するため。
-  - 各範囲を数値座標（行番号、列番号）に変換する。変換後の形式は`(min_row, min_col, max_row, max_col)`（1-based）。
-  - 複数範囲が存在する場合は、すべての範囲を取得し、後続処理（§5.3）で統合する。
-- **印刷領域の検証**：
-  - 取得した印刷領域の各範囲について、以下の検証を行う：
-    - `min_row <= max_row` かつ `min_col <= max_col` であること（有効な矩形であること）
-    - 行番号・列番号が正の整数であること
-    - シートの最大行数・最大列数を超えていないこと（超過している場合は最大値に制限）
-  - 検証に失敗した範囲は**WARN**ログを出力し、その範囲をスキップする。すべての範囲が無効な場合は、`no_print_area_mode`に従って処理する。
-- **印刷領域外のセルは処理対象外**：取得した印刷領域の範囲外にあるセルは、以降の処理（空行・空列判定、テーブル抽出、値取得）の対象外とし、出力には含まれない。
-- 未設定時は `no_print_area_mode`：
-  - `used_range`：UsedRange を採用（シート内で使用されている範囲を自動検出）
-  - `entire_sheet_range`：最大行列（非推奨、大規模負荷）
-  - `skip_sheet`：本シートをスキップ（WARN）
-
-### ④ 空の「列」を特定（印刷領域内）
-左端→右端の列を走査し、§6.1 に基づき空列フラグを付与。`hidden_policy` 反映。
-
-### ④’ 形式判定の評価ポイント
-- 本段階では**まだ最終出力形式を確定しない**。以降の処理（⑦ の正規化、⑦’〜⑩’ のMermaid分岐を含む）を経た後、§7「Markdown 生成規約」に基づき**優先順位**で形式を最終決定する。
-- Mermaid（フローテーブル）判定の**タイミング**は ⑦ の後、⑦’で行う（＝**既存のテーブル抽出と正規化が完了してから**評価する）。
-  - これにより、結合セルやエスケープ、日付/数値正規化の影響を受けた**確定値**で判定でき、競合を最小化する。
-
-### ⑤ 空の「行」を特定（印刷領域内）
-上端→下端の行を走査し、§6.1 に基づき空行フラグを付与。`hidden_policy` 反映。
-
-### ⑥ テーブル領域の認識
-- 空行・空列を**境界**として非空セルの**矩形**連続領域を抽出。
-- **印刷領域内のみを対象**：テーブル抽出は印刷領域内のセルのみを対象とする。抽出されたテーブルの`bbox`（境界矩形）と`mask`（セル集合）は、すべて印刷領域内に収まっていることを保証する。印刷領域外のセルは、テーブルの`bbox`や`mask`に含まれない。
-- **近接テーブル**分離規則：行または列に**1本以上**の空行/空列が存在すれば別テーブル。
-- **セル接続規則**：隣接するセル（水平、垂直、対角線方向）は、空行/空列で区切られていない限り、同じテーブルに属する。対角線方向のセルは、水平→垂直または垂直→水平の経路が空行/空列でブロックされていない場合に接続される。ただし、印刷領域外のセルは接続対象外とする。
-- **非矩形（L字/凹型）**は、行ごとの非空ラン長を計算し、**最大長方形分解**で矩形に分割（重複/包含は統合）。分割後の矩形も印刷領域内に収まっていることを保証する。
-- 複数印刷範囲は後述 §6.3。
-
-### ⑦ テーブルから行単位に値取得（リンク/結合対応）
-- 走査は**左上→右下**の行順。
-- **印刷領域内のセルのみ処理**：テーブルの`bbox`範囲内のセルを走査する際、各セルが印刷領域内にあることを確認する。印刷領域外のセルは処理対象外とし、値の取得・正規化・出力を行わない。
-- 文字列正規化（NFC）、必要に応じ §7 のエスケープと改行処理。
-- `merge_policy` に従い結合セルを平坦化。結合セルの処理については §6.4 を参照。
-- ハイパーリンクは §6.5 に従って整形。
-
-### ⑦a 出力形式ディスパッチ
-> **目的**：既存実装との整合性を担保するため、⑦で抽出した **md_rows（空列削除前）** を入力として、
-> 以降の**形式判定と出力**を一元管理する分岐ポイントを定義する。
-
-**実装位置（準拠指示）**
-- 既存コードの **`format_table_as_text_or_nested(md_rows, ...)` を直接呼び出している箇所（例：1347行目）** を、
-  **`dispatch_table_output(md_rows, context)`（新関数）** の呼び出しに**置き換える**。
-- 互換のため、`dispatch_table_output` は内部で**従来の `format_table_as_text_or_nested` を呼び出してもよい**（優先順位の第3・第4判定で使用）。
-
-**`dispatch_table_output` の評価順（優先度）**
-1. **コード形式判定（最優先）**：§7.2.4 の規則で**最初に**評価する。
-   - 既存の `format_table_as_text_or_nested` 内の「コード判定」ロジックは**独立関数**（例：`is_code_block(md_rows)`）に切り出し、ここから呼ぶ。
-2. **Mermaid（シェイプ/フローテーブル）判定**：
-   - **`mermaid_detect_mode="shapes"`の場合**：⑦''でシェイプ（図形）からフローチャートを検出（テーブル処理とは独立）。
-   - **`mermaid_detect_mode="column_headers"` または `"heuristic"`の場合**：⑦’に委譲（条件一致時のみ）。
-   - 判定・生成失敗時の**フォールバック**は本関数内で制御。
-3. **単一行テキスト判定**：§7.2.1 を評価（従来のロジック流用可）。
-4. **ネスト形式判定**：§7.2.3 を評価（従来のロジック流用可）。
-5. **通常テーブル生成**：§7.2.5 と `make_markdown_table` に従う（ここで空列削除を実施）。
-
-**フォールバック起動方法（実装）**
-- Mermaid 生成中に**不成立/WARN**または**例外/ERROR**が発生した場合、
-  `dispatch_table_output` は **`dispatch_skip_code_and_mermaid_on_fallback=true` のとき**、
-  **優先順位3（単一行）から再評価**する（コード・Mermaidはスキップ）。
-  同フラグが `false` の場合は、通常の 1→2→3… の順で再評価してもよい（互換運用）。
-
-### ⑦'' シェイプ（図形）からのMermaid検出
-- 実施条件：`mermaid_enabled=true` かつ `mermaid_detect_mode="shapes"` の場合のみ。
-- 入力：ExcelファイルのDrawingML（`xl/drawings/*.xml`）とシートのセルグリッド。
-- 処理手順：
-  1. **DrawingMLの抽出**：
-     - ExcelファイルをZIPとして開き、`xl/drawings/` 配下のXMLファイルを取得。
-     - 各シートに対応するDrawingMLファイルを特定する：
-       - ワークシートの関係ファイル（`xl/worksheets/_rels/sheetN.xml.rels`）を確認する。
-       - 関係ファイル内の`Relationship`要素で、`Type`属性が`http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing`のものを探す。
-       - `Target`属性から対応するDrawingMLファイルのパスを取得する（例：`../drawings/drawing1.xml`）。
-       - パスは相対パスなので、`xl/worksheets/`基準で解決し、`xl/drawings/drawingN.xml`形式に変換する。
-       - 対応するDrawingMLファイルが存在しない場合は、そのシートにはシェイプが存在しないと判断し、シェイプ検出をスキップする。
-  2. **ノード（シェイプ）の抽出**：
-     - `xdr:twoCellAnchor` または `xdr:oneCellAnchor` 内の `xdr:sp` 要素を走査。
-     - 各シェイプから以下を取得：
-       - **ID**: `xdr:cNvPr@id` から取得（`s{id}`形式）。なければローカルIDを生成。
-       - **名前**: `xdr:cNvPr@name` から取得。
-       - **テキスト**:
-         - 優先順位1: `xdr:txBody` 内の `a:p/a:r/a:t` 要素から取得（Excel DrawingMLでは`xdr:txBody`が正しい構造）。複数の段落がある場合は改行（`\n`）で結合。`xdr:txBody`が見つからない場合は`a:txBody`をフォールバックとして試行。
-         - 優先順位2: テキストが空の場合は、シェイプのbbox（セル範囲）近傍（上下左右に1セル分のパディング）のセル値を参照。複数のセル値がある場合は、最長のテキストを選択。最長テキストが4文字未満の場合は、最大4つまでのテキストを改行で結合。
-         - 優先順位3: テキストが取得できない場合は、シェイプ名（`xdr:cNvPr@name`）を使用。
-         - テキストのエスケープ: Mermaidコード生成時に、表示名に含まれる特殊文字（`[`, `]`, `{`, `}`, `|`, `"`, `'`など）はHTMLエンティティに変換（例：`[` → `&#91;`, `]` → `&#93;`）。
-       - **種類**: `a:prstGeom@prst` 属性から取得。属性が存在しない場合は `process` とする。取得した値に応じて以下のように分類：
-         - `flowChartDecision`, `diamond` → `decision`（決定ノード）
-         - `flowChartTerminator`, `ellipse`, `roundRect` → `terminator`（開始/終了ノード）
-         - `flowChartInputOutput`, `trapezoid` → `io`（入出力ノード）
-         - `flowChartPreparation`, `hexagon` → `prep`（準備ノード）
-         - `flowChartManualOperation` → `manual`（手動操作ノード）
-         - `flowChartDocument` → `document`（文書ノード）
-         - `flowChartConnector` → `connector`（結合子ノード）
-         - その他 → `process`（処理ノード）
-       - **bbox**: `xdr:from/xdr:row`, `xdr:from/xdr:col`, `xdr:to/xdr:row`, `xdr:to/xdr:col` から取得（0-based行・列インデックス）。
-  3. **エッジ（コネクタ）の抽出**：
-     - `xdr:cxnSp` 要素を走査。
-     - `xdr:stCxn@id` と `xdr:endCxn@id` から接続元・接続先のシェイプIDを取得（`s{id}`形式）。
-     - エッジが不足している場合（有効エッジ数がノード数の30%未満）、位置情報（bbox）に基づく推論を実施：
-       - 各ノードから下方向または右方向の近接ノードを探索。
-       - 垂直方向の距離を優先し、最も近いノード（最大2個まで）にエッジを推論。
-  4. **Mermaidコード生成**：
-     - ノードIDは `mermaid_node_id_policy` に従って生成：
-       - `"auto"`: 表示名をサニタイズしてID化（テキストベース）
-       - `"shape_id"`: Excel描画IDをそのまま使用（`s{id}`形式、シェイプ検出時のみ有効）
-       - `"explicit"`: テーブルにID列があれば使用（将来拡張）
-     - ノード表示名はテキストまたは名前を使用。表示名に特殊文字が含まれる場合はHTMLエンティティに変換。
-     - ノード形状はシェイプの種類に応じて以下の形式を使用：
-       - `decision` → `{nid}{"{display}"}`（例：`s458{"1. 権限チェック"}`）
-       - `terminator` → `nid(["{display}"])`（例：`s470(["呼び出し元へ"])`）
-       - `io` → `nid[("{display}")]`（例：`s542[("入出力")]`）
-       - `prep` → `nid[{{"{display}"}}]`（例：`s639[{{"準備"}}]`）
-       - `manual` → `nid[("{display}")]`（例：`s557[("手動操作")]`）
-       - `document` → `nid[("{display}")]`（例：`s558[("文書")]`）
-       - `connector` → `nid["{display}"]`（例：`s23["R"]`、`s544["CR"]`）
-       - `process` → `nid["{display}"]`（例：`s524["19. レスポンス電文生成"]`）
-     - エッジは `{from_id} --> {to_id}` 形式で出力（ラベルは現時点では空）。推論されたエッジの場合は `{from_id} -.->|inferred| {to_id}` 形式を使用（任意）。
-- 出力：Mermaidコードブロック（```mermaid ... ```）。
-- **シェイプ検出とテーブル処理の関係**：シェイプ検出はシート単位で実行されるが、シェイプ検出が成功してもテーブル処理は続行される。1つのシートにシェイプ（フローチャート）とテーブル（データテーブル）の両方が存在する場合、両方を出力する（シェイプ検出のMermaidコード → テーブルのMarkdownの順）。
-- フォールバック：シェイプが検出されない、またはエッジが構築できない場合は、通常テーブル処理へ（シェイプ検出が失敗してもテーブル処理は実行される）。
-
-### ⑦’ フローテーブル判定（Mermaid 検出）
-- 実施条件：`mermaid_enabled=true` かつ `mermaid_detect_mode` が `"column_headers"` または `"heuristic"` の場合のみ。
-- 入力：⑦（値取得と正規化）を経た **md_rows（空列削除前）**。結合セル処理・改行・エスケープは済み。
-- 判定：
-  - `mermaid_detect_mode="column_headers"`：
-    - **ヘッダ候補行として常に先頭行を使用**（`header_detection` 設定に関わらず）。
-    - 列名照合は**列名ベース**（インデックスではない）。一致は以下の正規化後に行う：
-      1) NFKC 正規化（全角/半角の統一）
-      2) `casefold()` による大文字小文字の無視
-      3) 前後空白の削除、連続空白の1化
-    - `mermaid_columns.from` と `mermaid_columns.to` に一致する列名が**両方**存在するとき成立。
-    - `header_detection=first_row` の場合：先頭行を Markdown のヘッダとしても利用する。
-    - `header_detection=none` の場合：先頭行は**Mermaid判定専用**で、元テーブル出力時は**ヘッダ行を生成しない（先頭行はデータ行）**。
-  - `mermaid_detect_mode="heuristic"`：
-    - **暫定規則（実装ガイドライン）**：次の全てを満たす場合に成立（しきい値は §3.1 の既定値を用いる）
-      1) 2列以上が存在し、データ行（先頭行以外）において**先頭2列（列インデックス 0 と 1）**がともに非空の行数が **≥ `mermaid_heuristic_min_rows`**
-      2) 矢印表現（`->`, `→`, `⇒`）の**いずれか**を含む行の割合が **≥ `mermaid_heuristic_arrow_ratio`**
-      3) **列長中央値比** `median(len(col0))/median(len(col1))` が
-         `mermaid_heuristic_len_median_ratio_min` 以上かつ
-         `mermaid_heuristic_len_median_ratio_max` 以下
-       - `len()` は NFKC 正規化後の**コードポイント数**（単純長）でよい。トークナイズは不要。
-       - **対象列**は空列削除前の**元の列インデックス 0 と 1**を用いる（空セルは長さ 0 として扱う）。
-       - サンプル数不足（中央値が算出不能）の場合は不成立。
-    - **注**：**コード形式（優先度1）に一致する場合は適用しない**（誤検出回避）。
-  - いずれにも該当しない場合は「非フローテーブル」として通常処理へ。
-
-### ⑧’ 列マッピングとエッジ抽出
-- 列マッピング：`from = mermaid_columns.from`、`to = mermaid_columns.to`、任意列 `label/group/note` を解決。
-- エッジ抽出：データ行を走査し、`(from, to, label)` を1エッジとして登録。`mermaid_dedupe_edges=true` のときは重複除去。
-- グループ処理：`group` があればノードを所属 subgraph に割当（`mermaid_group_column_behavior` 準拠）。
-
-### ⑨’ ノードID生成とMermaidコード構築
-- ノードID生成：
-  - `mermaid_node_id_policy="auto"`：表示名をサニタイズしてID化（英数字と `_` のみ、先頭数字は `_` を付けて回避）。テキストベースで可読性が高い。
-  - `mermaid_node_id_policy="shape_id"`：Excel描画IDをそのまま使用（`s{id}`形式、例：`s454`, `s458`）。シェイプ検出時（`mermaid_detect_mode="shapes"`）のみ有効。元のExcelファイルとの対応関係が明確で、デバッグ時に元のシェイプを特定しやすい。
-  - `mermaid_node_id_policy="explicit"`：テーブルにID列があれば使用（将来拡張）。
-
-**ノードIDポリシーの比較**
-
-| オプション | ノードID形式 | 特徴 | 適用範囲 |
-|-----------|------------|------|---------|
-| `auto` | `_`, `__2`, `_1_` など（テキストベース） | テキストから生成されるため可読性が高い。表示名が変更されてもIDが安定（重複時は別処理が必要）。 | すべてのMermaid検出モード |
-| `shape_id` | `s454`, `s457`, `s458` など（Excel描画ID） | Excel描画IDをそのまま使用するため、元のExcelファイルとの対応関係が明確。デバッグ時に元のシェイプを特定しやすい。参考実装（flowchart-mermaid.md）との互換性がある。 | シェイプ検出時のみ（`mermaid_detect_mode="shapes"`） |
-| `explicit` | （将来拡張） | テーブルにID列があれば使用 | （将来拡張） |
-
-**使用例**
-
-- `auto`オプションの場合：
-  ```mermaid
-  flowchart TD
-    _["[権限チェック結果 == エラー以外]"]
-    __2["[権限チェック結果 == エラー]"]
-    _1_{"1. 権限チェック"}
-  ```
-
-- `shape_id`オプションの場合（シェイプ検出時）：
-  ```mermaid
-  flowchart TD
-    s454["[権限チェック結果 == エラー以外]"]
-    s457["[権限チェック結果 == エラー]"]
-    s458{"1. 権限チェック"}
-  ```
-- Mermaidコード構築：
-  - 先頭行：`flowchart {mermaid_direction}`（例：`flowchart TD`）。
-  - subgraph があれば `subgraph {group_name}` ブロックで囲む。
-  - エッジ：`{from_id} -->|{label}| {to_id}`（label が空の場合は `{from_id} --> {to_id}`）。
-  - ノード表示名：`{id}["{display_name}"]` 形式（表示名に特殊文字がある場合は適切にエスケープ）。
-
-### ⑩’ 出力埋め込み
-- 「```mermaid」から「```」までをテーブル章に挿入。
-- `mermaid_keep_source_table=true` の場合：Mermaid ブロックの**直後**に元テーブルを通常どおり出力。
-- `mermaid_keep_source_table=false` の場合：Mermaid のみ出力（テーブルは省略）。
-- **フォールバック（明確化）**：Mermaid 生成が失敗／不成立の場合、当該テーブルは**優先度3（単一行テキスト）から再評価**を開始し、以降の判定に従って出力を確定する。結果として通常テーブルとなる場合がある。
-
-**元テーブル出力時の空列削除（明確化）**
-- `mermaid_keep_source_table=true` の場合でも、元テーブルのMarkdown生成は**通常どおり `make_markdown_table` を経由**し、
-  その中で**空列削除**を適用する（Mermaid判定は空列削除前の `md_rows` を使用）。
-
-### ⑧ テーブル末行まで継続取得
-- 範囲最終行まで取得。`max_cells_per_table` を**逐次カウント**し、超過時は当該テーブルのみ打切り（WARN）。
-
-### ⑨ 次テーブルへ遷移
-検出順に次テーブルへ。順序は**（top, left）座標昇順**。
-
-### ⑩ シート見出しとテーブルの Markdown 出力
-- 各シート処理開始時に、Markdown見出しとして `## シート名` を出力する。
-- **シェイプ検出とテーブル処理の順序**：
-  - `mermaid_detect_mode="shapes"` の場合、シート処理開始時に⑦''でシェイプ検出を実行する。
-  - シェイプ検出が成功した場合、Mermaidコードブロックを出力するが、テーブル処理は続行される。
-  - その後、③〜⑨の処理を実行し、検出されたテーブルを通常どおり出力する。
-  - 1つのシートにシェイプとテーブルの両方が存在する場合、出力順序は「シェイプ検出のMermaidコード → テーブルのMarkdown」となる。
-- 検出順に Markdown を生成しシート章へ出力。
-
-> **注（優先順位の導入）**：最終的な「表現形式（Mermaid/コード/単一行/ネスト/通常表）」の確定は §7.1 直前の**優先順位規則**に従う（新設 §7.0 参照）。
-
-
-- **空列の削除**：テーブル内のすべての行で空である列（完全空列）は出力から除外する。結合セルの処理後、最終的なMarkdownテーブル生成時に空列を削除する。
-- `header_detection=first_row`：テーブル先頭行をヘッダとし、区切り行を付与。
-- `align_detection=numbers_right`：数値列の**右寄せ**（`---:`）を付与（§7.5）。
-
-### ⑪ シート末尾まで繰り返し
-- ③〜⑩を繰り返し、シート終了後に次のシートへ。
-- `hyperlink_mode` が脚注出力を伴う場合、**脚注はブック末尾**に集約（`footnote_scope` により切替）。
-
-### ⑫ CSVマークダウン出力処理
-- `csv_markdown_enabled=true` の場合にのみ実行される。
-- **実行タイミング**：ブック全体の処理完了後（全シートの処理が終わった後）。
-- **処理内容**：
-  1. マークダウンファイル（`{basename}_csv.md`）を作成。
-  2. **概要セクションの出力**：
-     - タイトル（例：`# CSV出力: sample.xlsx`）
-     - Excelファイル名
-     - シート数
-     - このファイルの説明文
-  3. **各シートのCSVセクションの出力**：
-     - シート名を見出しとして出力（例：`## Sheet1`）
-     - シートの印刷領域から最小外接矩形（bounding box）を計算
-     - 印刷領域内のすべてのセル（空セルを含む）を行列順に走査し、CSV形式で文字列化
-       - Pythonの標準`csv`モジュール（`csv.writer`）を使用してCSV行を生成
-       - `csv_quoting`設定に従って引用符の処理を行う
-       - セル内の改行、カンマ、引用符は自動的にエスケープされる（RFC 4180準拠）
-     - 生成したCSV文字列をコードブロック（` ```csv ... ``` `）で囲んで出力
-     - セル値の処理は `csv_normalize_values` / `csv_apply_merge_policy` の設定に従う
-  4. **検証用メタデータセクションの出力**（`csv_include_metadata=true` の場合）：
-     - 見出し（`## 検証用メタデータ`）
-     - JSON形式で以下の情報を記載：
-       - `excel`: 元のExcelファイルの情報（シート数、各シートの印刷領域の行数・列数）
-       - `csv_output`: 出力したCSVの情報（出力シート数、各シートのCSV行数・列数）
-       - `validation`: 検証結果（`status`: `"OK"` / `"FAILED"`）
-     - 検証ロジック：
-       - シート数の一致確認（Excel vs CSV出力）
-       - 各シートの存在確認（Excelにあるシートが全てCSV出力にも存在するか）
-       - 各シートの行数・列数の一致確認
-       - いずれかの検証が失敗した場合、`status` を `"FAILED"` とする
-     - JSONをコードブロック（` ```json ... ``` `）で囲んで出力
-  5. ファイル名は `csv_filename_pattern` に従って生成（既定: `{basename}_csv.md`）
-  6. `csv_output_dir` で指定されたディレクトリ（または既定のディレクトリ）に出力
-- **印刷領域未設定シートの扱い**：
-  - `no_print_area_mode="skip_sheet"` の場合、該当シートはCSV出力からも除外される。
-  - `no_print_area_mode="used_range"` または `"entire_sheet_range"` の場合、代替範囲を使用してCSV出力を行う。
-- **エラーハンドリング**：
-  - CSVマークダウン出力に失敗した場合（書き込みエラー、エンコーディングエラー等）は **WARN** を記録し、Markdown出力は継続する。
-  - CSV出力の失敗がMarkdown出力に影響を与えることはない（独立して処理）。
-
----
-
-## 5. 曖昧点への解決策（仕様反映）
-
-### 5.1 空行・空列判定の境界ケース
-- **数式が "" を返すセル**：表示値が空文字列なら**空**とみなす（`value_mode=display` 前提）。
-- **空白のみの定義**：以下の文字のみから成る場合は空白のみ扱い。
-  - U+0009（TAB）, U+0020（半角空白）, U+3000（全角空白）, U+00A0（NBSP）
-  - その他 Unicode 空白（`Zs`）は `markdown_escape_level="safe"` では空白扱い、`"minimal"` ではそのまま。
-- **フィルの判定**：`No Fill` と `白(#FFFFFF)` とその他の色を区別。
-  - Fill が未設定/`patternType` が `None` → **No Fill**
-  - `patternType="solid"` かつ RGB が `FFFFFF` → **白塗り**（空白と同じ扱い）
-  - `patternType="solid"` かつ RGB が `FFFFFF` 以外 → **色あり**（空セルではない）
-  → **空セル条件**は「表示値空」**かつ**「No Fill または白塗り」。白塗りは**空白と同じ**として扱う。色が入っている場合は**空セルではない**。
-
-### 5.2 テーブル領域認識アルゴリズム詳細
-- **近接閾値**：テーブル間に**連続1行/1列以上の空**があれば分離。閾値は固定（設定化は将来）。
-- **非矩形**：各行の非空連続区間（ラン）を列方向でマージし、**最大長方形分解**で複数の矩形領域へ分割。重なりは統合し、**（top,left）昇順**で並べ替え。
-- **順序規則**：主キー=top（行番号昇順）、副キー=left（列番号昇順）。完全同座標は面積昇順。
-
-### 5.3 印刷領域が複数範囲
-- **処理順**：各範囲を**（top,left）昇順**で処理。
-- **重複**：範囲同士が重なる場合は**幾何学的和集合**をとり、**矩形分解**してから §4 を適用。重複セルの二重処理は行わない。
-
-### 5.4 結合セルの詳細挙動
-- `top_left_only`（既定）：結合セルの**左上のセルのみ**に値を表示し、結合範囲内の他のセルは**空**とする。結合セルを1つのセルとして扱う。
-- `expand`：結合ブロック全体を**左上値で埋める**（結合範囲内のすべてのセルに同じ値を表示）。
-- `repeat`：行方向/列方向の両方に**繰返し充填**（結果は `expand` と同等の文字列配列）。
-- `warn`：`expand` で出力しつつ、テーブル直下に**注記**を追加。
-- **空判定への影響**：結合ブロック中**いずれか1セルでも非空**なら**非空**。フィルは**いずれかが塗り**で非空扱い。
-
-### 5.5 ハイパーリンクの種類別処理
-- **HTTP/HTTPS**：通常の URL として出力。
-- **メール（mailto:）**：`[表示](mailto:user@example.com)` として出力。
-- **外部ファイル（file://, 相対/絶対パス）**：**パス文字列をそのまま**リンクにする。環境依存で遷移不可の可能性がある旨を脚注文言で注意（WARN ログ）。
-- **ブック内参照**：`表示〔→Sheet!A1〕` 形式（脚注の場合は `Sheet!A1` を脚注内容に含める）。
-- **壊れたリンク**：スキーム不正/空 URL 等は**生文字列**とし、脚注に「不正 URL」注記（WARN）。
-- **脚注採番**：`footnote_scope` に従う。`"book"` のとき**ブック全体で通し番号**、`"sheet"` のときシートごとに 1 から採番。
-
-**CSVマークダウン出力時の特記事項**：
-- CSVマークダウンでは `hyperlink_mode` に応じて以下の形式で出力：
-  - `inline`: `[表示](URL)` または `表示〔→場所〕`
-  - `inline_plain`: `表示 (URL)` または `表示 (→場所)`（既定）
-  - `text_only`: 表示テキストのみ
-  - `footnote`/`both`: `inline_plain` へフォールバック（脚注非対応、WARNログ出力）
-
-### 5.6 日付・数値フォーマット
-- **桁区切り**：`numeric_thousand_sep="keep"` で Excel 表示に準拠。`"remove"` で削除。
-- **パーセント**：`"keep"` で `%` を含む表示文字列をそのまま出力。`"numeric"` で 0.123 → `0.123` のように**実数値**へ。
-- **通貨**：`currency_symbol="keep"` で記号保持。`"strip"` で記号を除去（数値は保持）。
-- **日付自動判定**：`detect_dates=true` のとき、Excel シリアル/number_format から**日付型**を推定。Excel 表示文字列が取得できない場合、`date_format_override` が `null` なら `date_default_format` で ISO 風（既定 `YYYY-MM-DD`）に整形。
-- **表示優先**：`value_mode="display"` の場合は**Excel の表示値**を最優先。
-
-### 5.7 ヘッダ検出（first_row）
-- **規則**：テーブル領域の**先頭行**がヘッダ。テーブルが A10:C20 なら **A10 行**がヘッダ。
-- 先頭行が**全て空セル**なら、ヘッダは**付与しない**（データ行のみ）。
-- `heuristic`（将来）：太字/塗り/データ型比率で推定。
-
-### 5.8 Markdown 出力の細部
-- **改行**：セル内改行は `<br>`。連続改行は回数を保持（例：2回→`<br><br>`）。
-- **Markdown 予約文字**（`\, |, *, _, ~, #, >, [, ], (, ), {, }, +, -, ., !, \``）は `markdown_escape_level` に従い**バックスラッシュ**でエスケープ（既定 `"safe"`：上記全てを対象）。
-- **アライメント**：標準 Markdown の範囲で**右寄せのみ**対応（`---:`）。中央寄せは未対応。
-- **右寄せ自動判定**：列の非空セルの**≥ numbers_right_threshold（既定 0.8）**が**数値的**に解釈可能なら右寄せを採用。
-
-### 5.9 エラーハンドリング詳細
-- **保護シート**：
-  - **読み取り保護（パスワードで開けない）**：**ERROR** でシートをスキップ、処理継続。
-  - **編集保護（ReadOnly で値は取得可能）**：**INFO** ログのみ、通常処理。
-- **壊れたブック**：ファイルオープン/解析例外、構造欠落、不整合 → **ERROR**。ブック単位で中断。
-- **WARN 時継続範囲**：原則**最小単位**でスキップ（セル→行→テーブル→シート の順で縮退）。例：`max_cells_per_table` 超過は**そのテーブルのみ**スキップし次へ。
-
-### 5.10 パフォーマンス実装
-- **読み込み**：`openpyxl.load_workbook(read_only=True, data_only=True)` を前提。スタイル参照が必要な場合のみ該当セルの style を遅延参照。
-- **巨大ファイル対策**：
-  - シートは**行ジェネレータ**で逐次走査（values_only ベース）。
-  - **空判定の短絡評価**：列/行の早期打切り。
-  - `max_cells_per_table` は**走査中に逐次加算**し、超過で即打切り。
-  - 印刷領域が巨大な場合は**タイル分割**して処理（実装ガイドライン）。
-- 将来：`pyxlsb`/分割処理/並列化は拡張項。
-
-### 5.11 設定ファイルの扱い
-- **優先順位**：**CLI 引数 > YAML > 既定値**。
-- **設定ファイルは任意**（未指定時は既定値で動作）。
-- **未知キー**は ERROR。既知キーの型不一致は ERROR。
-
-### 5.12 文字コード・ロケール
-- **入力**：Excel 内部は Unicode。取得後に**NFC 正規化**。不可視制御文字は `"safe"` で削除、`"minimal"` で保持。
-- **出力**：UTF-8。BOM なし。
-- **locale** の影響：独自整形フェーズ（`date_default_format` 等）のみで使用。`value_mode="display"` で Excel の表示文字列が取得できる場合、**locale は影響しない**。
-
----
-
-## 6. 判定/処理ロジック（要点抜粋）
-
-### 6.1 空セル判定
-1) 表示値が空 or 空白のみ（§5.1 の文字セット）
-2) Fill が **No Fill** または **白塗り（#FFFFFF）**（白塗りは空白と同じ扱い）
-→ 両方満たすと **空セル**。
-→ **色が入っている場合**（白以外の色）は**空セルではない**。
-
-### 6.2 行/列の空判定
-- 対象行/列内の**すべて**のセルが空セル。
-- `hidden_policy="exclude"` の場合、非表示は**空として扱う**。`"include"` は中身で判定。
-
-### 6.3 複数印刷範囲と重複
-- 範囲を座標正規化し、重複は和集合化後に矩形分解。順序は（top,left）昇順。
-
-### 6.4 結合セル
-- 空判定は結合ブロック単位。**いずれか非空**でブロック非空。
-- **印刷領域外の結合セルの扱い**：
-  - 結合セルの**左上セル**が印刷領域外にある場合、その結合セルは処理対象外とする（値の取得・出力を行わない）。
-  - 結合セルが印刷領域と重なるが、左上セルが印刷領域内にある場合、印刷領域内の部分のみを処理対象とする。印刷領域外の部分は無視する。
-  - 結合セルの`merged_lookup`（結合セルマッピング）を作成する際は、印刷領域内のセルのみを含める。印刷領域外のセルは`merged_lookup`に含めない。
-
-### 6.5 ハイパーリンク抽出
-- セル表示テキストとリンク先を分離し、`hyperlink_mode` に従いインライン/脚注/併用。
-
----
-
-## 7. Markdown 生成規約
-
-### 7.0 判定の優先順位と競合回避
-本節では、**既存の形式判定**（§7.2.*）と**Mermaid判定**（⑦’〜⑩’／§7.6）の競合を避けるため、最終出力形式の**確定順序**を定義する。
-
-1) **ソースコード形式（§7.2.4）**
-   - 行ブロックが明確なコード規則に該当する場合は**最優先でコードブロック**として出力する。
-   - これにより、コードを含む表が誤ってフローテーブルや単一行テキストとして扱われることを防ぐ。
-
-2) **Mermaid（フローテーブル/シェイプ）出力（§7.6／⑦''／⑦’〜⑩’）**
-   - `mermaid_enabled=true` のとき、以下のいずれかの方法でMermaidを生成：
-     - **`mermaid_detect_mode="shapes"`**: ⑦''でシェイプ（図形）からフローチャートを検出（§⑦''参照）。
-     - **`mermaid_detect_mode="column_headers"` または `"heuristic"`**: ⑦の正規化後、⑦’でフローテーブル判定を実施。
-   - `column_headers` モードでは、**ヘッダ行（`header_detection=first_row` が前提）**に `from`/`to` 列が揃っている場合にのみ適用する。
-   - `heuristic` モードはヘッダ検出と独立して動作可能だが、**コード形式（1位）に該当する場合は適用しない**（誤検出回避）。
-
-3) **単一行テキスト形式（§7.2.1）**
-   - 1セルのみ値／他は空・罫線なし、の条件に合致すればこの時点で確定。
-
-4) **ネスト形式（§7.2.3）**
-   - 先頭列空などのネスト条件に合致すれば確定。
-
-5) **通常のテーブル形式（§7.2.5）**
-   - 上記に該当しないものは通常表として出力。
-
-**ヘッダ検出との整合性（明確化）**
-- `header_detection=first_row` の場合：
-  - Mermaidの `column_headers` 判定は**先頭行をヘッダとして解釈**して列名照合する。
-  - 先頭行が空（全空セル）の場合は**ヘッダ無し**とみなし、`column_headers` 判定は**不成立**（Mermaidは適用しない）。
-- `header_detection=none` の場合：
-  - `column_headers` は**適用不可**。Mermaidを使う場合は `heuristic` のみ評価対象。
-
-**エラー時のフォールバック（明確化）**
-- Mermaid生成フェーズ（⑧’〜⑩’）でエラー／必須列未解決／生成失敗が起きた場合：
-  - 当該テーブルは**既存の形式判定**にフォールバックする（優先順位に従い 3) 以降で再評価）。
-  - ログ：`WARN`（検出失敗／不完全データ）または`ERROR`（例外等）を記録し、**処理は継続**。
-  - `mermaid_keep_source_table=true` でも、Mermaidが出力できなかった場合は**元テーブルのみ**出力する。
-
-**フォールバックの開始点（明確化）**
-- Mermaid 生成失敗／不成立時は、**優先順位3（単一行テキスト）から**再評価を行う。
-- コード形式（1位）は⑦a時点で既に判定済みのため、再評価対象にはしない。
-
-**`header_detection=none` と元テーブル出力（明確化）**
-- `mermaid_keep_source_table=true` かつ `header_detection=none` の場合：
-  - 元テーブル出力では**ヘッダ行を生成しない**（先頭行をデータ行として扱う）。
-  - ただし Mermaid 判定では**先頭行をヘッダ候補として使用**する（列名照合のみ、Markdown出力には影響しない）。
-  - 実装上は `make_markdown_table(md_rows, header_detection=False, ...)` のように、
-    **`header_detection=False` を明示**して呼び出す（既存の 1365 行目相当の呼び出しと整合）。
-  - `mermaid_keep_source_table=false` の場合はテーブルを出力しないため、この指定は不要。
-
-### 7.1 テーブル見出し
-- テーブル見出しは `### Table {番号}` の形式で出力する。
-- **テーブルタイトルの検出**：テーブル領域の左上に大きな結合セル（テーブルの左上セルを含む結合セル）があり、その結合セルがテーブルの全行または大部分の行にまたがっている場合、その値をテーブル見出しとして使用する。この場合、タイトル結合セルはテーブル内の列として含めない。
-  - 判定条件：結合セルがテーブルの最初の1-3行のいずれかに含まれ、かつ結合セルが3列以上にまたがっている場合、テーブルタイトルとして扱う。
-  - **印刷領域内のセルのみ対象**：テーブルタイトル検出時は、印刷領域内のセルのみを参照する。結合セルの左上セルが印刷領域内にある場合のみ、テーブルタイトルとして検出対象とする。印刷領域外のセルは検出対象外とする。
-- `header_detection=first_row` で先頭行を見出し、区切り行を挿入。
-
-### 7.2 テーブル形式の判定と出力形式の選択
-- テーブルとして検出された領域について、以下の条件に応じて出力形式を決定する。
-
-#### 7.2.1 単一行テキスト形式
-- **条件**：テーブルの1行目に、1つのセルのみに値があり、他のセルがすべて空（白塗りまたは空白）で、かつセルに罫線がない場合。
-- **出力形式**：テーブルではなく、そのセルの値を1行のMarkdownテキストとして出力する。
-- **例**：`1. 権限チェック` → `1\. 権限チェック`（Markdownエスケープ済み）
-
-#### 7.2.2 空行の処理
-- **条件**：テーブル内の行が完全に空（すべてのセルが空）の場合。
-- **出力形式**：Markdownで改行（空行）として出力する。
-
-#### 7.2.3 ネスト形式
-- **条件**：テーブルの行で、2つ目以降のセルに値がある場合（1列目が空で、2列目以降に値がある場合など）。
-- **出力形式**：インデント（2スペース）を使用して、ネストした見せ方で出力する。
-- **インデントレベル**：最初の非空セルの列インデックスに応じて、2スペース × 列インデックス分のインデントを付与する。
-- **例**：
-  - 1列目が空、2列目に「なし」 → `  なし`（2スペースインデント、列インデックス1）
-  - 1列目が空、2列目に「入力値チェック」 → `  入力値チェック`（2スペースインデント、列インデックス1）
-  - 1列目が空、3列目に値がある場合 → `    値`（4スペースインデント、列インデックス2）
-
-#### 7.2.4 ソースコード形式
-- **条件**：テーブルの行にソースコードらしき内容が含まれている場合。
-- **ソースコード判定基準**：以下のいずれかの条件を満たす場合、ソースコードとみなす：
-  - 特定のキーワードを含む：`public`, `private`, `protected`, `class`, `interface`, `import`, `package`, `static`, `final`, `void`, `return`, `if`, `else`, `for`, `while`, `switch`, `case`, `try`, `catch`, `throw`, `throws`, `extends`, `implements`
-  - 特定の記号を含む：`{`, `}`, `;`, `@`（アノテーション）, `//`（コメント）, `/*`, `*/`
-  - 複数行にわたるコードブロック（連続する行が上記の条件を満たす）
-- **出力形式**：Markdownのコードブロック形式（```で囲む）で出力する。
-- **言語指定**：可能な限り言語を自動判定（例：Java, Python, JavaScript等）。判定できない場合は言語指定なし。
-- **例**：
-  ```
-  ```java
-  /** ドキュメントコメント */
-  @Annotation1
-  @Annotation2
-  public String sampleMethod() { … };
-  ```
-  ```
-
-#### 7.2.5 通常のテーブル形式
-- **条件**：上記の条件に該当しない場合。
-- **出力形式**：通常のMarkdownテーブル形式で出力する。
-
-### 7.3 空列の削除
-- テーブル内のすべての行で空である列（完全空列）は、Markdown出力から除外する。
-- 空列の判定は、結合セル処理後の最終的なセル値に基づいて行う。
-- 列内のいずれかの行に非空セルがあれば、その列は保持する。
-
-#### 7.3.1 空列判定の詳細
-- **空セルの定義**：セルの表示値が空文字列、または空白文字のみ（U+0009, U+0020, U+3000, U+00A0 等）である場合、そのセルは空とみなす。
-- **空列の定義**：列内のすべての行で、対応するセルが空である場合、その列は空列とみなす。
-- **判定タイミング**：空列の判定は、以下の処理が完了した後に行う：
-  1. 結合セルの処理（`merge_policy` に従った処理）
-  2. ハイパーリンクの処理
-  3. 数値フォーマットの正規化
-  4. Markdownエスケープ処理
-- **削除の実行**：空列と判定された列は、テーブル出力から完全に除外する。列の順序は、元のExcelファイルでの列順序を保持する（空列を除く）。
-
-#### 7.3.2 空列削除の例
-以下のようなテーブルデータがある場合：
 ```
-| サブシステム名 |  |  | 業務ID／業務名 | 機能ID／機能名 |  | 作成者 | 作成日 |  |
-| サブシステムA |  |  | BIZ-001 | FUNC-001 |  | 作成者A | 2023-01-01 |  |
+[入力] Excelファイル + オプション
+         ↓
+    CLI引数解析
+         ↓
+    ワークブック読み込み
+         ↓
+    ┌─────────────────┐
+    │ シート単位ループ │
+    └────────┬────────┘
+             ↓
+        保護状態チェック
+             ↓
+    ┌──────────────────────┐
+    │ shapes検出モード時    │→ DrawingML図形からMermaid生成
+    └──────────────────────┘
+             ↓
+        印刷領域取得
+             ↓
+        矩形和集合計算
+             ↓
+    ┌──────────────────────┐
+    │ CSV Markdown有効時    │→ 画像抽出
+    └──────────────────────┘
+             ↓
+    ┌───────────────────────┐
+    │ 矩形・テーブル単位ループ │
+    └─────────┬─────────────┘
+              ↓
+         結合セルマップ作成
+              ↓
+         テーブル分割検出
+              ↓
+    ┌─────────────────────┐
+    │ 各テーブル単位ループ  │
+    └────────┬────────────┘
+             ↓
+        テーブルタイトル検出
+             ↓
+        テーブル抽出
+        ・セル値取得・正規化
+        ・ハイパーリンク処理
+        ・Markdownエスケープ
+        ・脚注生成
+             ↓
+        テーブル形式判定・出力
+        ① コード形式判定
+        ② Mermaidフロー判定
+        ③ 単一行テキスト判定
+        ④ ネスト形式判定
+        ⑤ 通常テーブル形式
+             ↓
+    脚注処理（footnote_scope設定に基づく）
+         ↓
+[出力] CSV Markdown / 通常Markdown
 ```
 
-空列を削除すると：
+### 4.2 テーブル検出フロー
+
 ```
-| サブシステム名 | 業務ID／業務名 | 機能ID／機能名 | 作成者 | 作成日 |
-| サブシステムA | BIZ-001 | FUNC-001 | 作成者A | 2023-01-01 |
-```
-
-#### 7.3.3 空列削除の例外
-- テーブルタイトルとして検出された結合セルの列は、テーブルタイトル検出時に既に除外されているため、空列削除の対象外とする。
-- すべての列が空列である場合、テーブル全体を「（テーブルなし）」として出力する。
-
-#### 7.3.4 空列削除の実装上の注意
-- **空列削除のタイミング**：空列削除は、`extract_table`関数でテーブルデータを抽出した後、`make_markdown_table`関数でMarkdownテーブルを生成する際に行う。
-- **空列判定の基準**：空列の判定は、結合セル処理（`merge_policy="top_left_only"`の場合、結合範囲内の他のセルは空文字列）、ハイパーリンク処理、数値フォーマット正規化、Markdownエスケープ処理が完了した後の最終的なセル値に基づいて行う。
-- **空列が残る原因**：
-  - `extract_table`関数で`used_cols`を計算する際に、実際のセル値が空でない列のみを含めるように修正したが、結合セル処理後の値で判定していない場合、空列が残る可能性がある。
-  - `make_markdown_table`関数で空列削除が実装されているが、`extract_table`関数で既に空列が含まれているデータが渡されている場合、空列が残る可能性がある。
-- **解決策**：
-  - `extract_table`関数で`used_cols`を計算する際は、結合セル処理、ハイパーリンク処理、数値フォーマット正規化、Markdownエスケープ処理が完了した後の最終的なセル値に基づいて判定する。
-  - または、`make_markdown_table`関数で空列削除を確実に実行するため、`extract_table`関数で生成されるデータに空列が含まれていても、`make_markdown_table`関数で空列削除が正しく動作するようにする。
-
-### 7.3 文字のエスケープ
-- `markdown_escape_level="safe"` 既定：
-  `\ | * _ ~ # > [ ] ( ) { } + - . ! \`` を `\` でエスケープ。`|` は常にエスケープ（`escape_pipes` が `false` でも表内は強制エスケープ）。
-
-### 7.4 改行
-- セル内 `\n` は `<br>` に変換。連続改行は回数保持（例：2 回→`<br><br>`）。
-
-### 7.5 列アライメント
-- `align_detection="numbers_right"` のとき、列内非空セルの **≥ threshold（既定 0.8）** が数値的（`int/float/±%, 通貨, 桁区切り含むが記号除去で数値化成功`）なら右寄せ（`---:`）。
-
-### 7.6 Mermaid 出力規約
-- 本節は ⑦’〜⑩’ で「フローテーブル」と判定された場合に適用する。
-- **コードフェンス**：Mermaid は **```mermaid** で囲む（言語指定は `mermaid`）。
-- **優先順位**：フローテーブル判定が真の場合、Mermaid の生成を優先し、`mermaid_keep_source_table` に従って元テーブルを併置または省略。
-- **方向指定**：`mermaid_direction` に従い `flowchart TD|LR|BT|RL` を付与。
-- **subgraph（グループ）**：`group` 列がある行のノードは `subgraph {表示名}` 〜 `end` に内包する。
-- **ノードID**：
-  - `auto`：表示名を正規化（英数と `_` のみ、先頭数字回避）。重複は `_2`, `_3` … で解消。
-  - `explicit`：実装側で既存IDを尊重（将来拡張）。
-- **ラベルとエスケープ**：
-  - 表示名・label は §7.3 の Markdown エスケープ後、Mermaidで不正となる最小限の文字をサニタイズ。
-  - セル改行は `<br>` を維持（ノード表示名内で改行として扱われる）。
-- **重複エッジ**：`mermaid_dedupe_edges=true` のとき `(from,to,label)` をキーにデデュープ。
-- **自己ループ・循環**：許容（描画はMermaidに準ずる）。必要に応じて §9 の WARN を出す。
-
----
-
-## 7.8 画像抽出とMarkdownリンク生成
-
-### 7.8.1 画像抽出の処理フロー
-
-1. **画像の検出**
-   - 各ワークシートの `_images` 属性から画像オブジェクトを取得
-   - openpyxlの画像オブジェクト（`Image`）のリストを処理
-
-2. **画像データの取得**
-   - `img._data()` メソッドで画像バイナリデータを取得
-   - エラー発生時は当該画像をスキップし、WARN ログを出力
-
-3. **画像フォーマット判定**
-   - 優先度1: `img.format` 属性が存在する場合、その値を使用（例: `'png'`, `'jpeg'`）
-   - 優先度2: マジックバイト（ファイルシグネチャ）による判定
-     - PNG: `\x89PNG` (0x89 0x50 0x4E 0x47)
-     - JPEG: `\xff\xd8\xff` (0xFF 0xD8 0xFF)
-     - GIF: `GIF` (0x47 0x49 0x46)
-   - デフォルト: 判定不能時は `.png` を使用
-
-4. **ファイル名生成**
-   - 形式: `{サニタイズされたシート名}_img_{連番}.{拡張子}`
-   - シート名のサニタイズ: `sanitize_sheet_name()` 関数を使用（ファイルシステム非安全文字を `_` に置換）
-   - 連番: 1始まり（シートごとに独立）
-
-5. **保存先ディレクトリ**
-   - CSVマークダウンファイル名（拡張子なし）をベースディレクトリとして使用
-   - 例: `input.xlsx` → `input_csv.md` → `input/` ディレクトリ
-   - ディレクトリが存在しない場合は自動作成（`mkdir -p` 相当）
-
-6. **セル位置の特定**
-   - 画像の `anchor` 属性から配置位置を取得
-   - アンカータイプ:
-     - `TwoCellAnchor`: `anchor._from` 属性に開始位置（row, col）
-     - `OneCellAnchor`: `anchor.row`, `anchor.col` 属性
-     - その他: 位置特定不可の場合はスキップ
-   - 座標変換: openpyxl（0始まり）→ Excel（1始まり）
-
-7. **相対パスの生成**
-   - 形式: `{ベースディレクトリ名}/{ファイル名}`
-   - 例: `input/Sheet1_img_1.png`
-   - ポータビリティのため常に相対パスを使用
-
-### 7.8.2 Markdownリンクの生成規則
-
-1. **画像セルの判定**
-   - CSV抽出時、セル座標 `(row, col)` が画像位置マッピングに存在するかチェック
-
-2. **代替テキストの決定**
-   - 優先度1: セルに文字列値がある場合、その値を使用
-   - 優先度2: セルが空の場合、`Image at {セル参照}` を生成（例: `Image at B3`）
-
-3. **Markdownリンク形式**
-   ```markdown
-   ![代替テキスト](相対パス)
-   ```
-   - 例: `![Company Logo](input/Sheet1_img_1.png)`
-   - 例: `![Image at B3](input/Sheet2_img_2.jpg)`
-
-4. **CSV出力での扱い**
-   - 画像が配置されているセルは、通常のセル値ではなくMarkdown画像リンクを出力
-   - セルの他の属性（結合セル、数値フォーマット等）は無視
-
-### 7.8.3 対応画像形式
-
-- **PNG** (Portable Network Graphics)
-- **JPEG/JPG** (Joint Photographic Experts Group)
-- **GIF** (Graphics Interchange Format)
-
-その他の形式（BMP, TIFF等）は、マジックバイト判定に失敗した場合PNGとして扱われる。
-
-### 7.8.4 エラーハンドリング
-
-- 画像データ取得失敗: WARN ログ出力、当該画像をスキップ
-- アンカー位置不明: WARN ログ出力、当該画像をスキップ
-- ファイル書き込み失敗: WARN ログ出力、当該画像をスキップ
-- 画像処理の失敗は変換処理全体を中断しない
-
-### 7.8.5 実装上の注意点
-
-1. **openpyxl依存性**
-   - `worksheet._images` 属性の存在に依存
-   - read_onlyモードでは画像情報が取得できない場合がある
-
-2. **ディスク容量**
-   - 大量の画像を含むExcelファイルは相応のディスク容量を消費
-   - 画像ファイルはCSVマークダウンと同じディレクトリツリーに配置
-
-3. **パス区切り文字**
-   - Windows/Unix両対応のため、Pathlib（`Path`）を使用
-   - 出力時は `/` 区切りに正規化
-
-4. **並行処理**
-   - 画像抽出はシート単位で実行
-   - 同一シート内では順次処理（画像インデックスの一貫性のため）
-
----
-
-## 8. 出力レイアウト（例）
-
-```md
-# 変換結果: sample.xlsx
-
-- シート数: 3
-- シート一覧: Sheet1, 集計, 設定
-
----
-
-## Sheet1
-
-### Table 1
-| 品目 | 数量 | 備考 |
-| --- | ---: | --- |
-| りんご | 10 | [発注先](https://example.com)[^1] |
-| みかん | 5 |  |
-
-[^1]: https://example.com
+印刷領域/使用範囲
+       ↓
+  非空グリッド構築
+  ・セル値の空性判定
+  ・背景色の判定
+  ・結合セルの考慮
+       ↓
+  連結成分検出（BFS）
+  ・空行/空列をテーブル境界として認識
+       ↓
+  矩形分解（Histogram Algorithm）
+  ・最大矩形の反復抽出
+       ↓
+  テーブルリスト生成
+  ・各テーブルの矩形リスト
+  ・バウンディングボックス
+  ・セル座標集合
 ```
 
-### 例：Mermaid を併置したフローテーブル（新規）
-```md
-### Table 2
-```mermaid
-flowchart TD
-  subgraph 認可
-    A["認証"] -->|OK| B["権限チェック"]
-  end
-  B --> C["画面遷移"]
+### 4.3 テーブル形式判定フロー
+
+抽出されたテーブルは、以下の優先順位で形式が判定される。
+
+| 優先度 | 形式 | 判定条件 |
+|-------|------|---------|
+| 1 | コード形式 | コードキーワード（public, class, def等）、コードシンボル（{}, ;, //等）の検出 |
+| 2 | Mermaid形式 | mermaid_enabled=true かつ検出モードの条件に合致 |
+| 3 | 単一行テキスト | 先頭行に1つの値のみ、枠線なし、他セルすべて空 |
+| 4 | ネスト形式 | 各行の最初の非空セルにインデントがある |
+| 5 | 通常テーブル | 上記いずれにも該当しない場合 |
+
+---
+
+## 5. セル・テーブル処理規則
+
+### 5.1 セル値取得
+
+セル値は以下の手順で取得・正規化される。
+
+1. **値取得**: value_mode設定に基づき、表示値/数式/両方を取得
+2. **日付判定**: 日付型の場合、指定フォーマットで文字列化
+3. **Unicode正規化**: NFC形式に正規化
+4. **制御文字除去**: 不可視制御文字の除去
+5. **空白処理**: strip_whitespace=true時、前後空白を除去
+6. **数値正規化**: 通貨記号、千単位区切り、パーセントの処理
+
+### 5.2 制御文字除去対象
+
+| 範囲 | 説明 |
+|------|------|
+| U+0000-U+0008 | NULL～バックスペース前 |
+| U+000B-U+000C | 垂直タブ、フォームフィード |
+| U+000E-U+001F | シフトアウト～ユニットセパレータ |
+| U+007F | DELETE |
+| U+0080-U+009F | C1制御文字 |
+| U+00AD | 軟ハイフン |
+| U+200B-U+200D | ゼロ幅文字 |
+| U+2060 | ワード結合子 |
+| U+2066-U+2069 | 方向性制御文字 |
+
+### 5.3 結合セル処理
+
+| ポリシー | 動作 |
+|---------|------|
+| top_left_only | 左上セルのみ値を保持、他セルは空 |
+| expand | 左上セルの値を全セルに展開 |
+| repeat | expandと同等 |
+| warn | expandしつつ警告を出力 |
+
+### 5.4 セル空性の判定
+
+セルが「空」と判定される条件：
+- セル値が空文字列または空白のみ
+- かつ、背景色が無色または白色
+
+白色と見なされるフィル：
+- RGB: #FFFFFF
+- インデックスカラー: 64（白色インデックス）
+- 読み取り専用モード時: フィル情報不可のため無色と仮定
+
+---
+
+## 6. Markdown生成規約
+
+### 6.1 テーブル生成
+
+**ヘッダー処理**
+- header_detection=true: 先頭行をヘッダーとして扱う
+- header_detection=false: ヘッダーなし（全行がデータ行）
+
+**列アラインメント**
+- align_detection=true: 各列の数値比率が閾値（既定80%）以上なら右寄せ
+- 右寄せ: 区切り行を `---:` で表現
+- 左寄せ: 区切り行を `---` で表現
+
+### 6.2 エスケープ処理
+
+**エスケープ対象文字**
+
+Markdownの予約文字: `\` `|` `*` `_` `~` `#` `>` `[` `]` `(` `)` `{` `}` `+` `-` `.` `!` `` ` ``
+
+**エスケープレベル**
+
+| レベル | 動作 |
+|-------|------|
+| safe（既定） | 上記予約文字にバックスラッシュを付加 |
+| minimal | パイプ記号のみエスケープ |
+| aggressive | すべての文字をエスケープ（非推奨） |
+
+**改行処理**
+
+セル内の改行（`\r\n`, `\r`, `\n`）は `<br>` タグに変換される。
+
+### 6.3 ハイパーリンク出力形式
+
+| モード | 出力例 | 用途 |
+|-------|--------|------|
+| inline | `[テキスト](URL)` | 標準的なMarkdownリンク |
+| inline_plain | `テキスト (URL)` | 平文でのURL埋め込み |
+| footnote | `テキスト[^1]` + 脚注 | 参考文献スタイル |
+| both | inline形式 + 脚注 | 両方を出力 |
+| text_only | `テキスト` | リンク情報を除去 |
+
+### 6.4 脚注スコープ
+
+| スコープ | 動作 |
+|---------|------|
+| book | ワークブック全体で連番（[^1], [^2], ...） |
+| sheet | シートごとに番号をリセット |
+
+---
+
+## 7. Mermaid生成規約
+
+### 7.1 検出モード
+
+#### 7.1.1 shapes検出モード
+
+DrawingMLの図形（Shape）とコネクタ（Connector）を解析してMermaidコードを生成する。
+
+**検出対象**
+- xdr:sp（Shape）: フローチャートの処理ボックス
+- xdr:cxnSp（Connector）: ノード間の接続線
+
+**図形タイプマッピング**
+
+| Excel図形 | Mermaidノード形式 | 意味 |
+|----------|------------------|------|
+| flowChartDecision, diamond | `{"テキスト"}` | 判断 |
+| flowChartTerminator, ellipse | `(["テキスト"])` | 開始/終了 |
+| flowChartInputOutput, trapezoid | `[("テキスト")]` | 入出力 |
+| flowChartPreparation, hexagon | `[{"テキスト"}]` | 準備 |
+| flowChartManualOperation | `[("テキスト")]` | 手動操作 |
+| flowChartDocument | `[("テキスト")]` | 文書 |
+| その他 | `["テキスト"]` | 処理 |
+
+#### 7.1.2 column_headers検出モード
+
+テーブルのヘッダー行を解析し、フロー定義列（From, To, Label等）を特定する。
+
+**列マッピング既定値**
+- from列: "From"
+- to列: "To"
+- label列: "Label"
+- group列: なし
+- note列: なし
+
+#### 7.1.3 heuristic検出モード
+
+テーブルのパターンを統計的に分析してフローテーブルを検出する。
+
+**判定条件**
+1. データ行数が最小行数（既定3行）以上
+2. 先頭2列に値がある行が最小行数以上
+3. 矢印記号（->, →, ⇒）を含む行の比率が閾値（既定30%）以上
+4. 1列目と2列目の値の長さの中央値比率が許容範囲（既定0.4〜2.5）内
+
+### 7.2 Mermaid生成規則
+
+**図の種類**
+- flowchart: フローチャート
+- sequence: シーケンス図
+- state: 状態遷移図
+
+**フロー方向**
+- TD: 上から下
+- LR: 左から右
+- BT: 下から上
+- RL: 右から左
+
+**ノードID生成**
+- auto: テキストから自動生成（サニタイズ処理）
+- shape_id: 図形IDを使用
+- explicit: 明示的に指定されたIDを使用
+
+**エッジ重複排除**
+mermaid_dedupe_edges=true時、同一のFrom-Toペアは1つのエッジにまとめられる。
+
+**サブグラフ**
+group列が指定され、mermaid_group_column_behavior="subgraph"の場合、グループごとにサブグラフとして出力される。
+
+---
+
+## 8. 画像抽出規約
+
+### 8.1 抽出方式
+
+**優先方式: DrawingML抽出**
+1. Excelファイルをzipアーカイブとして開く
+2. workbook.xmlからシートIDを取得
+3. worksheets/_rels/sheet{ID}.xml.relsからDrawing参照を取得
+4. drawings/drawing{N}.xmlから画像参照を抽出
+5. mediaディレクトリから画像データを取得
+
+**フォールバック: openpyxl抽出**
+DrawingML抽出で画像が取得できない場合、openpyxlのws._imagesを使用する。
+
+### 8.2 出力仕様
+
+**出力ディレクトリ**
 ```
-| From | To | Label | Group |
-| --- | --- | --- | --- |
-| 認証 | 権限チェック | OK | 認可 |
-| 権限チェック | 画面遷移 |  |  |
-```
-（`mermaid_keep_source_table=true` の例。`false` の場合は表の部分は出力しない）
-
----
-
-## 9. エラーハンドリングとログ
-- レベル：`INFO / WARN / ERROR`。
-- **ERROR**：ブック破損/開けない保護/入出力例外/未知キー/型不一致 など → シート or ブックをスキップ/中断。
-- **WARN**：印刷領域なし/外部ファイルリンク/不正 URL/巨大表打切り/結合セル `warn` 等 → 継続。
-- **WARN（印刷領域関連）**：
-  - 印刷領域が未設定で`no_print_area_mode="skip_sheet"`の場合：シートをスキップ（WARN）
-  - 印刷領域の範囲が無効（`min_row > max_row`など）の場合：該当範囲をスキップ（WARN）
-  - 印刷領域の範囲がシートの最大範囲を超えている場合：最大範囲に制限（WARN）
-- **INFO（印刷領域関連）**：
-  - 印刷領域が正常に取得できた場合、または`no_print_area_mode`で代替範囲を採用した場合：取得した範囲の情報を**INFO**ログに出力する。
-- 要約ログを出力末尾にまとめるオプション（将来）。
-
-### 9.x Mermaid 関連
-- **WARN**
-  - フローテーブル判定失敗（必須列 `from/to` 不足、または `heuristic` 条件未満）
-  - シェイプ検出失敗（DrawingMLが見つからない、ノードが検出されない、エッジが構築できない）
-  - ノードIDサニタイズにより表示名とIDが一致しない（重複回避の連番付与など）
-  - 自己ループ・サイクルを検出（描画は許容）。複雑な循環が長い場合はメモを推奨。
-- **ERROR**
-  - `mermaid_enabled=true` かつ `mermaid_detect_mode="column_headers"` で `from/to` 列が特定できず、
-    `heuristic` も無効の場合：当該テーブルに対する Mermaid 生成をスキップ（処理は継続）。
-  - `mermaid_detect_mode="shapes"` でDrawingMLの解析に失敗した場合：シェイプ検出をスキップ（処理は継続）。
-  - `mermaid_columns` の型不一致・未知キー（§5.11 に準ずる）
-
-#### 9.y 既存形式との競合時の扱い
-- **競合解決**：§7.0 の優先順位に従う。判定が揺らぐ場合は**通常テーブル**を採用し、`INFO/WARN` を記録。
-- **フォールバックの分類**：
-  - **判定不成立**（列名不一致・しきい値未達など）：`WARN` を記録し、優先順位3から再評価。
-  - **例外発生**（ID生成・サニタイズ・コード生成時の例外等）：`ERROR` を記録し、優先順位3から再評価。
-- **バッチ処理（付録C）**：Mermaid 未生成は「部分的成功」として扱い、
-  ログ統計に `mermaid_generated` / `mermaid_skipped` / `mermaid_fallbacks` を任意で追加可能。
-
-### 9.z CSV出力関連
-- **WARN**
-  - CSV出力先ディレクトリが作成できない（権限エラー、パスが不正等）
-  - シート名にファイルシステムで使用できない文字が含まれている（自動サニタイズを実施）
-  - CSVマークダウンファイルの書き込みに失敗（書き込みエラー、ディスク容量不足等）→ Markdown出力は継続
-  - エンコーディング変換に失敗（指定されたエンコーディングで表現できない文字が含まれる）→ 代替文字（`?`）で出力し、WARN記録
-  - シート数が100を超える場合（大規模なCSVマークダウン生成に時間がかかる可能性）
-  - 印刷領域未設定のシートをスキップした場合（`no_print_area_mode="skip_sheet"`）
-- **ERROR**
-  - `csv_encoding` で不正なエンコーディング名が指定された場合 → CSVマークダウン出力をスキップ
-  - `csv_delimiter` で複数文字が指定された場合（1文字のみ有効）→ CSVマークダウン出力をスキップ
-  - `csv_quoting` で不正な値が指定された場合 → CSVマークダウン出力をスキップ
-- **INFO**
-  - CSVマークダウン出力が正常に完了した場合：出力先パスを記録
-  - 出力に含まれたシート数を記録
-
----
-
-## 10. パフォーマンス/制限
-- `read_only=True, data_only=True` 利用、行ジェネレータで逐次処理。
-- スタイル参照は必要セルのみ。
-- `max_cells_per_table` を**走査中判定**し、即時打切り（当該テーブルのみ）。
-
----
-
-## 11. 設定サンプル（YAML）
-
-```yaml
-no_print_area_mode: used_range
-value_mode: display
-merge_policy: top_left_only
-hyperlink_mode: footnote
-header_detection: first_row
-hidden_policy: ignore
-strip_whitespace: true
-escape_pipes: true
-date_format_override: null
-date_default_format: "YYYY-MM-DD"
-numeric_thousand_sep: keep
-percent_format: keep
-currency_symbol: keep
-align_detection: numbers_right
-numbers_right_threshold: 0.8
-max_cells_per_table: 200000
-footnote_scope: book
-locale: ja-JP
-markdown_escape_level: safe
-mermaid_enabled: false
-mermaid_diagram_type: flowchart
-mermaid_detect_mode: column_headers  # "none" | "column_headers" | "heuristic" | "shapes"
-mermaid_columns:
-  from: "From"
-  to: "To"
-  label: "Label"
-  group: null
-  note: null
-mermaid_direction: TD
-mermaid_keep_source_table: true
-mermaid_dedupe_edges: true
-mermaid_node_id_policy: auto  # "auto" | "shape_id" | "explicit" (シェイプ検出時は "shape_id" でExcel描画IDを使用可能)
-mermaid_group_column_behavior: subgraph
-mermaid_heuristic_min_rows: 3
-mermaid_heuristic_arrow_ratio: 0.3
-mermaid_heuristic_len_median_ratio_min: 0.4
-mermaid_heuristic_len_median_ratio_max: 2.5
-dispatch_skip_code_and_mermaid_on_fallback: true
-# CSV出力関連
-csv_markdown_enabled: true  # CSVマークダウン出力を有効化
-csv_output_range: print_area  # 現バージョンでは "print_area" のみサポート
-csv_delimiter: ","
-csv_quoting: minimal  # "minimal" | "all" | "nonnumeric"
-csv_encoding: utf-8  # "utf-8" | "shift_jis" | "cp932" など
-csv_line_terminator: "\n"  # Unix: "\n" | Windows: "\r\n"
-csv_apply_merge_policy: true
-csv_output_dir: null  # null の場合はMarkdownファイルと同じディレクトリ
-csv_filename_pattern: "{basename}_csv.md"
-csv_normalize_values: true
-csv_include_metadata: true  # 検証用メタデータを末尾に付記
-csv_include_description: true  # 概要セクション（説明文）を出力
-# CSVマークダウンでのMermaid出力は mermaid_enabled と mermaid_detect_mode で制御
-# mermaid_enabled: true かつ mermaid_detect_mode: shapes の場合にMermaidを出力
+{output_dir}/{ファイル名}_images/
 ```
 
----
+**ファイル名形式**
+```
+{サニタイズ済シート名}_img_{連番}.{拡張子}
+```
 
-## 12. 非対応/将来拡張
-- 画像/コメント/ピボットの構造は非対応（展開済み値は処理）。
-- **図形（シェイプ）**：`mermaid_detect_mode="shapes"` によりDrawingMLからのフローチャート抽出に対応しています（§⑦''参照）。
-- 罫線情報を用いた境界補助（将来）。
-- HTML 等の追加出力形式。
-- 自動ヘッダ推定（heuristic）。
+**対応画像形式**
+- PNG
+- JPEG
+- GIF
+- BMP
+- その他（magic bytesによる判定）
 
-#### Mermaid 関連
-- Mermaid のレイアウト微調整（アイコン、スタイルテーマ）。
-- `sequenceDiagram` / `stateDiagram` の自動判定および変換。
-- **シェイプの種類に応じたMermaidノード形状の自動マッピング**：対応しています（§⑦''参照）。`a:prstGeom@prst`属性から形状を判定し、`decision`、`terminator`、`io`、`prep`、`manual`、`document`、`connector`、`process`に分類して適切なMermaidノード形式を適用。
-- エッジラベルの抽出（シェイプ近傍のセル値やコネクタのテキストから）。
-- Mermaid コードの検証や linting の統合。
+### 8.3 Markdownでの参照
 
-#### CSVマークダウン出力関連
-- **CSVマークダウン内でのハイパーリンク情報の含め方**：リンク先URLをCSVセル内に含める方法（例：`"表示テキスト (URL)"`形式）。現在は表示テキストのみ出力。
-- **CSV形式のカスタマイズ**：CSV区切り文字（`,` / `;` / `\t`）、引用符ポリシー（minimal / all / nonnumeric）、エンコーディング（utf-8 / shift_jis / cp932）、行終端文字（\n / \r\n）のカスタマイズオプション。現在は固定値（区切り: `,`、引用符: minimal、エンコーディング: utf-8、行終端: \n）。
-- **ファイル名パターンのカスタマイズ**：CSVマークダウンファイル名のパターン指定オプション（例：`csv_filename_pattern="{basename}_{sheet}_csv.md"`）。現在は `{basename}_csv.md` 固定。
+画像はMarkdownの画像リンク形式で参照される。
+
+- alt text: セル値がある場合はその値、なければ "Image at {セル参照}"
+- パス: 出力ディレクトリからの相対パス
 
 ---
 
-# 付録
+## 9. エラーハンドリング
 
-付録は別ファイル [spec_appendix.md](spec_appendix.md) を参照してください。
+### 9.1 基本方針
 
-- **付録A**: 実装ガイド（非規範・参考）
-- **付録B**: 仕様補遺
-- **付録C**: 実装詳細ガイド — ディスパッチ／列名マッチング／フォールバック
-- **付録D**: 単体テスト仕様
+**処理継続優先**: エラーが発生しても可能な限り処理を継続し、部分的な出力を確保する。
+
+### 9.2 ログ出力
+
+| レベル | 形式 | 出力先 |
+|-------|------|--------|
+| 警告 | [WARN] メッセージ | 標準エラー出力 |
+| 情報 | [INFO] メッセージ | 標準エラー出力 |
+
+### 9.3 例外処理ポリシー
+
+| 例外発生箇所 | 処理 | ポリシー |
+|-------------|------|---------|
+| Excelファイル読み込み失敗 | 終了コード2で終了 | 即時終了 |
+| シート処理エラー | 警告出力、次シートへ | 継続 |
+| CSV抽出エラー | 警告出力、次シートへ | 継続 |
+| Mermaid生成エラー | 警告出力、通常テーブルにフォールバック | 継続 |
+| 画像抽出エラー | 警告出力、次画像へ | 継続 |
+| メタデータ付記エラー | 警告出力、メタデータなしで出力 | 継続 |
+
+### 9.4 代表的な警告メッセージ
+
+| 状況 | メッセージ例 |
+|------|-------------|
+| 無効なURL | Invalid URL detected at C5: invalid://url |
+| 印刷領域超過 | Print area max_row (100) exceeds sheet max_row (50), limiting to 50 |
+| 画像抽出失敗 | Failed to extract image from media/image1.png: ... |
+| 非対応検出モード | mermaid_detect_mode='column_headers' is not supported for CSV markdown |
+
+---
+
+## 10. 用語集
+
+### 10.1 Excel関連
+
+| 用語 | 定義 |
+|------|------|
+| 印刷領域 | ユーザーが定義した印刷対象範囲。未設定の場合はno_print_area_modeに従う |
+| 使用範囲 | 値を持つセルの最小バウンディングボックス |
+| 結合セル | 複数セルをマージして1つのセルとして扱うExcelの機能 |
+| 結合トップレフト | 結合セル範囲の左上セル。値はここにのみ格納される |
+| DrawingML | Office Open XMLで図形や画像を表現するためのマークアップ言語 |
+
+### 10.2 テーブル検出関連
+
+| 用語 | 定義 |
+|------|------|
+| 非空セル | 値があるか、または背景色が設定されているセル |
+| 連結成分 | 空行・空列で分断されていない、隣接するセルの集合 |
+| 矩形 | 連続した行・列で構成される矩形領域。テーブルの基本単位 |
+| バウンディングボックス | テーブルを囲む最小の矩形 |
+
+### 10.3 Mermaid関連
+
+| 用語 | 定義 |
+|------|------|
+| ノード | フローチャートの処理ボックス。図形タイプにより表現が異なる |
+| エッジ | ノード間の接続を表す矢印 |
+| サブグラフ | 複数のノードをグループ化した領域 |
+
+### 10.4 出力形式関連
+
+| 用語 | 定義 |
+|------|------|
+| CSV Markdown | CSVコードブロックと検証用メタデータを含むMarkdown出力（既定の出力形式） |
+| 通常Markdown | GFMテーブル形式を基本とした標準的なMarkdown出力 |
+| 脚注 | ドキュメント末尾にまとめて配置される参照情報 |
+| インラインリンク | テキスト中に埋め込まれた形式のハイパーリンク |
+
+---
+
+## 11. テスト仕様
+
+### 11.1 概要
+
+本章は、excel2mdパッケージの単体テスト仕様を定義する。テストはpytestを使用し、openpyxlのモックまたはメモリ内Workbookを活用して、実際のExcelファイルなしでテスト可能とする。
+
+#### 11.1.1 テストファイル構成
+
+```
+excel2md/
+├── __init__.py
+├── cli.py
+├── runner.py
+├── ...（その他モジュール）
+└── tests/
+    ├── __init__.py
+    ├── conftest.py              # pytest fixtures
+    ├── test_cell_utils.py       # セル処理関連
+    ├── test_table_detection.py  # テーブル検出関連
+    ├── test_markdown_output.py  # Markdown出力関連
+    ├── test_csv_markdown.py     # CSVマークダウン出力関連
+    ├── test_mermaid.py          # Mermaid変換関連
+    ├── test_hyperlink.py        # ハイパーリンク処理関連
+    └── test_integration.py      # 統合テスト
+```
+
+#### 11.1.2 テストの原則
+
+1. **モック優先**: openpyxlのWorkbook/Worksheetオブジェクトをメモリ内で生成
+2. **独立性**: 各テストは他のテストに依存しない
+3. **再現性**: ファイルシステムや外部リソースに依存しない
+4. **網羅性**: 正常系・異常系・境界値を網羅
+
+#### 11.1.3 テスト実行方法
+
+```bash
+cd v2.0
+uv run pytest tests/ -v                    # 全テスト実行
+uv run pytest tests/test_cell_utils.py -v  # 特定ファイルのみ
+uv run pytest tests/ --cov=. --cov-report=html  # カバレッジ付き
+```
+
+### 11.2 テスト方針
+
+#### 11.2.1 セル処理（test_cell_utils.py）
+
+- **空性判定**: 値なし、空文字、空白のみ、数値0、背景色の有無を組み合わせて検証
+- **数値判定**: 整数、負数、桁区切り、通貨記号、パーセント、括弧表記の正常系と、不正形式の異常系を網羅
+- **エスケープ**: 各エスケープレベル（safe/minimal/aggressive）での変換結果を検証
+
+#### 11.2.2 テーブル検出（test_table_detection.py）
+
+- **グリッド構築**: 空行・空列によるテーブル分割、結合セルの影響を検証
+- **連結成分**: 矩形、L字型、離散領域など多様な形状でのテーブル検出を検証
+- **矩形分解**: 非矩形領域の長方形分解が正しく行われることを検証
+
+#### 11.2.3 Markdown出力（test_markdown_output.py）
+
+- **テーブル生成**: ヘッダー検出、列アラインメント、空列除去を検証
+- **テーブル抽出**: 結合セル処理、ハイパーリンク処理、脚注生成を検証
+
+#### 11.2.4 CSV出力（test_csv_markdown.py）
+
+- **データ抽出**: 結合セル、改行、ハイパーリンクを含むセルの処理を検証
+- **オプション**: 各オプション（description、metadata、mermaid）の有効/無効時の出力を検証
+
+#### 11.2.5 ハイパーリンク（test_hyperlink.py）
+
+- **リンク種別**: 外部URL、内部参照、mailto等の各種リンク形式を検証
+- **URL検証**: 有効なURL形式と無効な形式（javascript:等）の判定を検証
+
+#### 11.2.6 Mermaid（test_mermaid.py）
+
+- **コード判定**: プログラミング言語のキーワード・記号検出を検証
+- **言語検出**: 各言語固有のパターンによる言語判定を検証
+- **出力形式判定**: テキスト/ネスト/コード/テーブルの形式判定を検証
+
