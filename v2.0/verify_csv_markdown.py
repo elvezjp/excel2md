@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-CSV Markdown Verification Script
-File: verify_csv_markdown.py
+"""CSV Markdown Verification Script.
 
 検証スクリプト - CSVマークダウンファイルの検証
 - スタンドアロンモード: CLI経由で検証実行
 - プログラマティックモード: Python API経由で検証実行
+
+仕様書参照: §3.2.1 CSV Markdown（検証用メタデータ）
 """
 
 import argparse
@@ -249,7 +249,7 @@ def validate_metadata(excel_meta: Dict, csv_meta: Dict, excel_filename: str = No
 
 
 def update_metadata_section(csv_md_path: str, validation_result: Dict) -> None:
-    """Update validation metadata section in CSV markdown file (markdown format per spec §3.2.2).
+    """Update validation metadata section in CSV markdown file.
 
     Args:
         csv_md_path: Path to CSV markdown file

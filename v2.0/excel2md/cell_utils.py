@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Cell and text utilities."""
+"""Cell and text utilities.
+
+仕様書参照: §5 セル・テーブル処理規則
+"""
 
 import re
 import unicodedata
@@ -173,7 +176,7 @@ def excel_is_date(cell) -> bool:
 
 
 def format_value(cell, opts) -> str:
-    """Display value with basic formatting per §5.6"""
+    """Display value with basic formatting."""
     v = cell.value
     if v is None:
         return ""

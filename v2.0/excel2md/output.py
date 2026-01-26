@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Lightweight logging helpers (stderr)."""
+"""Lightweight logging helpers (stderr).
+
+仕様書参照: §9 エラーハンドリング
+"""
 
 import sys
 

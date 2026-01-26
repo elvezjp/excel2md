@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Run orchestration for Excel to Markdown conversion."""
+"""Run orchestration for Excel to Markdown conversion.
+
+仕様書参照: §4 処理フロー
+"""
 
 from pathlib import Path
 from typing import List, Tuple, Optional
@@ -85,19 +88,19 @@ def run(input_path: str, output_path: Optional[str], args):
         "detect_dates": True,
         "prefer_excel_display": args.prefer_excel_display,
 
-        # CSV markdown output options (v1.5 spec §⑫, extended in v1.7)
+        # CSV markdown output options
         "csv_output_dir": getattr(args, "csv_output_dir", None),
         "csv_apply_merge_policy": getattr(args, "csv_apply_merge_policy", True),
         "csv_normalize_values": getattr(args, "csv_normalize_values", True),
         "csv_markdown_enabled": getattr(args, "csv_markdown_enabled", True),
         "csv_include_metadata": getattr(args, "csv_include_metadata", True),
-        "csv_include_description": getattr(args, "csv_include_description", True),  # v1.7
+        "csv_include_description": getattr(args, "csv_include_description", True),
 
-        # Image extraction options (v1.8)
+        # Image extraction options
         "image_extraction": getattr(args, "image_extraction", True),
     }
 
-    # Prepare for CSV markdown output (v1.5 spec §⑫)
+    # Prepare for CSV markdown output
     csv_output_dir = opts.get("csv_output_dir") or str(Path(input_path).parent)
     csv_basename = Path(input_path).stem
     csv_markdown_data = {}  # For CSV markdown output (dict of sheet_name: rows)
@@ -129,26 +132,21 @@ def run(input_path: str, output_path: Optional[str], args):
             current_md_lines.append(f"## {sname}\n（シート数上限によりスキップ）\n\n---\n")
             continue
 
-        # §4.⑩: 各シート処理開始時に、Markdown見出しとしてシート名を出力
         if not split_by_sheet:
             current_md_lines.append(f"## {sname}\n")
 
-        # §⑦'': シェイプ（図形）からのMermaid検出（シート単位で実行）
+        # シェイプ（図形）からのMermaid検出（シート単位で実行）
         shapes_mermaid = None
         if opts.get("mermaid_enabled", False) and opts.get("mermaid_detect_mode") == "shapes":
             shapes_mermaid = _v14_extract_shapes_to_mermaid(input_path, ws, opts)
             if shapes_mermaid:
                 current_md_lines.append(shapes_mermaid + "\n")
                 current_md_lines.append("\n---\n")
-                # シェイプ検出が成功してもテーブル処理は続行される（仕様書§3.2、§⑦''、§⑩参照）
-
-        # §4.③: シートの印刷領域を取得
         areas = get_print_areas(ws, opts["no_print_area_mode"])
         if not areas:
             current_md_lines.append("（テーブルなし）\n\n---\n")
             continue
 
-        # §5.3: 幾何学的和集合 → 矩形分解
         unioned = union_rects(areas)
 
         if opts["footnote_scope"] == "sheet":
@@ -158,8 +156,6 @@ def run(input_path: str, output_path: Optional[str], args):
         table_id = 0
 
         for union_area in unioned:
-            # Per spec §6.4: build merged_lookup for each print area separately
-            # to ensure only merged cells within the print area are processed
             merged_lookup = build_merged_lookup(ws, union_area)
             tables = grid_to_tables(ws, union_area, hidden_policy=opts["hidden_policy"], opts=opts)
             if not tables:
@@ -169,15 +165,11 @@ def run(input_path: str, output_path: Optional[str], args):
             for tbl in tables:
                 table_id += 1
 
-                # Per spec §⑦: pass print_area to ensure only cells within print area are processed
                 md_rows, note_refs, truncated, table_title = extract_table(ws, tbl, opts, footnotes, global_footnote_start, merged_lookup, print_area=union_area)
 
-                # テーブル見出しの出力
                 if table_title:
-                    # §7.1: テーブルタイトルを検出した場合、それをテーブル見出しとして使用
                     current_md_lines.append(f"### {table_title}")
                 else:
-                    # 付録B.1: テーブル見出しには座標範囲を表示しない
                     current_md_lines.append(f"### Table {table_id}")
                 for (n, txt) in note_refs:
                     footnotes.append((n, txt))
@@ -186,26 +178,19 @@ def run(input_path: str, output_path: Optional[str], args):
                     current_md_lines.append("（テーブルなし）\n")
                     continue
 
-                # §7.2: テーブル形式の判定と出力形式の選択
                 format_type, formatted_output = dispatch_table_output(ws, tbl, md_rows, opts, merged_lookup, xlsx_path=input_path)
 
                 if format_type == "text":
-                    # §7.2.1: 単一行テキスト形式
                     current_md_lines.append(formatted_output + "\n")
                 elif format_type == "nested":
-                    # §7.2.3: ネスト形式
                     current_md_lines.append(formatted_output + "\n")
                 elif format_type == "code":
-                    # §7.2.4: ソースコード形式
                     current_md_lines.append(formatted_output + "\n")
                 elif format_type == "mermaid":
-                    # §7.6: Mermaid形式（formatted_outputにはMermaidコードと必要に応じて元テーブルが含まれる）
                     current_md_lines.append(formatted_output + "\n")
                 elif format_type == "empty":
-                    # §7.2.2: 空行の処理
                     current_md_lines.append("\n")
                 else:
-                    # §7.2.5: 通常のテーブル形式
                     # Note: dispatch_table_output() already handles table formatting,
                     # but this branch handles cases where format_type is "table" from dispatch
                     hdr = opts.get("header_detection", True)
@@ -221,10 +206,7 @@ def run(input_path: str, output_path: Optional[str], args):
 
             current_md_lines.append("\n---\n")
 
-        # CSV markdown data collection per spec §⑫ (v1.5)
-        # v1.5 only outputs CSV markdown format, not raw CSV files
         if opts.get("csv_markdown_enabled", True):
-            # Extract images from sheet first (v1.8)
             cell_to_image = {}
             if opts.get("image_extraction", True):
                 cell_to_image = extract_images_from_sheet(ws, Path(csv_output_dir), sname, csv_basename, opts, xlsx_path=input_path)
@@ -245,10 +227,8 @@ def run(input_path: str, output_path: Optional[str], args):
                         }
                 except Exception as e:
                     warn(f"CSV data extraction failed for sheet '{sname}': {e}")
-                    # Continue processing (per spec §9.z)
 
-            # v1.7: Extract Mermaid for CSV markdown if mermaid_enabled=true
-            # Only mermaid_detect_mode="shapes" is supported for CSV markdown (per spec §3.2.2)
+            # Extract Mermaid for CSV markdown if mermaid_enabled=true
             if opts.get("mermaid_enabled", False) and sname in csv_markdown_data:
                 detect_mode = opts.get("mermaid_detect_mode", "shapes")
                 if detect_mode == "shapes":
@@ -280,7 +260,7 @@ def run(input_path: str, output_path: Optional[str], args):
             for idx, txt in footnotes_sorted:
                 md_lines.append(f"[^{idx}]: {txt}")
 
-    # Write output file(s) - exclusive mode per v1.6 spec §3.2
+    # Write output file(s)
     # csv_markdown_enabled=true: CSV markdown only
     # csv_markdown_enabled=false: Regular markdown only
     if opts.get("csv_markdown_enabled", True):

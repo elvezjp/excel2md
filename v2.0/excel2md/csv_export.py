@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""CSV markdown export utilities."""
+"""CSV markdown export utilities.
+
+仕様書参照: §3.2.1 CSV Markdown
+"""
 
 from pathlib import Path
 from typing import Dict, Tuple, Optional
@@ -36,7 +39,7 @@ def format_timestamp():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 def write_csv_markdown(wb, csv_data_dict, excel_file_basename, opts, output_dir):
-    """Write CSV markdown file containing sheets' CSV data per spec §3.2.2.
+    """Write CSV markdown file containing sheets' CSV data.
 
     Args:
         wb: Workbook object
@@ -71,12 +74,9 @@ def write_csv_markdown(wb, csv_data_dict, excel_file_basename, opts, output_dir)
         is_single_sheet = len(csv_data_dict) == 1
         sheet_names = list(csv_data_dict.keys())
 
-        # Check if description section should be included (v1.7)
         include_description = opts.get("csv_include_description", True)
 
-        # Write markdown file
         with open(csv_md_path, 'w', encoding='utf-8') as f:
-            # Write title section per spec §3.2.2
             if is_single_sheet:
                 f.write(f"# {sheet_names[0]}\n\n")
                 if include_description:
@@ -85,7 +85,7 @@ def write_csv_markdown(wb, csv_data_dict, excel_file_basename, opts, output_dir)
             else:
                 f.write(f"# CSV出力: {excel_file_basename}.xlsx\n\n")
 
-            # Overview section (level 2) - only if csv_include_description=true (v1.7)
+            # Overview section
             if include_description:
                 f.write("## 概要\n\n")
 
@@ -103,7 +103,7 @@ def write_csv_markdown(wb, csv_data_dict, excel_file_basename, opts, output_dir)
                 else:
                     # Single-sheet: simplified description
                     f.write("このCSVマークダウンファイルは、AIがExcelの内容を理解できるよう、シートの印刷領域をCSV形式で出力したファイルです。")
-                # Add metadata description only if metadata is enabled (v1.7)
+                # Add metadata description only if metadata is enabled
                 if opts.get("csv_include_metadata", True):
                     f.write("ファイル末尾に検証用メタデータセクションがあり、Excel原本との整合性を確認できます。")
                 f.write("\n\n")
@@ -135,7 +135,7 @@ def write_csv_markdown(wb, csv_data_dict, excel_file_basename, opts, output_dir)
                 else:  # inline_plain or footnote or both (after fallback)
                     f.write(f"- **ハイパーリンク**: 平文形式で出力（例: `表示テキスト (URL)` または `表示テキスト (→シート名+セル番号)`）\n\n")
 
-                # About Mermaid (level 3) - only when mermaid is enabled with shapes mode (v1.7)
+                # About Mermaid (level 3) - only when mermaid is enabled with shapes mode
                 mermaid_enabled = opts.get("mermaid_enabled", False)
                 mermaid_detect_mode = opts.get("mermaid_detect_mode", "shapes")
                 if mermaid_enabled and mermaid_detect_mode == "shapes":
@@ -144,7 +144,7 @@ def write_csv_markdown(wb, csv_data_dict, excel_file_basename, opts, output_dir)
                     f.write("- 各シートのCSVブロックの前に、検出されたShapeがMermaidコードブロックで記載されます\n")
                     f.write("- Shape間の接続（コネクタ）も矢印として表現されます\n\n")
 
-                # About Verification Metadata (level 3) - only when metadata is enabled (v1.7)
+                # About Verification Metadata (level 3)
                 include_metadata = opts.get("csv_include_metadata", True)
                 if include_metadata:
                     f.write("### 検証用メタデータについて\n\n")
@@ -162,7 +162,7 @@ def write_csv_markdown(wb, csv_data_dict, excel_file_basename, opts, output_dir)
                 if not is_single_sheet:
                     f.write(f"## {sheet_name}\n\n")
 
-                # v1.7: Write Mermaid block before CSV if mermaid_enabled=true and mermaid exists
+                # Write Mermaid block before CSV if mermaid_enabled=true and mermaid exists
                 if isinstance(sheet_data, dict) and sheet_data.get("mermaid"):
                     f.write(sheet_data["mermaid"])
                     f.write("\n\n")
@@ -193,7 +193,7 @@ def write_csv_markdown(wb, csv_data_dict, excel_file_basename, opts, output_dir)
                 import sys
                 from pathlib import Path as PathLib
 
-                # Add v1.5 directory to path if not already there
+                # Add module directory to path if not already there
                 verify_module_path = PathLib(__file__).parent
                 if str(verify_module_path) not in sys.path:
                     sys.path.insert(0, str(verify_module_path))
@@ -217,7 +217,7 @@ def write_csv_markdown(wb, csv_data_dict, excel_file_basename, opts, output_dir)
         return None
 
 def extract_print_area_for_csv(ws, area, opts, merged_lookup, cell_to_image=None):
-    """Extract all cell values from print area for CSV output per spec §3.2.2.
+    """Extract all cell values from print area for CSV output.
 
     This function processes cells within the specified print area and extracts their
     values for CSV markdown output. If a cell contains an image (indicated by
@@ -265,7 +265,7 @@ def extract_print_area_for_csv(ws, area, opts, merged_lookup, cell_to_image=None
 
             cell = ws.cell(row=R, column=C)
 
-            # Handle merged cells per spec §3.2.2
+            # Handle merged cells
             tl = merged_lookup.get((R, C))
             if tl:
                 if (R, C) == tl:
@@ -288,11 +288,11 @@ def extract_print_area_for_csv(ws, area, opts, merged_lookup, cell_to_image=None
             else:
                 text = cell_display_value(cell, opts)
 
-            # Apply normalization if requested per spec §3.2.2
+            # Apply normalization if requested
             if opts.get("csv_normalize_values", True):
                 text = normalize_numeric_text(text, opts)
 
-            # Handle hyperlinks per spec §3.2.2 (updated in v1.6)
+            # Handle hyperlinks
             hl = hyperlink_info(cell)
             if hl:
                 disp = text if text else (hl.get("display") or "")
@@ -327,7 +327,7 @@ def extract_print_area_for_csv(ws, area, opts, merged_lookup, cell_to_image=None
                     else:
                         text = disp
 
-            # Replace newlines with spaces for CSV markdown (per spec §3.2.2)
+            # Replace newlines with spaces for CSV markdown
             # This ensures 1 record = 1 physical line for AI readability
             if text and isinstance(text, str):
                 text = text.replace('\r\n', ' ').replace('\n', ' ').replace('\r', ' ')
@@ -337,6 +337,4 @@ def extract_print_area_for_csv(ws, area, opts, merged_lookup, cell_to_image=None
 
     return rows
 
-# Note: Old CSV file output functions (write_csv_per_sheet, write_csv_merged_book) have been removed.
-# v1.5 now only outputs CSV markdown format via write_csv_markdown() function.
 # ===== end CSV output functions =====

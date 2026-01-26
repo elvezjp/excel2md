@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Table extraction utilities."""
+"""Table extraction utilities.
+
+仕様書参照: §5 セル・テーブル処理規則
+"""
 
 from typing import Dict, List, Set, Tuple
 
@@ -12,8 +15,6 @@ from .table_formatting import make_markdown_table, format_table_as_text_or_neste
 def detect_table_title(ws, table, merged_lookup, opts, print_area=None):
     """Detect if table has a title from a large merged cell at the top-left.
 
-    Per spec §7.1: only check cells within print area.
-
     Args:
         ws: Worksheet object
         table: Table dict with 'bbox' and 'mask'
@@ -24,7 +25,6 @@ def detect_table_title(ws, table, merged_lookup, opts, print_area=None):
     min_row, min_col, max_row, max_col = table["bbox"]
     mask: Set[Tuple[int,int]] = table["mask"]
 
-    # Per spec §7.1: only check cells within print area
     if print_area is not None:
         area_r0, area_c0, area_r1, area_c1 = print_area
         min_row = max(min_row, area_r0)
@@ -32,12 +32,10 @@ def detect_table_title(ws, table, merged_lookup, opts, print_area=None):
         max_row = min(max_row, area_r1)
         max_col = min(max_col, area_c1)
 
-    # Check first 3 rows for a large merged cell that spans 3+ columns
     for r in range(min_row, min(min_row + 3, max_row + 1)):
-        for c in range(min_col, min(min_col + 10, max_col + 1)):  # Check first 10 columns, but within print area
+        for c in range(min_col, min(min_col + 10, max_col + 1)):
             if (r, c) not in mask:
                 continue
-            # Per spec §7.1: only check cells within print area
             if print_area is not None:
                 area_r0, area_c0, area_r1, area_c1 = print_area
                 if r < area_r0 or r > area_r1 or c < area_c0 or c > area_c1:
@@ -49,22 +47,17 @@ def detect_table_title(ws, table, merged_lookup, opts, print_area=None):
                 if merged_cells:
                     for rng in merged_cells.ranges:
                         if rng.min_row == r and rng.min_col == c:
-                            # Per spec §7.1: ensure top-left cell is within print area
                             if print_area is not None:
                                 area_r0, area_c0, area_r1, area_c1 = print_area
                                 if r < area_r0 or c < area_c0:
-                                    continue  # Top-left cell is outside print area
-                                # Adjust span_cols to be within print area
+                                    continue
                                 span_cols = min(rng.max_col, area_c1) - c + 1
                             else:
                                 span_cols = rng.max_col - rng.min_col + 1
-                            # Check if it spans 3+ columns and is in the first few rows
                             if span_cols >= 3 and r <= min_row + 2:
                                 cell = ws.cell(row=r, column=c)
                                 text = cell_display_value(cell, opts)
                                 if text and text.strip():
-                                    # This could be a title - return it and the column range to exclude
-                                    # Per spec §7.1: only exclude columns within print area
                                     if print_area is not None:
                                         area_r0, area_c0, area_r1, area_c1 = print_area
                                         exclude_cols = set(range(c, min(rng.max_col, area_c1) + 1))
@@ -75,8 +68,6 @@ def detect_table_title(ws, table, merged_lookup, opts, print_area=None):
 
 def extract_table(ws, table, opts, footnotes, footnote_index_start, merged_lookup, print_area=None):
     """Extract Markdown rows for a logical table (possibly multiple rects).
-
-    Per spec §⑦: only process cells within print area.
 
     Args:
         ws: Worksheet object
@@ -90,7 +81,6 @@ def extract_table(ws, table, opts, footnotes, footnote_index_start, merged_looku
     min_row, min_col, max_row, max_col = table["bbox"]
     mask: Set[Tuple[int,int]] = table["mask"]
 
-    # Per spec §⑦: ensure all cells are within print area
     if print_area is not None:
         area_r0, area_c0, area_r1, area_c1 = print_area
         # Filter mask to only include cells within print area
@@ -170,17 +160,14 @@ def extract_table(ws, table, opts, footnotes, footnote_index_start, merged_looku
     count_cells = 0
 
     for R in range(min_row, max_row+1):
-        # Per spec §⑦: ensure row is within print area
         if print_area is not None:
             area_r0, area_c0, area_r1, area_c1 = print_area
             if R < area_r0 or R > area_r1:
-                continue  # Row is outside print area
-        # Check if this row is completely empty (all cells in used_cols are empty)
+                continue
         row_is_empty = True
         for C in used_cols:
             if (R, C) not in mask:
                 continue
-            # Per spec §⑦: ensure cell is within print area
             if print_area is not None:
                 area_r0, area_c0, area_r1, area_c1 = print_area
                 if R < area_r0 or R > area_r1 or C < area_c0 or C > area_c1:
@@ -217,13 +204,12 @@ def extract_table(ws, table, opts, footnotes, footnote_index_start, merged_looku
             if count_cells > max_cells:
                 return md_rows, note_refs, True
             if (R,C) not in mask:
-                row_vals.append("")  # outside component -> empty
+                row_vals.append("")
                 continue
-            # Per spec §⑦: ensure cell is within print area before processing
             if print_area is not None:
                 area_r0, area_c0, area_r1, area_c1 = print_area
                 if R < area_r0 or R > area_r1 or C < area_c0 or C > area_c1:
-                    row_vals.append("")  # Cell is outside print area -> empty
+                    row_vals.append("")
                     continue
             cell = ws.cell(row=R, column=C)
             # merged handling
@@ -279,7 +265,7 @@ def extract_table(ws, table, opts, footnotes, footnote_index_start, merged_looku
     return md_rows, note_refs, False, table_title
 
 def dispatch_table_output(ws, tbl, md_rows, opts, merged_lookup, xlsx_path=None):
-    """Unified dispatcher per v1.4: code -> mermaid -> text -> nested -> table
+    """Unified dispatcher: code -> mermaid -> text -> nested -> table
 
     Args:
         ws: Worksheet object
@@ -320,10 +306,7 @@ def dispatch_table_output(ws, tbl, md_rows, opts, merged_lookup, xlsx_path=None)
                     if ok:
                         mer = build_mermaid(md_rows, opts, colmap)
                         if opts.get("mermaid_keep_source_table", True):
-                            # header_detection handling: opts["header_detection"] is boolean (True/False)
-                            # per §7.0: if header_detection=none, explicitly pass False
                             hdr = opts.get("header_detection", True)
-                            # Use existing table generator with explicit header_detection
                             table_md = make_markdown_table(md_rows, header_detection=hdr, align_detect=opts.get("align_detection", True), align_threshold=opts.get("numbers_right_threshold", 0.8))
                             return "mermaid", mer + "\n" + table_md
                         else:

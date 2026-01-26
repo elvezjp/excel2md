@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Workbook loading and coordinate utilities."""
+"""Workbook loading and coordinate utilities.
+
+仕様書参照: §3.1 入力、§4.1 全体処理フロー
+"""
 
 from .output import warn, info
 
@@ -32,7 +35,7 @@ def parse_dimension(ws):
 
 
 def get_print_areas(ws, mode: str):
-    """Get print areas from worksheet, with validation per spec §③."""
+    """Get print areas from worksheet, with validation."""
     areas = []
     sheet_max_row = ws.max_row
     sheet_max_col = ws.max_column

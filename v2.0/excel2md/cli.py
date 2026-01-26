@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""CLI entrypoints for excel2md."""
+"""CLI entrypoints for excel2md.
+
+仕様書参照: §3.1.2 主要設定オプション
+"""
 
 import argparse
 
@@ -56,9 +59,7 @@ def build_argparser():
     p.add_argument("--read-only", action="store_true", help="Use openpyxl read_only=True (styles may be limited)")
     p.add_argument("--prefer-excel-display", action="store_true", default=True, help="Prefer Excel displayed value over formatted output when possible")
 
-    # CSV output options (v1.5)
-    # CSV Markdown output options (v1.5 spec §⑫)
-    # Note: v1.5 only outputs CSV markdown format, not raw CSV files
+    # CSV Markdown output options
     p.add_argument("--csv-output-dir", default=None, help="CSV markdown output directory (default: same as input file)")
     p.add_argument("--csv-apply-merge-policy", action="store_true", default=True, help="Apply merge_policy to CSV data extraction")
     p.add_argument("--no-csv-apply-merge-policy", dest="csv_apply_merge_policy", action="store_false")
@@ -71,7 +72,7 @@ def build_argparser():
     p.add_argument("--csv-include-description", action="store_true", default=True, help="Include description section in CSV markdown output (default: True)")
     p.add_argument("--no-csv-include-description", dest="csv_include_description", action="store_false")
 
-    # Image extraction options (v1.8)
+    # Image extraction options
     p.add_argument("--image-extraction", action="store_true", default=True, help="Enable image extraction from Excel (default: True)")
     p.add_argument("--no-image-extraction", dest="image_extraction", action="store_false")
 

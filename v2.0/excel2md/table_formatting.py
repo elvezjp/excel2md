@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
-"""Markdown table formatting utilities."""
+"""Markdown table formatting utilities.
+
+仕様書参照: §4.3 テーブル形式判定フロー、§6 Markdown生成規約
+"""
 
 from typing import List, Tuple, Set
 
 from .cell_utils import cell_display_value, numeric_like, normalize_numeric_text, has_border
 
 def is_source_code(text: str) -> bool:
-    """Check if text appears to be source code based on §7.2.4 specification."""
+    """Check if text appears to be source code."""
     if not text or not text.strip():
         return False
 
@@ -65,10 +68,7 @@ def is_source_code(text: str) -> bool:
     return False
 
 def is_code_block(md_rows) -> bool:
-    """Extracted code detection using existing is_source_code() logic per §A.x+1.6.
-
-    Uses the same logic as format_table_as_text_or_nested() to maintain compatibility.
-    """
+    """Check if rows appear to be a code block."""
     if not md_rows:
         return False
 
@@ -175,7 +175,7 @@ def build_code_block_from_rows(md_rows):
 
 
 def format_table_as_text_or_nested(ws, table, md_rows, opts, merged_lookup):
-    """Format table as text/nested format based on §7.2 specification.
+    """Format table as text/nested format.
 
     Returns:
     - "text": Single line text format (1 cell in first row, no borders)
@@ -230,7 +230,7 @@ def format_table_as_text_or_nested(ws, table, md_rows, opts, merged_lookup):
     if not used_cols:
         return "empty", ""
 
-    # Check first row: single cell text format (§7.2.1)
+    # Check first row: single cell text format
     first_row = md_rows[0] if md_rows else []
     non_empty_in_first = [i for i, val in enumerate(first_row) if val and val.strip()]
 
@@ -265,25 +265,23 @@ def format_table_as_text_or_nested(ws, table, md_rows, opts, merged_lookup):
                     text_value = first_row[first_row_col_idx]
                     return "text", text_value
 
-    # Check for source code format (§7.2.4)
+    # Check for source code format
     code_block = build_code_block_from_rows(md_rows)
     if code_block:
         return "code", code_block
 
-    # Check for nested format (§7.2.3)
-    # If first column is empty and second column has value
+    # Check for nested format
     nested_lines = []
     use_nested = True
     for row_idx, row in enumerate(md_rows):
         if not row:
-            nested_lines.append("")  # Empty line (§7.2.2)
+            nested_lines.append("")
             continue
 
-        # Count non-empty cells in this row
         non_empty = [i for i, val in enumerate(row) if val and val.strip()]
 
         if len(non_empty) == 0:
-            nested_lines.append("")  # Empty line (§7.2.2)
+            nested_lines.append("")
         elif len(non_empty) == 1:
             if non_empty[0] == 0:
                 # First column only - normal text (no indent)
@@ -368,7 +366,6 @@ def make_markdown_table(md_rows, header_detection=True, align_detect=True, align
 
     header = None
     data = md_rows
-    # TODO: heuristic header detection (future spec)
     if header_detection and any((cell or "").strip() for cell in md_rows[0]):
         header = md_rows[0]
         data = md_rows[1:]
@@ -391,4 +388,4 @@ def make_markdown_table(md_rows, header_detection=True, align_detect=True, align
         lines.append("| " + " | ".join(row) + " |")
     return "\n".join(lines)
 
-# ===== CSV Markdown Output Functions (v1.5 spec §3.2.2) =====
+# ===== CSV Markdown Output Functions =====

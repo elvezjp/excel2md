@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Table detection utilities."""
+"""Table detection utilities.
+
+仕様書参照: §4.2 テーブル検出フロー、§5.4 セル空性の判定
+"""
 
 from typing import List, Tuple, Set, Dict
 
@@ -27,10 +30,8 @@ def build_nonempty_grid(ws, area, hidden_policy="ignore", opts=None) -> Tuple[Li
     merged_coords = []
     for rng in merged_blocks:
         min_row, min_col, max_row, max_col = rng.min_row, rng.min_col, rng.max_row, rng.max_col
-        # Per spec §6.4: if merged cell doesn't intersect with print area, skip it
         if max_row < r0 or min_row > r1 or max_col < c0 or min_col > c1:
             continue
-        # Per spec §6.4: if top-left cell of merged cell is outside print area, exclude it
         if min_row < r0 or min_col < c0:
             continue  # Top-left cell is outside print area
         # Only include the part of merged cell that is within print area
@@ -49,15 +50,12 @@ def build_nonempty_grid(ws, area, hidden_policy="ignore", opts=None) -> Tuple[Li
             grid[rr][cc] = 0 if empty else 1
 
     # merged influence
-    # Per spec §6.4: only mark cells within print area
     for mr0, mc0, mr1, mc1 in merged_coords:
         found_nonempty = False
-        # Check if any cell in merged range (within print area) is non-empty
         for R in range(mr0, mr1+1):
             for C in range(mc0, mc1+1):
-                # Per spec §6.4: only check cells within print area
                 if R < r0 or R > r1 or C < c0 or C > c1:
-                    continue  # Cell is outside print area
+                    continue
                 cell = ws.cell(row=R, column=C)
                 if not cell_is_empty(cell, opts):
                     found_nonempty = True
@@ -65,12 +63,10 @@ def build_nonempty_grid(ws, area, hidden_policy="ignore", opts=None) -> Tuple[Li
             if found_nonempty:
                 break
         if found_nonempty:
-            # Per spec §6.4: only mark cells within print area
             for R in range(mr0, mr1+1):
                 for C in range(mc0, mc1+1):
-                    # Per spec §6.4: only mark cells within print area
                     if R < r0 or R > r1 or C < c0 or C > c1:
-                        continue  # Cell is outside print area
+                        continue
                     # Convert to grid coordinates
                     grid_r = R - r0
                     grid_c = C - c0
@@ -226,8 +222,6 @@ def grid_to_tables(ws, area, hidden_policy="ignore", opts=None):
     # 1. Cell value (text) - must be empty or whitespace only
     # 2. Cell fill - white fill is treated as no fill (same as blank)
     #    Any other color means the cell is not empty
-    # We need to consider merged cells: only check the top-left cell of merged ranges.
-    # Per spec §6.4: only merged cells within print area are processed
     merged_lookup = build_merged_lookup(ws, area)
 
     empty_rows = set()
@@ -320,7 +314,6 @@ def grid_to_tables(ws, area, hidden_policy="ignore", opts=None):
         # Not adjacent: not directly connected
         return False
 
-    # Modified BFS that respects empty row/column boundaries
     seen = [[False]*C for _ in range(R)]
     comps = []
     from collections import deque
@@ -333,7 +326,6 @@ def grid_to_tables(ws, area, hidden_policy="ignore", opts=None):
                 comp.add((r,c))
                 while q:
                     rr,cc = q.popleft()
-                    # Check neighbors (horizontal/vertical and diagonal, respecting boundaries)
                     for dr,dc in ((1,0),(-1,0),(0,1),(0,-1),(1,1),(1,-1),(-1,1),(-1,-1)):
                         nr,nc = rr+dr, cc+dc
                         if 0<=nr<R and 0<=nc<C and grid[nr][nc]==1 and not seen[nr][nc]:
@@ -345,26 +337,15 @@ def grid_to_tables(ws, area, hidden_policy="ignore", opts=None):
                 comps.append(comp)
 
     tables = []
-    # Per spec §⑥: ensure bbox and mask are within print area
-    # Note: r0, c0, r1, c1 from build_nonempty_grid are the same as area
-    # comp contains relative coordinates (0-based) within the grid, which is already within print area
     for comp in comps:
         rects_local = rectangles_for_component(comp, (len(grid), len(grid[0])))
-        # convert to sheet coords (r0+r, c0+c are already within print area since grid is built from area)
         rects_sheet = [(r0+t, c0+l, r0+b, c0+r) for (t,l,b,r) in rects_local]
-        # bounding box
         min_r = min(r for r,c in comp)
         max_r = max(r for r,c in comp)
         min_c = min(c for r,c in comp)
         max_c = max(c for r,c in comp)
-        # Per spec §⑥: bbox and mask are already within print area since grid is built from area
-        # But we ensure it explicitly for safety
         bbox = (r0+min_r, c0+min_c, r0+max_r, c0+max_c)
-        # Per spec §⑥: mask contains only cells within print area
-        # Since comp is relative to grid (which is within print area), r0+r and c0+c are within print area
-        # But we filter explicitly to ensure no cells outside print area
         mask = {(r0+r, c0+c) for (r,c) in comp if r0 <= r0+r <= r1 and c0 <= c0+c <= c1}
-        # Per spec §⑥: ensure bbox is within print area (should already be, but ensure explicitly)
         bbox_min_row = max(bbox[0], r0)
         bbox_min_col = max(bbox[1], c0)
         bbox_max_row = min(bbox[2], r1)
@@ -378,7 +359,6 @@ def grid_to_tables(ws, area, hidden_policy="ignore", opts=None):
 def build_merged_lookup(ws, area=None):
     """Map each cell (r,c) in a merged range to its top-left (r0,c0).
 
-    Per spec §6.4: only include merged cells within print area.
     If area is provided, only cells within the print area are included.
 
     Args:
@@ -394,19 +374,15 @@ def build_merged_lookup(ws, area=None):
         except Exception:
             continue
 
-        # Per spec §6.4: if top-left cell is outside print area, exclude the merged cell
         if area is not None:
             area_r0, area_c0, area_r1, area_c1 = area
-            # Check if merged cell intersects with print area
             if r1 < area_r0 or r0 > area_r1 or c1 < area_c0 or c0 > area_c1:
-                continue  # Merged cell is completely outside print area
-            # Per spec §6.4: if top-left cell is outside print area, exclude it
+                continue
             if r0 < area_r0 or c0 < area_c0:
-                continue  # Top-left cell is outside print area
+                continue
 
         for R in range(r0, r1+1):
             for C in range(c0, c1+1):
-                # Per spec §6.4: only include cells within print area
                 if area is not None:
                     area_r0, area_c0, area_r1, area_c1 = area
                     if R < area_r0 or R > area_r1 or C < area_c0 or C > area_c1:

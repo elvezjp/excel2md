@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Image extraction utilities."""
+"""Image extraction utilities.
+
+仕様書参照: §8 画像抽出規約
+"""
 
 import re
 import zipfile as _zipfile
@@ -331,7 +334,7 @@ def extract_images_from_sheet(ws, output_dir: Path, sheet_name: str, md_basename
 
     return cell_to_image
 def sanitize_sheet_name(sheet_name: str) -> str:
-    """Sanitize sheet name for use in filenames per spec §3.2.2."""
+    """Sanitize sheet name for use in filenames."""
     # Replace filesystem-unsafe characters with underscore
     unsafe_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
     sanitized = sheet_name

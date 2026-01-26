@@ -1,29 +1,7 @@
 # -*- coding: utf-8 -*-
-"""
-Excel -> Markdown Converter
-File: excel_to_md.py
+"""Excel -> Markdown Converter.
 
-更新点（v1.8）:
-- v1.7の全機能を継承（CSVマークダウンモード拡張）
-- 画像抽出機能を追加
-  - Excelファイル内の画像を外部ファイルとして抽出
-  - 画像が配置されているセルには、Markdownリンク形式でパスを出力
-  - CSV Markdownモードでも画像リンクが有効
-
-更新点（v1.7 / 2025-12-25）:
-- v1.6の全機能を継承（ハイパーリンク平文出力モード、シート分割出力機能）
-- CSVマークダウンモードの拡張機能を追加
-  - --csv-include-description: 概要セクション（説明文）の出力を制御（デフォルト: ON）
-  - CSVマークダウンでも --mermaid-enabled が有効に（mermaid_detect_mode="shapes" の場合のみ）
-  - 複数ファイルを変換・結合する際のトークン数削減に対応
-
-更新点（v1.6 / 2025-11-XX）:
-- ハイパーリンク平文出力モード（inline_plain）を追加
-- シート分割出力機能（--split-by-sheet）を追加
-
-更新点（v1.5 / 2025-11-11）:
-- v1.4の全機能を継承（Mermaidフローチャート変換、シェイプ検出）
-- §⑫ CSVマークダウン出力機能を追加
+仕様書参照: §3.1.2 主要設定オプション、§4 処理フロー
 """
 
 from excel2md.cli import build_argparser, main

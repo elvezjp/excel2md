@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Mermaid generation utilities."""
+"""Mermaid generation utilities.
+
+仕様書参照: §7 Mermaid生成規約
+"""
 
 from .output import warn
 from .image_extraction import _DRAWINGML_NS
@@ -48,7 +51,7 @@ def _v14_resolve_columns_by_name(header_row, mapping):
     return index
 
 def _v14_extract_shapes_to_mermaid(xlsx_path: str, ws, opts) -> Optional[str]:
-    """Extract shapes from DrawingML and build Mermaid flowchart per §⑦''.
+    """Extract shapes from DrawingML and build Mermaid flowchart.
 
     Args:
         xlsx_path: Path to Excel file
@@ -69,7 +72,7 @@ def _v14_extract_shapes_to_mermaid(xlsx_path: str, ws, opts) -> Optional[str]:
         # Open Excel as ZIP and find DrawingML files
         z = _zipfile.ZipFile(xlsx_path, 'r')
 
-        # Find the drawing file corresponding to this sheet per §⑦''
+        # Find the drawing file corresponding to this sheet
         # 1. Get sheet name from worksheet object
         sheet_name = ws.title
 
@@ -145,7 +148,7 @@ def _v14_extract_shapes_to_mermaid(xlsx_path: str, ws, opts) -> Optional[str]:
             return f"local{tmp_id}"
 
         def get_text_from_txBody(sp):
-            """Get text from txBody element per §⑦''.
+            """Get text from txBody element.
 
             Note: In Excel DrawingML, text is stored in xdr:txBody (not a:txBody).
             The structure is: xdr:txBody -> a:p -> a:r -> a:t
@@ -267,7 +270,7 @@ def _v14_extract_shapes_to_mermaid(xlsx_path: str, ws, opts) -> Optional[str]:
         node_id_policy = opts.get("mermaid_node_id_policy", "auto")
 
         def escape_mermaid_text(text: str) -> str:
-            """Mermaid表示名の特殊文字をHTMLエンティティに変換 per §⑦''"""
+            """Mermaid表示名の特殊文字をHTMLエンティティに変換"""
             if not text:
                 return ""
             # 主要な特殊文字をHTMLエンティティに変換
@@ -281,7 +284,7 @@ def _v14_extract_shapes_to_mermaid(xlsx_path: str, ws, opts) -> Optional[str]:
             return text
 
         def format_node(nid: str, display: str, shape_type: str) -> str:
-            """シェイプ種類に応じたMermaidノード形式を生成 per §⑦''"""
+            """シェイプ種類に応じたMermaidノード形式を生成"""
             display_escaped = escape_mermaid_text(display)
             if shape_type == "decision":
                 return f'  {nid}{{"{display_escaped}"}}'
@@ -306,7 +309,7 @@ def _v14_extract_shapes_to_mermaid(xlsx_path: str, ws, opts) -> Optional[str]:
             display = n["text"] or n["name"] or n["id"]
             shape_type = n.get("type", "process")
 
-            # ノードID生成 per §⑦''
+            # ノードID生成
             if node_id_policy == "shape_id":
                 # Excel描画IDをそのまま使用（s{id}形式）
                 nid = n["id"]  # 既に "s{id}" 形式で格納されている
@@ -345,7 +348,7 @@ def _v14_extract_shapes_to_mermaid(xlsx_path: str, ws, opts) -> Optional[str]:
         return None
 
 def _v14_infer_edges(nodes: List[Dict], exist_edges: List[Dict], max_out: int = 2, v_bias: float = 1.0) -> List[Dict]:
-    """Infer edges based on vertical proximity per §⑦''."""
+    """Infer edges based on vertical proximity."""
     def center_of(bbox):
         if not bbox or None in bbox:
             return None
@@ -399,13 +402,11 @@ def is_flow_table(md_rows, opts):
 
     # column_headers mode
     if detect_mode == "column_headers":
-        # §7.0: header_detection=none の場合、column_headers は適用不可
         header_detection = opts.get("header_detection", True)
-        if not header_detection:  # header_detection=none (False)
+        if not header_detection:
             return False, None
 
         header = md_rows[0]
-        # §7.0: 先頭行が空（全空セル）の場合はヘッダ無しとみなし、column_headers 判定は不成立
         def _is_empty_cell(v): return not (v and str(v).strip())
         if all(_is_empty_cell(cell) for cell in header):
             return False, None
@@ -418,7 +419,6 @@ def is_flow_table(md_rows, opts):
             return False, None
 
     # heuristic mode
-    # §7.0: コード形式（優先度1）に一致する場合は適用しない（誤検出回避）
     if is_code_block(md_rows):
         return False, None
 
@@ -435,7 +435,7 @@ def is_flow_table(md_rows, opts):
     nonempty12 = [r for r in data if len(r)>=2 and _val(r[0]) and _val(r[1])]
     if len(nonempty12) < min_rows:
         return False, None
-    # arrow presence ratio: データ行全体に対して計算（§A.x+1.3）
+    # arrow presence ratio
     arrow_lines = 0
     pat = _re.compile(r"(->|→|⇒)")
     for r in data:
