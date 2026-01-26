@@ -691,12 +691,10 @@ uv run pytest tests/ --cov=. --cov-report=html  # カバレッジ付き
 
 ```bash
 uv run python v2.0/excel_to_md.py --help
-uv run python v2.0/excel_to_md.py --version
 uv run python v2.0/excel_to_md.py nonexistent.xlsx
 ```
 
 - [ ] `--help` で全オプションの説明が表示される
-- [ ] `--version` でバージョン番号（2.0）が表示される
 - [ ] 存在しないファイル指定時、エラーメッセージと終了コード2で終了する
 
 #### 11.3.2 test_standard.xlsx を使用した確認

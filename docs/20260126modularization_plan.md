@@ -1,5 +1,7 @@
 # excel_to_md.py モジュール化計画（v2.0）
 
+> **✅ 完了**: この計画は PR#12 で対応完了しました。
+
 ## 目的
 - 3,230行の単一ファイル（`v1.8/excel_to_md.py`）を分割し、保守性を向上させる。
 - 状態共有が必要な処理はクラス化し、責務を明確化する。
@@ -187,3 +189,113 @@ cli.py
 **注釈**:
 - （※）循環依存回避のため `cell_utils.py` に配置
 - （※2）`is_code_block` を統合し、コード検出からブロック生成までを一括処理
+
+---
+
+## 動作テスト項目
+
+v2.0/spec.md の動作テスト項目について実行し確認する。
+
+### CLI基本動作確認
+
+```bash
+uv run python v2.0/excel_to_md.py --help
+uv run python v2.0/excel_to_md.py nonexistent.xlsx
+```
+
+- [x] `--help` で全オプションの説明が表示される
+- [x] 存在しないファイル指定時、エラーメッセージと終了コード2で終了する
+
+### test_standard.xlsx を使用した確認
+
+**基本変換**
+```bash
+uv run python v2.0/excel_to_md.py test_standard.xlsx
+```
+- [x] エラーなく `test_standard_csv.md` が生成される
+- [x] 5シート分のCSVコードブロックが出力される
+- [x] 概要セクションとメタデータセクションが含まれる
+
+**出力形式オプション**
+```bash
+uv run python v2.0/excel_to_md.py test_standard.xlsx --no-csv-markdown-enabled -o out.md
+uv run python v2.0/excel_to_md.py test_standard.xlsx --split-by-sheet
+uv run python v2.0/excel_to_md.py test_standard.xlsx --csv-output-dir ./output
+```
+- [x] `--no-csv-markdown-enabled -o out.md` でGFMテーブル形式のMarkdownが出力される
+- [x] `--split-by-sheet` でシートごとに個別ファイル（5ファイル）が生成される
+- [x] `--csv-output-dir ./output` で指定ディレクトリに出力される
+
+**Sheet1「基本テーブル」の確認**
+- [x] ヘッダー行が正しく認識される
+- [x] 数値列が右寄せで出力される
+
+**Sheet2「結合セル」の確認**
+- [x] 結合セルの値が左上セルに出力される
+- [x] 結合範囲の他セルは空で出力される
+
+**Sheet3「複数テーブル」の確認**
+- [x] 空行を境界として複数テーブルが検出される
+- [x] 印刷領域内のみが変換対象となる
+
+**Sheet4「ハイパーリンク」の確認**
+```bash
+uv run python v2.0/excel_to_md.py test_standard.xlsx --hyperlink-mode inline
+uv run python v2.0/excel_to_md.py test_standard.xlsx --hyperlink-mode inline_plain
+uv run python v2.0/excel_to_md.py test_standard.xlsx --hyperlink-mode footnote
+```
+- [x] `inline` モードで `[テキスト](URL)` 形式で出力される
+- [x] `inline_plain` モードで `テキスト (URL)` 形式で出力される
+- [ ] `footnote` モードで脚注形式 `テキスト[^1]` で出力される ※問題あり
+- [x] 内部リンク（シート参照）が `→シート名!セル` 形式で出力される
+- [x] mailtoリンクが正しく処理される
+
+**Sheet5「画像」の確認**
+- [x] `test_standard_images/` ディレクトリが作成される
+- [x] PNG画像が `画像_img_1.png` として抽出される
+- [x] JPEG画像が `画像_img_2.jpg` として抽出される
+- [ ] CSVに `![alt](test_standard_images/...)` 形式でリンクが出力される ※問題あり
+
+```bash
+uv run python v2.0/excel_to_md.py test_standard.xlsx --no-image-extraction
+```
+- [x] `--no-image-extraction` で画像が抽出されない
+
+### test_mermaid.xlsx を使用した確認
+
+**Sheet1「図形フロー」の確認**
+```bash
+uv run python v2.0/excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermaid-detect-mode shapes
+uv run python v2.0/excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermaid-detect-mode shapes --mermaid-direction LR
+```
+- [x] フローチャート図形からMermaidコードが生成される
+- [x] 矩形が `["テキスト"]`、ひし形が `{"テキスト"}` で出力される
+- [ ] コネクタが `-->` で接続される ※問題あり（`-.->|inferred|` で出力）
+- [x] `--mermaid-direction LR` で `flowchart LR` が出力される
+
+**Sheet2「テーブルフロー」の確認**
+```bash
+uv run python v2.0/excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermaid-detect-mode column_headers
+uv run python v2.0/excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermaid-detect-mode column_headers --no-mermaid-keep-source-table
+```
+- [x] From/To/Label列からMermaidコードが生成される
+- [x] `--no-mermaid-keep-source-table` で元テーブルが出力されない
+
+---
+
+## 発見された問題
+
+### 問題1: 脚注番号の重複
+- **現象**: `--hyperlink-mode footnote` で全リンクの脚注番号が `[^1]` になる
+- **期待**: 各リンクに連番 `[^1]`, `[^2]`, `[^3]`... が付与される
+- **影響**: 脚注が正しく参照されない
+
+### 問題2: CSV内の画像リンク
+- **現象**: CSVコードブロック内に画像リンク `![alt](path)` が含まれない
+- **期待**: 画像が配置されたセルに `![alt](test_standard_images/...)` 形式でリンクが出力される
+- **備考**: 画像ファイル自体は正しく抽出されている。仕様の解釈確認が必要
+
+### 問題3: Shapesモードのコネクタ表現
+- **現象**: shapes検出モードでコネクタが `-.->|inferred|` （破線＋推論ラベル）で出力される
+- **期待**: 実線矢印 `-->` で接続される
+- **備考**: Excelのコネクタ情報が取得できず推論で接続している可能性。仕様確認が必要
