@@ -21,6 +21,7 @@ from excel2md.cell_utils import (
     normalize_numeric_text,
     hyperlink_info,
     is_valid_url,
+    has_border,
 )
 from excel2md.workbook_loader import load_workbook_safe, a1_from_rc, parse_dimension, get_print_areas
 from excel2md.mermaid_generator import (
@@ -44,7 +45,7 @@ from excel2md.table_detection import (
     grid_to_tables,
     build_merged_lookup,
 )
-from excel2md.table_extraction import detect_table_title, extract_table, has_border, dispatch_table_output
+from excel2md.table_extraction import detect_table_title, extract_table, dispatch_table_output
 from excel2md.table_formatting import (
     is_source_code,
     detect_code_language,
