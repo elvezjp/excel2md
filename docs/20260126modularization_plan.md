@@ -246,7 +246,7 @@ uv run python v2.0/excel_to_md.py test_standard.xlsx --hyperlink-mode footnote
 ```
 - [x] `inline` モードで `[テキスト](URL)` 形式で出力される
 - [x] `inline_plain` モードで `テキスト (URL)` 形式で出力される
-- [ ] `footnote` モードで脚注形式 `テキスト[^1]` で出力される ※問題あり
+- [x] `footnote` モードで脚注形式 `テキスト[^1]` で出力される
 - [x] 内部リンク（シート参照）が `→シート名!セル` 形式で出力される
 - [x] mailtoリンクが正しく処理される
 
@@ -254,7 +254,7 @@ uv run python v2.0/excel_to_md.py test_standard.xlsx --hyperlink-mode footnote
 - [x] `test_standard_images/` ディレクトリが作成される
 - [x] PNG画像が `画像_img_1.png` として抽出される
 - [x] JPEG画像が `画像_img_2.jpg` として抽出される
-- [ ] CSVに `![alt](test_standard_images/...)` 形式でリンクが出力される ※問題あり
+- [x] CSVに `![alt](test_standard_images/...)` 形式でリンクが出力される
 
 ```bash
 uv run python v2.0/excel_to_md.py test_standard.xlsx --no-image-extraction
@@ -270,7 +270,7 @@ uv run python v2.0/excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermaid-
 ```
 - [x] フローチャート図形からMermaidコードが生成される
 - [x] 矩形が `["テキスト"]`、ひし形が `{"テキスト"}` で出力される
-- [ ] コネクタが `-->` で接続される ※問題あり（`-.->|inferred|` で出力）
+- [x] コネクタが `-->` で接続される
 - [x] `--mermaid-direction LR` で `flowchart LR` が出力される
 
 **Sheet2「テーブルフロー」の確認**
@@ -283,41 +283,27 @@ uv run python v2.0/excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermaid-
 
 ---
 
-## 既知の問題
+## 既知の問題（すべて修正済み）
 
-### 問題1: 脚注番号の重複
+> 以下の3つの問題は動作テストで発見され、修正済みです。
+
+### 問題1: 脚注番号の重複 ✅ 修正済み
 - **現象**: `--hyperlink-mode footnote` で全リンクの脚注番号が `[^1]` になる
 - **期待**: 各リンクに連番 `[^1]`, `[^2]`, `[^3]`... が付与される
-- **影響**: 脚注が正しく参照されない
 - **原因箇所**: `table_extraction.py` 248行目、258行目
-- **原因**: 脚注番号の計算で `len(footnotes)` を使用しているが、`footnotes` は関数引数で関数内では変化しない。実際に追加される `note_refs` の長さを使うべき
-- **修正案**: `n = footnote_index_start + len(footnotes)` → `n = footnote_index_start + len(note_refs)`
+- **原因**: 脚注番号の計算で `len(footnotes)` を使用しているが、`footnotes` は関数引数で関数内では変化しない
+- **修正内容**: `len(footnotes)` → `len(note_refs)` に変更
 
-### 問題2: CSV内の画像リンク
+### 問題2: CSV内の画像リンク ✅ 修正済み
 - **現象**: CSVコードブロック内に画像リンク `![alt](path)` が含まれない
 - **期待**: 画像が配置されたセルに `![alt](test_standard_images/...)` 形式でリンクが出力される
 - **原因箇所**: `runner.py` 233-236行目
-- **原因**: `used_range`（A1:A6）はテキストがある範囲のみで、画像が配置されているB列（col=2）を含まない。CSV出力時に `union_area` の範囲のみをループするため、B列の画像セルは参照されない
-- **修正案**: `cell_to_image` のキーを参照し、画像がある位置を含むように `union_area` を拡張する
-  ```python
-  if cell_to_image:
-      for (img_row, img_col) in cell_to_image.keys():
-          union_area = (min(union_area[0], img_row), min(union_area[1], img_col),
-                        max(union_area[2], img_row), max(union_area[3], img_col))
-  ```
+- **原因**: `used_range` はテキストがある範囲のみで、画像が配置されている列を含まない
+- **修正内容**: `cell_to_image` のキーを参照し、画像がある位置を含むように `union_area` を拡張
 
-### 問題3: Shapesモードのコネクタ表現
+### 問題3: Shapesモードのコネクタ表現 ✅ 修正済み
 - **現象**: shapes検出モードでコネクタが `-.->|inferred|` （破線＋推論ラベル）で出力される
 - **期待**: 実線矢印 `-->` で接続される
 - **原因箇所**: `mermaid_generator.py` 251-252行目
-- **原因**: コネクタの接続情報 (`stCxn`, `endCxn`) は `a:` 名前空間（drawingml/2006/main）にあるが、コードは `xdr:` 名前空間で検索しているため見つからない
-  ```python
-  # 現在（バグ）
-  st = cxn.find(".//xdr:stCxn", _DRAWINGML_NS)
-  ed = cxn.find(".//xdr:endCxn", _DRAWINGML_NS)
-  ```
-- **修正案**:
-  ```python
-  st = cxn.find(".//a:stCxn", _DRAWINGML_NS)
-  ed = cxn.find(".//a:endCxn", _DRAWINGML_NS)
-  ```
+- **原因**: コネクタの接続情報は `a:` 名前空間にあるが、コードは `xdr:` 名前空間で検索していた
+- **修正内容**: `xdr:stCxn` → `a:stCxn`、`xdr:endCxn` → `a:endCxn` に変更

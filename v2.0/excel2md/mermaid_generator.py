@@ -248,8 +248,8 @@ def _v14_extract_shapes_to_mermaid(xlsx_path: str, ws, opts) -> Optional[str]:
 
                 nodes.append({"id": _id, "name": name, "text": text, "bbox": bbox, "type": shape_type})
             elif cxn is not None:
-                st = cxn.find(".//xdr:stCxn", _DRAWINGML_NS)
-                ed = cxn.find(".//xdr:endCxn", _DRAWINGML_NS)
+                st = cxn.find(".//a:stCxn", _DRAWINGML_NS)
+                ed = cxn.find(".//a:endCxn", _DRAWINGML_NS)
                 st_id = f"s{st.get('id')}" if st is not None and st.get("id") else None
                 ed_id = f"s{ed.get('id')}" if ed is not None and ed.get("id") else None
                 if st_id and ed_id:

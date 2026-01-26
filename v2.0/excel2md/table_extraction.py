@@ -245,7 +245,7 @@ def extract_table(ws, table, opts, footnotes, footnote_index_start, merged_looku
                     elif opts["hyperlink_mode"] == "inline_plain":
                         text = f"{disp} ({link})"
                     if opts["hyperlink_mode"] in ("footnote", "both"):
-                        n = footnote_index_start + len(footnotes)
+                        n = footnote_index_start + len(note_refs)
                         note_refs.append((n, link))
                         text = f"{text}[^{n}]"
                 elif hl.get("location"):
@@ -255,7 +255,7 @@ def extract_table(ws, table, opts, footnotes, footnote_index_start, merged_looku
                     elif opts["hyperlink_mode"] == "inline_plain":
                         text = f"{disp} (→{loc})"
                     elif opts["hyperlink_mode"] in ("footnote", "both"):
-                        n = footnote_index_start + len(footnotes)
+                        n = footnote_index_start + len(note_refs)
                         note_refs.append((n, loc))
                         text = f"{disp}[^{n}]"
 
