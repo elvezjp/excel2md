@@ -33,8 +33,8 @@ Excel to Markdown converter. Reads Excel workbooks (.xlsx/.xlsm) and automatical
 - [CHANGELOG.md](CHANGELOG.md) - Version history
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
 - [SECURITY.md](SECURITY.md) - Security policy and best practices
+- [v2.0/spec.md](v2.0/spec.md) - Technical specification (v2.0)
 - [v1.8/spec.md](v1.8/spec.md) - Technical specification (v1.8)
-- [v1.7/spec.md](v1.7/spec.md) - Technical specification (v1.7)
 
 ## Setup
 
@@ -56,7 +56,7 @@ uv sync
 ## Usage
 
 ```bash
-uv run python v1.8/excel_to_md.py input.xlsx
+uv run python v2.0/excel_to_md.py input.xlsx
 ```
 This generates:
 - `input_csv.md`: CSV markdown format (default)
@@ -70,34 +70,34 @@ This generates:
 
 **Convert with Mermaid flowchart support:**
 ```bash
-uv run python v1.8/excel_to_md.py input.xlsx --mermaid-enabled
+uv run python v2.0/excel_to_md.py input.xlsx --mermaid-enabled
 ```
 
 **Generate individual files per sheet:**
 ```bash
-uv run python v1.8/excel_to_md.py input.xlsx --split-by-sheet
+uv run python v2.0/excel_to_md.py input.xlsx --split-by-sheet
 ```
 
 **Specify CSV markdown output directory:**
 ```bash
-uv run python v1.8/excel_to_md.py input.xlsx --csv-output-dir ./output
+uv run python v2.0/excel_to_md.py input.xlsx --csv-output-dir ./output
 # CSV markdown: ./output/input_csv.md
 # Images: ./output/input_images/
 ```
 
 **Output standard Markdown only (no CSV output):**
 ```bash
-uv run python v1.8/excel_to_md.py input.xlsx -o output.md --no-csv-markdown-enabled
+uv run python v2.0/excel_to_md.py input.xlsx -o output.md --no-csv-markdown-enabled
 ```
 
 **Plain text hyperlinks (no Markdown syntax):**
 ```bash
-uv run python v1.8/excel_to_md.py input.xlsx --hyperlink-mode inline_plain
+uv run python v2.0/excel_to_md.py input.xlsx --hyperlink-mode inline_plain
 ```
 
 **Reduce token count (exclude CSV summary section):**
 ```bash
-uv run python v1.8/excel_to_md.py input.xlsx --no-csv-include-description
+uv run python v2.0/excel_to_md.py input.xlsx --no-csv-include-description
 ```
 
 ## Key Options
@@ -149,7 +149,7 @@ uv run python v1.8/excel_to_md.py input.xlsx --no-csv-include-description
 ```markdown
 # Conversion Result: sample.xlsx
 
-- Spec Version: 1.7
+- Spec Version: 2.0
 - Sheet Count: 2
 - Sheet List: Sheet1, Summary
 
@@ -232,7 +232,7 @@ If a company logo image is at cell position (B2):
 List all options:
 
 ```bash
-uv run python v1.8/excel_to_md.py --help
+uv run python v2.0/excel_to_md.py --help
 ```
 
 Key advanced options:
@@ -247,14 +247,21 @@ Key advanced options:
 
 ```
 excel2md/
-├── v1.8/                       # Latest version
+├── v2.0/                       # Latest version
+│   ├── excel_to_md.py          # Entry point
+│   ├── excel2md/               # Main package
+│   ├── tests/                  # Test suite
+│   ├── spec.md                 # Specification
+│   └── spec_appendix.md        # Specification appendix
+├── v1.8/                       # Legacy version
 │   ├── excel_to_md.py          # Main conversion program
 │   ├── spec.md                 # Specification
 │   └── tests/                  # Test suite
-├── v1.7/                       # Previous version
+├── v1.7/                       # Legacy version
 │   ├── excel_to_md.py          # Main conversion program
 │   ├── spec.md                 # Specification
 │   └── tests/                  # Test suite
+├── docs/                   # Documentation
 ├── pyproject.toml          # Project metadata
 ├── LICENSE                 # MIT License
 ├── README.md               # This file

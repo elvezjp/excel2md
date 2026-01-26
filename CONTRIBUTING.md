@@ -40,10 +40,10 @@
 3. 変更に対する**テストを作成**
    ```bash
    # テストを実行
-   uv run pytest v1.7/tests
+   uv run pytest v2.0/tests
 
    # カバレッジ付きでテストを実行
-   uv run pytest v1.7/tests --cov=v1.7 --cov-report=html
+   uv run pytest v2.0/tests --cov=v2.0 --cov-report=html
    ```
 
 4. 必要に応じて**ドキュメントを更新**
@@ -89,13 +89,13 @@ uv sync --extra test
 
 ```bash
 # すべてのテストを実行
-uv run pytest v1.7/tests
+uv run pytest v2.0/tests
 
 # 特定のテストファイルを実行
-uv run pytest v1.7/tests/test_csv_markdown.py
+uv run pytest v2.0/tests/test_csv_markdown.py
 
 # カバレッジ付きで実行
-uv run pytest v1.7/tests --cov=v1.7 --cov-report=html
+uv run pytest v2.0/tests --cov=v2.0 --cov-report=html
 ```
 
 ### 変更のテスト
@@ -143,7 +143,7 @@ Closes #123
 ## バージョン管理
 
 貢献する際は：
-- 最新バージョン（`v1.7/`）に焦点を当てる
+- 最新バージョン（`v2.0/`）に焦点を当てる
 - 可能な限り後方互換性を維持する
 - 破壊的変更は明確にドキュメント化する
 
