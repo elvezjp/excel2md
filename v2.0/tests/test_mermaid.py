@@ -1,6 +1,5 @@
 """
 Unit tests for Mermaid and code detection functions.
-Spec reference: 付録D.3.5
 """
 import pytest
 import sys
@@ -60,18 +59,18 @@ def create_mock_cell(value=None, fill_color=None, hyperlink_target=None,
 
 
 # ============================================================
-# Tests for is_source_code (D.3.5.1)
+# Tests for is_source_code
 # ============================================================
 
 class TestIsSourceCode:
     """Tests for source code detection."""
 
-    def test_sc001_java_class(self):
-        """SC001: Java class definition is detected as code."""
+    def test_java_class(self):
+        """Java class definition is detected as code."""
         assert is_source_code("public class Foo {") is True
 
-    def test_sc002_python_function(self):
-        """SC002: Python function definition without braces/semicolons.
+    def test_python_function(self):
+        """Python function definition without braces/semicolons.
 
         Implementation requires both keyword AND symbol ({, }, ;, //, etc.)
         Python-style code with just colon is not detected.
@@ -81,24 +80,24 @@ class TestIsSourceCode:
         # With brace it would be detected
         assert is_source_code("def foo(): {") is True
 
-    def test_sc003_java_annotation(self):
-        """SC003: Java annotation is detected as code."""
+    def test_java_annotation(self):
+        """Java annotation is detected as code."""
         assert is_source_code("@Override") is True
 
-    def test_sc004_javascript_function(self):
-        """SC004: JavaScript function is detected as code."""
+    def test_javascript_function(self):
+        """JavaScript function is detected as code."""
         assert is_source_code("function test() {}") is True
 
-    def test_sc005_normal_text(self):
-        """SC005: Normal text is not detected as code."""
+    def test_normal_text(self):
+        """Normal text is not detected as code."""
         assert is_source_code("Hello World") is False
 
-    def test_sc006_numeric_string(self):
-        """SC006: Numeric string is not detected as code."""
+    def test_numeric_string(self):
+        """Numeric string is not detected as code."""
         assert is_source_code("123.45") is False
 
-    def test_sc007_empty_string(self):
-        """SC007: Empty string is not detected as code."""
+    def test_empty_string(self):
+        """Empty string is not detected as code."""
         assert is_source_code("") is False
 
     def test_whitespace_only(self):
@@ -175,32 +174,32 @@ class TestIsSourceCode:
 
 
 # ============================================================
-# Tests for detect_code_language (D.3.5.2)
+# Tests for detect_code_language
 # ============================================================
 
 class TestDetectCodeLanguage:
     """Tests for programming language detection."""
 
-    def test_dl001_java(self):
-        """DL001: Java code detection."""
+    def test_java(self):
+        """Java code detection."""
         lines = ["public class Example {", "import java.util.List;"]
         result = detect_code_language(lines)
         assert result == "java"
 
-    def test_dl002_python(self):
-        """DL002: Python code detection."""
+    def test_python(self):
+        """Python code detection."""
         lines = ["def foo():", "import os"]
         result = detect_code_language(lines)
         assert result == "python"
 
-    def test_dl003_javascript(self):
-        """DL003: JavaScript code detection."""
+    def test_javascript(self):
+        """JavaScript code detection."""
         lines = ["const x = 1;", "function test() {}"]
         result = detect_code_language(lines)
         assert result == "javascript"
 
-    def test_dl004_unknown(self):
-        """DL004: Unknown language returns empty string."""
+    def test_unknown(self):
+        """Unknown language returns empty string."""
         lines = ["普通のテキスト", "もっとテキスト"]
         result = detect_code_language(lines)
         assert result == ""

@@ -1,6 +1,5 @@
 """
 Unit tests for hyperlink processing functions.
-Spec reference: 付録D.3.4
 """
 import pytest
 import sys
@@ -57,14 +56,14 @@ def create_mock_cell(value=None, fill_color=None, hyperlink_target=None,
 
 
 # ============================================================
-# Tests for hyperlink_info (D.3.4.1)
+# Tests for hyperlink_info
 # ============================================================
 
 class TestHyperlinkInfo:
     """Tests for hyperlink information extraction."""
 
-    def test_hi001_external_url(self):
-        """HI001: External URL hyperlink."""
+    def test_external_url(self):
+        """External URL hyperlink."""
         cell = create_mock_cell(
             value="Click here",
             hyperlink_target="https://example.com"
@@ -75,8 +74,8 @@ class TestHyperlinkInfo:
         assert result['target'] == "https://example.com"
         assert result['location'] is None
 
-    def test_hi002_internal_link(self):
-        """HI002: Internal sheet link."""
+    def test_internal_link(self):
+        """Internal sheet link."""
         cell = create_mock_cell(
             value="Go to Sheet2",
             hyperlink_location="Sheet2!A1"
@@ -87,15 +86,15 @@ class TestHyperlinkInfo:
         assert result['location'] == "Sheet2!A1"
         assert result['target'] is None
 
-    def test_hi003_no_hyperlink(self):
-        """HI003: Cell without hyperlink."""
+    def test_no_hyperlink(self):
+        """Cell without hyperlink."""
         cell = create_mock_cell(value="Plain text")
         result = hyperlink_info(cell)
 
         assert result is None
 
-    def test_hi004_mailto_link(self):
-        """HI004: mailto: hyperlink."""
+    def test_mailto_link(self):
+        """mailto: hyperlink."""
         cell = create_mock_cell(
             value="Email us",
             hyperlink_target="mailto:user@example.com"
@@ -154,50 +153,50 @@ class TestHyperlinkInfo:
 
 
 # ============================================================
-# Tests for is_valid_url (D.3.4.2)
+# Tests for is_valid_url
 # ============================================================
 
 class TestIsValidUrl:
     """Tests for URL validation."""
 
-    def test_vu001_https_url(self):
-        """VU001: HTTPS URL is valid."""
+    def test_https_url(self):
+        """HTTPS URL is valid."""
         assert is_valid_url("https://example.com") is True
 
-    def test_vu002_http_url(self):
-        """VU002: HTTP URL is valid."""
+    def test_http_url(self):
+        """HTTP URL is valid."""
         assert is_valid_url("http://example.com") is True
 
-    def test_vu003_mailto(self):
-        """VU003: mailto: URL is valid."""
+    def test_mailto(self):
+        """mailto: URL is valid."""
         assert is_valid_url("mailto:user@example.com") is True
 
-    def test_vu004_file_url(self):
-        """VU004: file:// URL is valid."""
+    def test_file_url(self):
+        """file:// URL is valid."""
         assert is_valid_url("file:///path/to/file") is True
 
-    def test_vu005_relative_path_dot(self):
-        """VU005: Relative path with ./ is valid."""
+    def test_relative_path_dot(self):
+        """Relative path with ./ is valid."""
         assert is_valid_url("./relative/path") is True
 
-    def test_vu005_relative_path_dotdot(self):
-        """VU005: Relative path with ../ is valid."""
+    def test_relative_path_dotdot(self):
+        """Relative path with ../ is valid."""
         assert is_valid_url("../parent/path") is True
 
-    def test_vu005_absolute_path(self):
-        """VU005: Absolute path with / is valid."""
+    def test_absolute_path(self):
+        """Absolute path with / is valid."""
         assert is_valid_url("/absolute/path") is True
 
-    def test_vu006_javascript_invalid(self):
-        """VU006: javascript: URL is invalid."""
+    def test_javascript_invalid(self):
+        """javascript: URL is invalid."""
         assert is_valid_url("javascript:alert(1)") is False
 
-    def test_vu007_empty_string(self):
-        """VU007: Empty string is invalid."""
+    def test_empty_string(self):
+        """Empty string is invalid."""
         assert is_valid_url("") is False
 
-    def test_vu008_none(self):
-        """VU008: None is invalid."""
+    def test_none(self):
+        """None is invalid."""
         assert is_valid_url(None) is False
 
     def test_plain_text(self):

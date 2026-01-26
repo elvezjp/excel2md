@@ -1,6 +1,5 @@
 """
 Unit tests for Markdown output functions.
-Spec reference: 付録D.2.1
 """
 import pytest
 import sys
@@ -19,7 +18,7 @@ from excel_to_md import (
 
 
 # ============================================================
-# Tests for make_markdown_table (D.2.1)
+# Tests for make_markdown_table
 # ============================================================
 
 class TestMakeMarkdownTable:
@@ -121,7 +120,7 @@ class TestMakeMarkdownTable:
 
 
 # ============================================================
-# Tests for detect_right_align (D.2.1)
+# Tests for detect_right_align
 # ============================================================
 
 class TestDetectRightAlign:

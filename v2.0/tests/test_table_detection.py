@@ -1,6 +1,5 @@
 """
 Unit tests for table detection functions.
-Spec reference: 付録D.3.2
 """
 import pytest
 import sys
@@ -21,30 +20,30 @@ from excel_to_md import (
 
 
 # ============================================================
-# Tests for carve_rectangles (D.3.2.2)
+# Tests for carve_rectangles
 # ============================================================
 
 class TestCarveRectangles:
     """Tests for maximum rectangle decomposition."""
 
-    def test_cr001_single_rectangle(self, grid_3x3_full):
-        """CR001: Full 3x3 grid should be single rectangle."""
+    def test_single_rectangle(self, grid_3x3_full):
+        """Full 3x3 grid should be single rectangle."""
         rects = carve_rectangles(grid_3x3_full)
         assert len(rects) == 1
         # Should cover entire grid
         top, left, bottom, right = rects[0]
         assert (bottom - top + 1) * (right - left + 1) == 9
 
-    def test_cr002_l_shape(self, grid_l_shape):
-        """CR002: L-shape should decompose to 2 rectangles."""
+    def test_l_shape(self, grid_l_shape):
+        """L-shape should decompose to 2 rectangles."""
         rects = carve_rectangles(grid_l_shape)
         assert len(rects) >= 1  # At least 1 rectangle
         # Total cells covered should be 5 (L-shape has 5 cells)
         total_cells = sum((b - t + 1) * (r - l + 1) for t, l, b, r in rects)
         assert total_cells == 5
 
-    def test_cr003_t_shape(self):
-        """CR003: T-shape should decompose to multiple rectangles."""
+    def test_t_shape(self):
+        """T-shape should decompose to multiple rectangles."""
         # T-shape:
         # 1 1 1
         # 0 1 0
@@ -60,8 +59,8 @@ class TestCarveRectangles:
         total_cells = sum((b - t + 1) * (r - l + 1) for t, l, b, r in rects)
         assert total_cells == 5
 
-    def test_cr004_concave_shape(self):
-        """CR004: Concave shape should decompose correctly."""
+    def test_concave_shape(self):
+        """Concave shape should decompose correctly."""
         # Concave (U-shape):
         # 1 0 1
         # 1 0 1
@@ -161,7 +160,7 @@ class TestBfsComponents:
 
 
 # ============================================================
-# Tests for union_rects (D.2.4)
+# Tests for union_rects
 # ============================================================
 
 class TestUnionRects:
@@ -212,28 +211,28 @@ class TestUnionRects:
 
 
 # ============================================================
-# Tests for grid_to_tables (D.3.2.1)
+# Tests for grid_to_tables
 # ============================================================
 
 class TestGridToTables:
     """Tests for table detection from grid."""
 
-    def test_gt001_single_table(self, simple_worksheet, default_opts):
-        """GT001: Contiguous data should be single table."""
+    def test_single_table(self, simple_worksheet, default_opts):
+        """Contiguous data should be single table."""
         ws = simple_worksheet
         area = (1, 1, 2, 2)  # A1:B2
         tables = grid_to_tables(ws, area, hidden_policy="ignore", opts=default_opts)
         assert len(tables) == 1
 
-    def test_gt002_split_by_empty_row(self, worksheet_with_empty_rows, default_opts):
-        """GT002: Empty row should split into 2 tables."""
+    def test_split_by_empty_row(self, worksheet_with_empty_rows, default_opts):
+        """Empty row should split into 2 tables."""
         ws = worksheet_with_empty_rows
         area = (1, 1, 5, 2)  # A1:B5 with row 3 empty
         tables = grid_to_tables(ws, area, hidden_policy="ignore", opts=default_opts)
         assert len(tables) == 2
 
-    def test_gt006_all_empty(self, empty_workbook, default_opts):
-        """GT006: All empty cells should return no tables."""
+    def test_all_empty(self, empty_workbook, default_opts):
+        """All empty cells should return no tables."""
         ws = empty_workbook.active
         area = (1, 1, 3, 3)
         tables = grid_to_tables(ws, area, hidden_policy="ignore", opts=default_opts)
@@ -260,7 +259,7 @@ class TestGridToTables:
 
 
 # ============================================================
-# Tests for build_nonempty_grid (D.2.1)
+# Tests for build_nonempty_grid
 # ============================================================
 
 class TestBuildNonemptyGrid:
@@ -303,7 +302,7 @@ class TestBuildNonemptyGrid:
 
 
 # ============================================================
-# Tests for get_print_areas (D.2.4)
+# Tests for get_print_areas
 # ============================================================
 
 class TestGetPrintAreas:

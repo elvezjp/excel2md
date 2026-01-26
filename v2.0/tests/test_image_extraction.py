@@ -1,5 +1,5 @@
 """
-Unit tests for image extraction functionality (v1.8 extension).
+Unit tests for image extraction functionality.
 Tests the extract_images_from_sheet function and related image handling.
 """
 import pytest

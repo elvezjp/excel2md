@@ -1,6 +1,5 @@
 """
-pytest fixtures for v1.7 unit tests.
-Spec reference: 付録D.4
+pytest fixtures for excel2md unit tests.
 """
 import sys
 from pathlib import Path
@@ -11,7 +10,6 @@ import openpyxl
 from openpyxl.styles import PatternFill, Font
 from openpyxl.cell.cell import Cell
 
-# Add v1.7 to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
@@ -170,7 +168,7 @@ def opts_no_strip(default_opts):
 
 @pytest.fixture
 def opts_csv_no_description(default_opts):
-    """Options for CSV markdown without description (v1.7 feature)."""
+    """Options for CSV markdown without description."""
     opts = default_opts.copy()
     opts["csv_include_description"] = False
     return opts

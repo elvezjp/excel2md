@@ -1,6 +1,5 @@
 """
 Unit tests for cell utility functions.
-Spec reference: 付録D.3.1
 """
 import pytest
 import sys
@@ -67,7 +66,7 @@ def create_mock_cell(value=None, fill_color=None, hyperlink_target=None,
 
 
 # ============================================================
-# Tests for a1_from_rc (D.2.4)
+# Tests for a1_from_rc
 # ============================================================
 
 class TestA1FromRC:
@@ -96,7 +95,7 @@ class TestA1FromRC:
 
 
 # ============================================================
-# Tests for is_whitespace_only (D.2.4)
+# Tests for is_whitespace_only
 # ============================================================
 
 class TestIsWhitespaceOnly:
@@ -134,7 +133,7 @@ class TestIsWhitespaceOnly:
 
 
 # ============================================================
-# Tests for remove_control_chars (D.2.4)
+# Tests for remove_control_chars
 # ============================================================
 
 class TestRemoveControlChars:
@@ -164,64 +163,62 @@ class TestRemoveControlChars:
 
 
 # ============================================================
-# Tests for numeric_like (D.3.1.2)
+# Tests for numeric_like
 # ============================================================
 
 class TestNumericLike:
     """Tests for numeric string detection."""
 
-    # NL001-NL007: True cases
-    def test_nl001_integer(self):
-        """NL001: Plain integer."""
+    def test_integer(self):
+        """Plain integer."""
         assert numeric_like("123") is True
 
-    def test_nl002_negative_integer(self):
-        """NL002: Negative integer."""
+    def test_negative_integer(self):
+        """Negative integer."""
         assert numeric_like("-123") is True
 
-    def test_nl003_thousands_separator(self):
-        """NL003: Number with thousands separator."""
+    def test_thousands_separator(self):
+        """Number with thousands separator."""
         assert numeric_like("1,234") is True
 
-    def test_nl004_thousands_with_decimal(self):
-        """NL004: Number with thousands separator and decimal."""
+    def test_thousands_with_decimal(self):
+        """Number with thousands separator and decimal."""
         assert numeric_like("1,234.56") is True
 
-    def test_nl005_currency_yen(self):
-        """NL005: Currency symbol (Yen)."""
+    def test_currency_yen(self):
+        """Currency symbol (Yen)."""
         assert numeric_like("¥1,234") is True
 
-    def test_nl005_currency_dollar(self):
-        """NL005: Currency symbol (Dollar)."""
+    def test_currency_dollar(self):
+        """Currency symbol (Dollar)."""
         assert numeric_like("$1,234") is True
 
-    def test_nl006_parentheses_negative(self):
-        """NL006: Parentheses for negative number."""
+    def test_parentheses_negative(self):
+        """Parentheses for negative number."""
         assert numeric_like("(123)") is True
 
-    def test_nl007_percentage(self):
-        """NL007: Percentage."""
+    def test_percentage(self):
+        """Percentage."""
         assert numeric_like("12.5%") is True
 
-    # NL008-NL012: False cases
-    def test_nl008_alphabetic_string(self):
-        """NL008: Alphabetic string."""
+    def test_alphabetic_string(self):
+        """Alphabetic string."""
         assert numeric_like("abc") is False
 
-    def test_nl009_mixed_alphanumeric(self):
-        """NL009: Mixed alphanumeric."""
+    def test_mixed_alphanumeric(self):
+        """Mixed alphanumeric."""
         assert numeric_like("12abc") is False
 
-    def test_nl010_unbalanced_parentheses(self):
-        """NL010: Unbalanced parentheses."""
+    def test_unbalanced_parentheses(self):
+        """Unbalanced parentheses."""
         assert numeric_like("(123") is False
 
-    def test_nl011_multiple_decimals(self):
-        """NL011: Multiple decimal points."""
+    def test_multiple_decimals(self):
+        """Multiple decimal points."""
         assert numeric_like("1.2.3") is False
 
-    def test_nl012_empty_string(self):
-        """NL012: Empty string."""
+    def test_empty_string(self):
+        """Empty string."""
         assert numeric_like("") is False
 
     # Additional edge cases
@@ -244,7 +241,7 @@ class TestNumericLike:
 
 
 # ============================================================
-# Tests for normalize_numeric_text (D.2.1)
+# Tests for normalize_numeric_text
 # ============================================================
 
 class TestNormalizeNumericText:
@@ -291,42 +288,41 @@ class TestNormalizeNumericText:
 
 
 # ============================================================
-# Tests for md_escape (D.3.1.3)
+# Tests for md_escape
 # ============================================================
 
 class TestMdEscape:
     """Tests for Markdown escaping."""
 
-    # ME001-ME006: Basic escape tests
-    def test_me001_no_escape_needed(self):
-        """ME001: Text without special characters."""
+    def test_no_escape_needed(self):
+        """Text without special characters."""
         assert md_escape("text", "safe") == "text"
 
-    def test_me002_pipe_escape(self):
-        """ME002: Pipe character should be escaped."""
+    def test_pipe_escape(self):
+        """Pipe character should be escaped."""
         result = md_escape("a|b", "safe")
         assert "|" not in result or "\\|" in result
 
-    def test_me003_newline_to_br(self):
-        """ME003: Newline should be converted to <br> (escaped as <br\\>)."""
+    def test_newline_to_br(self):
+        """Newline should be converted to <br> (escaped as <br\\>)."""
         result = md_escape("line1\nline2", "safe")
         # md_escape first converts newlines to <br>, then escapes < and >
         # Result contains the escaped form
         assert "br" in result
 
-    def test_me004_asterisk_escape(self):
-        """ME004: Asterisk should be escaped."""
+    def test_asterisk_escape(self):
+        """Asterisk should be escaped."""
         result = md_escape("*bold*", "safe")
         assert "\\*" in result
 
-    def test_me005_minimal_preserves_brackets(self):
-        """ME005: Minimal level preserves some characters."""
+    def test_minimal_preserves_brackets(self):
+        """Minimal level preserves some characters."""
         result = md_escape("[link]", "minimal")
         # Minimal should be less aggressive
         assert result is not None
 
-    def test_me006_aggressive_backtick(self):
-        """ME006: Aggressive level escapes backticks."""
+    def test_aggressive_backtick(self):
+        """Aggressive level escapes backticks."""
         result = md_escape("`code`", "aggressive")
         assert "\\`" in result
 
@@ -353,7 +349,7 @@ class TestMdEscape:
 
 
 # ============================================================
-# Tests for no_fill (D.2.1)
+# Tests for no_fill
 # ============================================================
 
 class TestNoFill:
@@ -381,55 +377,55 @@ class TestNoFill:
 
 
 # ============================================================
-# Tests for cell_is_empty (D.3.1.1)
+# Tests for cell_is_empty
 # ============================================================
 
 class TestCellIsEmpty:
     """Tests for cell emptiness detection."""
 
-    def test_ce001_none_value_no_fill(self, default_opts):
-        """CE001: None value with no fill is empty."""
+    def test_none_value_no_fill(self, default_opts):
+        """None value with no fill is empty."""
         cell = create_mock_cell(value=None)
         assert cell_is_empty(cell, default_opts) is True
 
-    def test_ce002_empty_string_no_fill(self, default_opts):
-        """CE002: Empty string with no fill is empty."""
+    def test_empty_string_no_fill(self, default_opts):
+        """Empty string with no fill is empty."""
         cell = create_mock_cell(value="")
         assert cell_is_empty(cell, default_opts) is True
 
-    def test_ce003_whitespace_only_no_fill(self, default_opts):
-        """CE003: Whitespace only with no fill is empty."""
+    def test_whitespace_only_no_fill(self, default_opts):
+        """Whitespace only with no fill is empty."""
         cell = create_mock_cell(value="   ")
         assert cell_is_empty(cell, default_opts) is True
 
-    def test_ce004_text_no_fill(self, default_opts):
-        """CE004: Text with no fill is not empty."""
+    def test_text_no_fill(self, default_opts):
+        """Text with no fill is not empty."""
         cell = create_mock_cell(value="text")
         assert cell_is_empty(cell, default_opts) is False
 
-    def test_ce005_none_with_yellow_fill(self, default_opts):
-        """CE005: None value with yellow fill is not empty."""
+    def test_none_with_yellow_fill(self, default_opts):
+        """None value with yellow fill is not empty."""
         cell = create_mock_cell(value=None, fill_color="FFFF00")
         assert cell_is_empty(cell, default_opts) is False
 
-    def test_ce006_none_with_white_fill(self, default_opts):
-        """CE006: None value with white fill is empty (white = no fill)."""
+    def test_none_with_white_fill(self, default_opts):
+        """None value with white fill is empty (white = no fill)."""
         cell = create_mock_cell(value=None, fill_color="FFFFFF")
         assert cell_is_empty(cell, default_opts) is True
 
-    def test_ce007_zero_integer(self, default_opts):
-        """CE007: Integer 0 is not empty."""
+    def test_zero_integer(self, default_opts):
+        """Integer 0 is not empty."""
         cell = create_mock_cell(value=0)
         assert cell_is_empty(cell, default_opts) is False
 
-    def test_ce008_zero_float(self, default_opts):
-        """CE008: Float 0.0 is not empty."""
+    def test_zero_float(self, default_opts):
+        """Float 0.0 is not empty."""
         cell = create_mock_cell(value=0.0)
         assert cell_is_empty(cell, default_opts) is False
 
 
 # ============================================================
-# Tests for cell_display_value (D.2.1)
+# Tests for cell_display_value
 # ============================================================
 
 class TestCellDisplayValue:

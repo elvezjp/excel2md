@@ -1,6 +1,5 @@
 """
 Unit tests for CSV Markdown output functions.
-Spec reference: 付録D.3.3
 """
 import pytest
 import sys
@@ -118,14 +117,14 @@ class TestSanitizeSheetName:
 
 
 # ============================================================
-# Tests for extract_print_area_for_csv (D.3.3.1)
+# Tests for extract_print_area_for_csv
 # ============================================================
 
 class TestExtractPrintAreaForCSV:
     """Tests for CSV print area extraction."""
 
-    def test_ep001_basic_extraction(self, simple_worksheet, default_opts):
-        """EP001: Basic 2x2 data extraction."""
+    def test_basic_extraction(self, simple_worksheet, default_opts):
+        """Basic 2x2 data extraction."""
         ws = simple_worksheet
         area = (1, 1, 2, 2)
         merged_lookup = build_merged_lookup(ws, area)
@@ -139,8 +138,8 @@ class TestExtractPrintAreaForCSV:
         assert rows[1][0] == 'Data1'
         assert rows[1][1] == 'Data2'
 
-    def test_ep002_merged_cells(self, worksheet_with_merged_cells, default_opts):
-        """EP002: Merged cell handling with top_left_only."""
+    def test_merged_cells(self, worksheet_with_merged_cells, default_opts):
+        """Merged cell handling with top_left_only."""
         ws = worksheet_with_merged_cells
         area = (1, 1, 3, 3)
         merged_lookup = build_merged_lookup(ws, area)
@@ -152,8 +151,8 @@ class TestExtractPrintAreaForCSV:
         assert rows[0][1] == ''  # B1 (part of merged range, empty in top_left_only mode)
         assert rows[0][2] == ''  # C1 (part of merged range, empty in top_left_only mode)
 
-    def test_ep003_newline_replacement(self, empty_workbook, default_opts):
-        """EP003: Newlines in cells should be replaced with spaces."""
+    def test_newline_replacement(self, empty_workbook, default_opts):
+        """Newlines in cells should be replaced with spaces."""
         ws = empty_workbook.active
         ws['A1'] = "Line1\nLine2"
         ws['A2'] = "Line3\r\nLine4"
@@ -166,8 +165,8 @@ class TestExtractPrintAreaForCSV:
         assert '\r' not in rows[1][0]
         assert ' ' in rows[0][0]  # Newline replaced with space
 
-    def test_ep004_hyperlink_inline_plain(self, worksheet_with_hyperlinks, default_opts):
-        """EP004: Hyperlinks in inline_plain mode."""
+    def test_hyperlink_inline_plain(self, worksheet_with_hyperlinks, default_opts):
+        """Hyperlinks in inline_plain mode."""
         ws = worksheet_with_hyperlinks
         opts = default_opts.copy()
         opts['hyperlink_mode'] = 'inline_plain'
@@ -205,14 +204,14 @@ class TestExtractPrintAreaForCSV:
 
 
 # ============================================================
-# Tests for write_csv_markdown (D.3.3.2)
+# Tests for write_csv_markdown
 # ============================================================
 
 class TestWriteCSVMarkdown:
     """Tests for CSV Markdown file writing."""
 
-    def test_wc001_with_description(self, empty_workbook, sample_csv_data_dict, default_opts):
-        """WC001: CSV markdown with description section (default)."""
+    def test_with_description(self, empty_workbook, sample_csv_data_dict, default_opts):
+        """CSV markdown with description section (default)."""
         with tempfile.TemporaryDirectory() as tmpdir:
             opts = default_opts.copy()
             opts['csv_include_description'] = True
@@ -234,8 +233,8 @@ class TestWriteCSVMarkdown:
             assert '### CSV生成方法' in content
             assert '### CSV形式の仕様' in content
 
-    def test_wc002_without_description(self, empty_workbook, sample_csv_data_dict, default_opts):
-        """WC002: CSV markdown without description section (v1.7 feature)."""
+    def test_without_description(self, empty_workbook, sample_csv_data_dict, default_opts):
+        """CSV markdown without description section."""
         with tempfile.TemporaryDirectory() as tmpdir:
             opts = default_opts.copy()
             opts['csv_include_description'] = False
@@ -256,8 +255,8 @@ class TestWriteCSVMarkdown:
             assert '## 概要' not in content
             assert '### CSV生成方法' not in content
 
-    def test_wc003_with_metadata(self, empty_workbook, sample_csv_data_dict, default_opts):
-        """WC003: CSV markdown with metadata section."""
+    def test_with_metadata(self, empty_workbook, sample_csv_data_dict, default_opts):
+        """CSV markdown with metadata section."""
         with tempfile.TemporaryDirectory() as tmpdir:
             opts = default_opts.copy()
             opts['csv_include_description'] = False
@@ -278,8 +277,8 @@ class TestWriteCSVMarkdown:
             # The metadata is appended by the module, so we just check file exists
             assert Path(result).exists()
 
-    def test_wc004_without_metadata(self, empty_workbook, sample_csv_data_dict, default_opts):
-        """WC004: CSV markdown without metadata section."""
+    def test_without_metadata(self, empty_workbook, sample_csv_data_dict, default_opts):
+        """CSV markdown without metadata section."""
         with tempfile.TemporaryDirectory() as tmpdir:
             opts = default_opts.copy()
             opts['csv_include_description'] = False
@@ -299,8 +298,8 @@ class TestWriteCSVMarkdown:
             # Should NOT have metadata section
             assert '## 検証用メタデータ' not in content
 
-    def test_wc005_with_mermaid(self, empty_workbook, default_opts):
-        """WC005: CSV markdown with Mermaid block (v1.7 feature)."""
+    def test_with_mermaid(self, empty_workbook, default_opts):
+        """CSV markdown with Mermaid block."""
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create data with Mermaid content
             csv_data = {
