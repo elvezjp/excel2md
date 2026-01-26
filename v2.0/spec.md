@@ -668,3 +668,109 @@ uv run pytest tests/ --cov=. --cov-report=html  # カバレッジ付き
 - **言語検出**: 各言語固有のパターンによる言語判定を検証
 - **出力形式判定**: テキスト/ネスト/コード/テーブルの形式判定を検証
 
+### 11.3 動作テスト項目
+
+本節では、自動テストでカバーしにくい項目について、動作確認する試験項目を定義する。
+
+#### 必要なテスト用Excelファイル
+
+以下のExcelファイルを `v2.0/tests/fixtures/` ディレクトリに準備する。
+
+**test_standard.xlsx** - 標準テスト用（複数シート構成）
+- Sheet1「基本テーブル」: 通常のテーブル（ヘッダー行あり、数値・文字列混在）
+- Sheet2「結合セル」: 結合セルを含むテーブル
+- Sheet3「複数テーブル」: 空行で分割された複数テーブル、印刷領域設定あり
+- Sheet4「ハイパーリンク」: 外部URL、内部参照（シート内・他シート）、mailto
+- Sheet5「画像」: PNG画像、JPEG画像を複数配置
+
+**test_mermaid.xlsx** - Mermaidテスト用
+- Sheet1「図形フロー」: フローチャート図形（矩形、ひし形、楕円、コネクタ）
+- Sheet2「テーブルフロー」: From/To/Label列を持つフロー定義テーブル
+
+#### 11.3.1 CLI基本動作確認
+
+```bash
+uv run python v2.0/excel_to_md.py --help
+uv run python v2.0/excel_to_md.py --version
+uv run python v2.0/excel_to_md.py nonexistent.xlsx
+```
+
+- [ ] `--help` で全オプションの説明が表示される
+- [ ] `--version` でバージョン番号（2.0）が表示される
+- [ ] 存在しないファイル指定時、エラーメッセージと終了コード2で終了する
+
+#### 11.3.2 test_standard.xlsx を使用した確認
+
+**基本変換**
+```bash
+uv run python v2.0/excel_to_md.py test_standard.xlsx
+```
+- [ ] エラーなく `test_standard_csv.md` が生成される
+- [ ] 5シート分のCSVコードブロックが出力される
+- [ ] 概要セクションとメタデータセクションが含まれる
+
+**出力形式オプション**
+```bash
+uv run python v2.0/excel_to_md.py test_standard.xlsx --no-csv-markdown-enabled -o out.md
+uv run python v2.0/excel_to_md.py test_standard.xlsx --split-by-sheet
+uv run python v2.0/excel_to_md.py test_standard.xlsx --csv-output-dir ./output
+```
+- [ ] `--no-csv-markdown-enabled -o out.md` でGFMテーブル形式のMarkdownが出力される
+- [ ] `--split-by-sheet` でシートごとに個別ファイル（5ファイル）が生成される
+- [ ] `--csv-output-dir ./output` で指定ディレクトリに出力される
+
+**Sheet1「基本テーブル」の確認**
+- [ ] ヘッダー行が正しく認識される
+- [ ] 数値列が右寄せで出力される
+
+**Sheet2「結合セル」の確認**
+- [ ] 結合セルの値が左上セルに出力される
+- [ ] 結合範囲の他セルは空で出力される
+
+**Sheet3「複数テーブル」の確認**
+- [ ] 空行を境界として複数テーブルが検出される
+- [ ] 印刷領域内のみが変換対象となる
+
+**Sheet4「ハイパーリンク」の確認**
+```bash
+uv run python v2.0/excel_to_md.py test_standard.xlsx --hyperlink-mode inline
+uv run python v2.0/excel_to_md.py test_standard.xlsx --hyperlink-mode inline_plain
+uv run python v2.0/excel_to_md.py test_standard.xlsx --hyperlink-mode footnote
+```
+- [ ] `inline` モードで `[テキスト](URL)` 形式で出力される
+- [ ] `inline_plain` モードで `テキスト (URL)` 形式で出力される
+- [ ] `footnote` モードで脚注形式 `テキスト[^1]` で出力される
+- [ ] 内部リンク（シート参照）が `→シート名!セル` 形式で出力される
+- [ ] mailtoリンクが正しく処理される
+
+**Sheet5「画像」の確認**
+- [ ] `test_standard_images/` ディレクトリが作成される
+- [ ] PNG画像が `Sheet5_img_1.png` として抽出される
+- [ ] JPEG画像が `Sheet5_img_2.jpg` として抽出される
+- [ ] CSVに `![alt](test_standard_images/...)` 形式でリンクが出力される
+
+```bash
+uv run python v2.0/excel_to_md.py test_standard.xlsx --no-image-extraction
+```
+- [ ] `--no-image-extraction` で画像が抽出されない
+
+#### 11.3.3 test_mermaid.xlsx を使用した確認
+
+**Sheet1「図形フロー」の確認**
+```bash
+uv run python v2.0/excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermaid-detect-mode shapes
+uv run python v2.0/excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermaid-detect-mode shapes --mermaid-direction LR
+```
+- [ ] フローチャート図形からMermaidコードが生成される
+- [ ] 矩形が `[テキスト]`、ひし形が `{テキスト}`、楕円が `([テキスト])` で出力される
+- [ ] コネクタが `-->` で接続される
+- [ ] `--mermaid-direction LR` で `flowchart LR` が出力される
+
+**Sheet2「テーブルフロー」の確認**
+```bash
+uv run python v2.0/excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermaid-detect-mode column_headers
+uv run python v2.0/excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermaid-detect-mode column_headers --no-mermaid-keep-source-table
+```
+- [ ] From/To/Label列からMermaidコードが生成される
+- [ ] `--no-mermaid-keep-source-table` で元テーブルが出力されない
+
