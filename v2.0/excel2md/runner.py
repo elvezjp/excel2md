@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Run orchestration for Excel to Markdown conversion.
+"""メイン処理オーケストレーション
 
-仕様書参照: §4 処理フロー
+処理フロー全体の制御、各モジュールの呼び出し順序管理を担当する。
 """
 
 from pathlib import Path
@@ -18,15 +18,17 @@ from .image_extraction import extract_images_from_sheet
 from .csv_export import coords_to_excel_range, write_csv_markdown, extract_print_area_for_csv
 
 def run(input_path: str, output_path: Optional[str], args):
+    """Excel→Markdown変換のメイン処理を実行する。"""
+    # ワークブック読み込み
     wb = load_workbook_safe(input_path, read_only=args.read_only)
     sheets = wb.sheetnames
 
     split_by_sheet = getattr(args, "split_by_sheet", False)
 
-    # For split_by_sheet mode, use a dict to store md_lines for each sheet
+    # split_by_sheetモード: シートごとにMarkdown行と脚注を管理
     if split_by_sheet:
-        sheet_md_dict = {}  # {sheet_name: [md_lines]}
-        sheet_footnotes_dict = {}  # {sheet_name: [(idx, text)]}
+        sheet_md_dict = {}
+        sheet_footnotes_dict = {}
     else:
         md_lines = []
         md_lines.append(f"# 変換結果: {Path(input_path).name}")
@@ -36,10 +38,12 @@ def run(input_path: str, output_path: Optional[str], args):
         md_lines.append(f"- シート一覧: {', '.join(sheets)}")
         md_lines.append("\n---\n")
 
+    # 脚注管理
     footnotes: List[Tuple[int,str]] = []
     global_footnote_start = 1
     sheet_counter = 0
 
+    # オプション辞書の構築
     opts = {
         "no_print_area_mode": args.no_print_area_mode,
         "value_mode": args.value_mode,
@@ -88,7 +92,7 @@ def run(input_path: str, output_path: Optional[str], args):
         "detect_dates": True,
         "prefer_excel_display": args.prefer_excel_display,
 
-        # CSV markdown output options
+        # CSV Markdown出力オプション
         "csv_output_dir": getattr(args, "csv_output_dir", None),
         "csv_apply_merge_policy": getattr(args, "csv_apply_merge_policy", True),
         "csv_normalize_values": getattr(args, "csv_normalize_values", True),
@@ -96,22 +100,25 @@ def run(input_path: str, output_path: Optional[str], args):
         "csv_include_metadata": getattr(args, "csv_include_metadata", True),
         "csv_include_description": getattr(args, "csv_include_description", True),
 
-        # Image extraction options
+        # 画像抽出オプション
         "image_extraction": getattr(args, "image_extraction", True),
     }
 
-    # Prepare for CSV markdown output
+    # CSV Markdown出力の準備
     csv_output_dir = opts.get("csv_output_dir") or str(Path(input_path).parent)
     csv_basename = Path(input_path).stem
-    csv_markdown_data = {}  # For CSV markdown output (dict of sheet_name: rows)
+    csv_markdown_data = {}
 
+    # シート単位ループ
     for sname in sheets:
         sheet_counter += 1
         ws = wb[sname]
+
+        # 保護状態チェック
         if getattr(getattr(ws, "protection", None), "sheet", False):
             info(f"Sheet '{sname}' is protected (read-only); proceeding with read-only extraction.")
 
-        # Initialize current_md_lines for this sheet
+        # シートごとのMarkdown行を初期化
         if split_by_sheet:
             current_md_lines = []
             current_md_lines.append(f"# {sname}")
@@ -121,8 +128,8 @@ def run(input_path: str, output_path: Optional[str], args):
             current_md_lines.append("\n---\n")
             sheet_md_dict[sname] = current_md_lines
             sheet_footnotes_dict[sname] = []
+            # split_by_sheetモードではシート単位で脚注を独立管理
             if opts["footnote_scope"] == "book":
-                # For split_by_sheet mode, treat each sheet as independent (sheet scope)
                 footnotes = []
                 global_footnote_start = 1
         else:
@@ -135,36 +142,45 @@ def run(input_path: str, output_path: Optional[str], args):
         if not split_by_sheet:
             current_md_lines.append(f"## {sname}\n")
 
-        # シェイプ（図形）からのMermaid検出（シート単位で実行）
+        # shapes検出モード時のMermaid生成
         shapes_mermaid = None
         if opts.get("mermaid_enabled", False) and opts.get("mermaid_detect_mode") == "shapes":
             shapes_mermaid = _v14_extract_shapes_to_mermaid(input_path, ws, opts)
             if shapes_mermaid:
                 current_md_lines.append(shapes_mermaid + "\n")
                 current_md_lines.append("\n---\n")
+
+        # 印刷領域取得
         areas = get_print_areas(ws, opts["no_print_area_mode"])
         if not areas:
             current_md_lines.append("（テーブルなし）\n\n---\n")
             continue
 
+        # 矩形和集合計算
         unioned = union_rects(areas)
 
+        # 脚注スコープ処理
         if opts["footnote_scope"] == "sheet":
             footnotes = []
             global_footnote_start = 1
 
         table_id = 0
 
+        # 矩形・テーブル単位ループ
         for union_area in unioned:
+            # 結合セルマップ作成
             merged_lookup = build_merged_lookup(ws, union_area)
+
+            # テーブル分割検出
             tables = grid_to_tables(ws, union_area, hidden_policy=opts["hidden_policy"], opts=opts)
             if not tables:
                 continue
 
-            # Process tables
+            # 各テーブル単位ループ
             for tbl in tables:
                 table_id += 1
 
+                # テーブル抽出
                 md_rows, note_refs, truncated, table_title = extract_table(ws, tbl, opts, footnotes, global_footnote_start, merged_lookup, print_area=union_area)
 
                 if table_title:
@@ -178,6 +194,7 @@ def run(input_path: str, output_path: Optional[str], args):
                     current_md_lines.append("（テーブルなし）\n")
                     continue
 
+                # テーブル形式判定・出力
                 format_type, formatted_output = dispatch_table_output(ws, tbl, md_rows, opts, merged_lookup, xlsx_path=input_path)
 
                 if format_type == "text":
@@ -191,8 +208,7 @@ def run(input_path: str, output_path: Optional[str], args):
                 elif format_type == "empty":
                     current_md_lines.append("\n")
                 else:
-                    # Note: dispatch_table_output() already handles table formatting,
-                    # but this branch handles cases where format_type is "table" from dispatch
+                    # 通常テーブル形式
                     hdr = opts.get("header_detection", True)
                     table_md = make_markdown_table(
                         md_rows,
@@ -206,29 +222,30 @@ def run(input_path: str, output_path: Optional[str], args):
 
             current_md_lines.append("\n---\n")
 
+        # CSV Markdown出力処理
         if opts.get("csv_markdown_enabled", True):
+            # 画像抽出
             cell_to_image = {}
             if opts.get("image_extraction", True):
                 cell_to_image = extract_images_from_sheet(ws, Path(csv_output_dir), sname, csv_basename, opts, xlsx_path=input_path)
 
-            # Collect CSV data for markdown output
+            # CSVデータ収集
             for union_area in unioned:
                 merged_lookup = build_merged_lookup(ws, union_area)
                 try:
                     csv_rows = extract_print_area_for_csv(ws, union_area, opts, merged_lookup, cell_to_image)
                     if csv_rows:
-                        # Store both CSV rows and Excel range info
                         excel_range = coords_to_excel_range(*union_area)
                         csv_markdown_data[sname] = {
                             "rows": csv_rows,
                             "range": excel_range,
                             "area": union_area,
-                            "mermaid": None  # Will be populated if mermaid_enabled=true and mermaid_detect_mode="shapes"
+                            "mermaid": None,
                         }
                 except Exception as e:
                     warn(f"CSV data extraction failed for sheet '{sname}': {e}")
 
-            # Extract Mermaid for CSV markdown if mermaid_enabled=true
+            # CSV Markdown用Mermaid抽出
             if opts.get("mermaid_enabled", False) and sname in csv_markdown_data:
                 detect_mode = opts.get("mermaid_detect_mode", "shapes")
                 if detect_mode == "shapes":
@@ -239,11 +256,10 @@ def run(input_path: str, output_path: Optional[str], args):
                     except Exception as e:
                         warn(f"Mermaid extraction for CSV markdown failed for sheet '{sname}': {e}")
                 elif detect_mode in ("column_headers", "heuristic"):
-                    # column_headers and heuristic modes are not supported for CSV markdown
-                    # because CSV markdown does not split tables
+                    # CSV Markdownではcolumn_headers/heuristicモード非対応（テーブル分割なしのため）
                     warn(f"mermaid_detect_mode='{detect_mode}' is not supported for CSV markdown output (only 'shapes' is supported). Mermaid output will be skipped for sheet '{sname}'.")
 
-        # For split_by_sheet mode, save footnotes for this sheet and add to file
+        # split_by_sheetモード: シートごとの脚注を保存・出力
         if split_by_sheet:
             sheet_footnotes_dict[sname] = list(footnotes)
             if footnotes and opts["hyperlink_mode"] in ("footnote", "both"):
@@ -252,7 +268,7 @@ def run(input_path: str, output_path: Optional[str], args):
                 for idx, txt in footnotes_sorted:
                     current_md_lines.append(f"[^{idx}]: {txt}")
 
-    # For non-split mode, add footnotes at the end
+    # 通常モード: ドキュメント末尾に脚注を追加
     if not split_by_sheet:
         if footnotes and opts["hyperlink_mode"] in ("footnote", "both"):
             footnotes_sorted = sorted(set(footnotes), key=lambda x: x[0])
@@ -260,15 +276,13 @@ def run(input_path: str, output_path: Optional[str], args):
             for idx, txt in footnotes_sorted:
                 md_lines.append(f"[^{idx}]: {txt}")
 
-    # Write output file(s)
-    # csv_markdown_enabled=true: CSV markdown only
-    # csv_markdown_enabled=false: Regular markdown only
+    # 出力ファイル書き込み
     if opts.get("csv_markdown_enabled", True):
-        # CSV markdown output mode
+        # CSV Markdown出力モード
         if csv_markdown_data:
             try:
                 if split_by_sheet:
-                    # Split by sheet: write each sheet to separate CSV markdown file
+                    # シートごと分割出力
                     output_dir = Path(output_path).parent if output_path else Path(input_path).parent
                     output_basename = Path(output_path).stem if output_path else Path(input_path).stem
                     output_files = []
@@ -276,9 +290,8 @@ def run(input_path: str, output_path: Optional[str], args):
                     for sname in sheets:
                         if sname not in csv_markdown_data:
                             continue
-                        # Sanitize sheet name for filename
+                        # シート名をファイル名用にサニタイズ
                         safe_sheet_name = "".join(c if c.isalnum() or c in (' ', '-', '_') else '_' for c in sname)
-                        # Write single-sheet CSV markdown
                         single_sheet_data = {sname: csv_markdown_data[sname]}
                         csv_file = write_csv_markdown(
                             wb, single_sheet_data,
@@ -290,7 +303,7 @@ def run(input_path: str, output_path: Optional[str], args):
 
                     return "\n".join([f"シートごとに分割してCSVマークダウン出力しました:"] + output_files)
                 else:
-                    # Normal mode: write all sheets to single CSV markdown file
+                    # 通常モード: 単一ファイルに全シート出力
                     csv_file = write_csv_markdown(wb, csv_markdown_data, csv_basename, opts, csv_output_dir)
                     return csv_file or "CSV markdown output completed"
             except Exception as e:
@@ -300,9 +313,9 @@ def run(input_path: str, output_path: Optional[str], args):
             warn("No CSV data to output")
             return None
 
-    # Regular markdown output mode (csv_markdown_enabled=false)
+    # 通常Markdown出力モード
     if split_by_sheet:
-        # Split by sheet mode: write each sheet to a separate file
+        # シートごと分割出力
         output_dir = Path(output_path).parent if output_path else Path(input_path).parent
         output_basename = Path(output_path).stem if output_path else Path(input_path).stem
         output_files = []
@@ -310,7 +323,7 @@ def run(input_path: str, output_path: Optional[str], args):
         for sname in sheets:
             if sname not in sheet_md_dict:
                 continue
-            # Sanitize sheet name for filename
+            # シート名をファイル名用にサニタイズ
             safe_sheet_name = "".join(c if c.isalnum() or c in (' ', '-', '_') else '_' for c in sname)
             sheet_output_path = output_dir / f"{output_basename}_{safe_sheet_name}.md"
             Path(sheet_output_path).write_text("\n".join(sheet_md_dict[sname]), encoding="utf-8")
@@ -318,7 +331,7 @@ def run(input_path: str, output_path: Optional[str], args):
 
         return "\n".join([f"シートごとに分割して出力しました:"] + output_files)
     else:
-        # Normal mode: write all sheets to a single file
+        # 通常モード: 単一ファイルに出力
         if not output_path:
             output_path = str(Path(input_path).with_suffix(".md"))
         Path(output_path).write_text("\n".join(md_lines), encoding="utf-8")
