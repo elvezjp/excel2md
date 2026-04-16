@@ -6,8 +6,8 @@
 
 from .output import warn
 from .image_extraction import _DRAWINGML_NS
+from .table_formatting import is_code_block
 
-import re
 import re as _re
 import unicodedata as _unicodedata
 import zipfile as _zipfile
@@ -99,7 +99,7 @@ def _v14_extract_shapes_to_mermaid(xlsx_path: str, ws, opts) -> Optional[str]:
                                 # Extract sheet number from target (e.g., "worksheets/sheet1.xml" -> "1")
                                 if 'sheet' in target:
                                     # Find the number after "sheet" and before ".xml"
-                                    match = re.search(r'sheet(\d+)\.xml', target)
+                                    match = _re.search(r'sheet(\d+)\.xml', target)
                                     if match:
                                         sheet_id = match.group(1)
                                 break

@@ -36,9 +36,9 @@ v2.0 の `mermaid_generator.py` に以下2件のバグが存在する。
 - heuristic 検出モードの判定条件に「コードブロック除外（`is_code_block`）」の前処理を明記
 
 **実装記録**:
-- [ ] 完了
-- 実施日:
-- 備考:
+- [x] 完了
+- 実施日: 2026-04-16
+- 備考: 依存関係図に `mermaid_generator.py → table_formatting.py` を追記、heuristic 判定条件に条件0（コードブロック除外）を追記
 
 ---
 
@@ -51,9 +51,9 @@ v2.0 の `mermaid_generator.py` に以下2件のバグが存在する。
 2. `v2.0.1/excel2md/__init__.py` のバージョンを `"2.0.1"` に更新
 
 **実装記録**:
-- [ ] 完了
-- 実施日:
-- 備考:
+- [x] 完了
+- 実施日: 2026-04-16
+- 備考: `cp -r v2.0 v2.0.1`、`__version__` を `"2.0.1"` に更新
 
 ---
 
@@ -67,9 +67,9 @@ v2.0 の `mermaid_generator.py` に以下2件のバグが存在する。
 - `from .table_formatting import is_code_block` を import に追加
 
 **実装記録**:
-- [ ] 完了
-- 実施日:
-- 備考:
+- [x] 完了
+- 実施日: 2026-04-16
+- 備考: 9行目に `from .table_formatting import is_code_block` を追加
 
 ---
 
@@ -84,9 +84,9 @@ v2.0 の `mermaid_generator.py` に以下2件のバグが存在する。
 - ファイル内の `re.` 参照を `_re.` に統一（既存の使用箇所を確認のうえ）
 
 **実装記録**:
-- [ ] 完了
-- 実施日:
-- 備考:
+- [x] 完了
+- 実施日: 2026-04-16
+- 備考: `import re` を削除、103行目の `re.search` を `_re.search` に変更（`_re.` に統一）
 
 ---
 

@@ -56,6 +56,7 @@ cli.py
         │     └─→ cell_utils.py
         ├─→ table_formatting.py
         ├─→ mermaid_generator.py
+        │     └─→ table_formatting.py
         ├─→ image_extraction.py
         └─→ csv_export.py
               └─→ output.py
@@ -443,6 +444,7 @@ DrawingMLの図形（Shape）とコネクタ（Connector）を解析してMermai
 テーブルのパターンを統計的に分析してフローテーブルを検出する。
 
 **判定条件**
+0. コードブロック判定（`is_code_block`）に該当する場合はフローテーブルとみなさない
 1. データ行数が最小行数（既定3行）以上
 2. 先頭2列に値がある行が最小行数以上
 3. 矢印記号（->, →, ⇒）を含む行の比率が閾値（既定30%）以上
