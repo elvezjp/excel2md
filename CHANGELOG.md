@@ -5,6 +5,21 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/spec/v2.0.0.html) に準拠しています。
 
+## [2.0.1] - 2026-04-16
+
+### 修正
+- **mermaid_generator.py の `is_code_block` import 漏れを修正** ([#13](https://github.com/elvezjp/20260105excel2md/issues/13))
+  - heuristic 検出モードで `NameError` が発生するバグを修正
+  - `from .table_formatting import is_code_block` を追加
+
+- **`import re` の重複を解消** ([#13](https://github.com/elvezjp/20260105excel2md/issues/13))
+  - `import re` と `import re as _re` の重複を削除（v1.8 からの移植残り）
+  - `_re` に統一
+
+### ドキュメント
+- 仕様書（spec.md）のモジュール依存関係図を修正
+- 仕様書の heuristic 検出モード判定条件にコードブロック除外を明記
+
 ## [2.0.0] - 2026-01-26
 
 ### 変更
@@ -173,6 +188,7 @@
 
 | バージョン | 主な機能 |
 |------------|----------|
+| 2.0.1      | mermaid_generator.py のバグ修正（import 漏れ・重複解消） |
 | 2.0.0      | コードベースのモジュール化 |
 | 1.8.0      | 画像抽出機能（Excelファイル内の画像を外部ファイルとして抽出） |
 | 1.7.0      | CSVマークダウンモード拡張（Mermaid出力、説明文除外） |
