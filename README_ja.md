@@ -111,6 +111,7 @@ uv run python v2.0.1/excel_to_md.py input.xlsx --no-csv-include-description
 | `--csv-output-dir` | 入力ファイルと同じ | CSVマークダウンの出力先ディレクトリ |
 | `--csv-include-description` | true | CSV出力に概要セクションを含める |
 | `--csv-include-metadata` | true | CSV出力に検証メタデータを含める |
+| `--image-extraction` | true | 画像抽出を有効化 |
 | `-o`, `--output` | - | 標準Markdownの出力ファイルパス |
 
 ### ハイパーリンク形式
