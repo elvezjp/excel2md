@@ -1,198 +1,200 @@
-# 変更履歴
+# Changelog
 
-このプロジェクトに対するすべての重要な変更はこのファイルに記録されます。
+[English](./CHANGELOG.md) | [日本語](./CHANGELOG_ja.md)
 
-フォーマットは [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) に基づいており、
-このプロジェクトは [セマンティックバージョニング](https://semver.org/spec/v2.0.0.html) に準拠しています。
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [2.0.1] - 2026-04-16
 
-### 修正
-- **mermaid_generator.py の `is_code_block` import 漏れを修正** ([#13](https://github.com/elvezjp/excel2md/issues/13))
-  - heuristic 検出モードで `NameError` が発生するバグを修正
-  - `from .table_formatting import is_code_block` を追加
+### Fixed
+- **Fixed missing `is_code_block` import in mermaid_generator.py** ([#13](https://github.com/elvezjp/excel2md/issues/13))
+  - Fixed `NameError` occurring in heuristic detection mode
+  - Added `from .table_formatting import is_code_block`
 
-- **`import re` の重複を解消** ([#13](https://github.com/elvezjp/excel2md/issues/13))
-  - `import re` と `import re as _re` の重複を削除（v1.8 からの移植残り）
-  - `_re` に統一
+- **Resolved duplicate `import re`** ([#13](https://github.com/elvezjp/excel2md/issues/13))
+  - Removed duplicate `import re` and `import re as _re` (leftover from v1.8 migration)
+  - Unified to `_re`
 
-### ドキュメント
-- 仕様書（spec.md）のモジュール依存関係図を修正
-- 仕様書の heuristic 検出モード判定条件にコードブロック除外を明記
+### Documentation
+- Fixed module dependency diagram in specification (spec.md)
+- Added code block exclusion note to heuristic detection mode conditions in spec.md
 
 ## [2.0.0] - 2026-01-26
 
-### 変更
-- **コードベースのモジュール化**
-  - 単一実装ファイルを機能別モジュールに分割
-  - `excel2md/` パッケージとして再構成
+### Changed
+- **Modularized codebase**
+  - Split single implementation file into feature-based modules
+  - Restructured as `excel2md/` package
 
-### ドキュメント
-- 仕様書の構成を整理
-- 詳細・補足は付録として分離
+### Documentation
+- Reorganized specification structure
+- Separated details and supplements into appendix
 
-### テスト
-- モジュール別テストスイートを追加
+### Tests
+- Added module-level test suites
 
-### 互換性
-- v1.8との機能互換性を維持
+### Compatibility
+- Maintained feature compatibility with v1.8
 
 ## [1.8.0] - 2026-01-24
 
-### 追加
-- **画像抽出機能**
-  - Excelファイル内の画像を外部ファイルとして自動抽出
-  - 画像ファイル形式: `{シート名}_img_{連番}.{拡張子}`
-  - 保存先: Markdownファイル名をベースにしたサブディレクトリ
-  - 対応フォーマット: PNG, JPEG, GIF
-  - 画像フォーマット自動判定（format属性またはマジックバイト検出）
-  - セル位置の自動特定（TwoCellAnchor, OneCellAnchor対応）
-  - Markdownリンクの自動生成: `![代替テキスト](相対パス)`
-  - CSV Markdownモードでも画像リンクが有効
-  - セル値を代替テキストとして使用（空の場合はセル参照を生成）
-  - エラー時のグレースフルな処理（画像スキップして続行）
+### Added
+- **Image extraction**
+  - Automatically extracts images from Excel files as external files
+  - Image filename format: `{sheet_name}_img_{number}.{extension}`
+  - Save location: subdirectory based on Markdown filename
+  - Supported formats: PNG, JPEG, GIF
+  - Automatic image format detection (format attribute or magic byte detection)
+  - Automatic cell position identification (TwoCellAnchor, OneCellAnchor support)
+  - Automatic Markdown link generation: `![alt text](relative_path)`
+  - Image links work in CSV Markdown mode
+  - Uses cell value as alt text (generates cell reference if empty)
+  - Graceful error handling (skips image and continues)
 
-### テスト
-- 画像抽出機能の包括的なユニットテストを追加（18テストケース）
-  - 画像フォーマット検出テスト（PNG, JPEG, GIF）
-  - アンカー位置抽出テスト（TwoCellAnchor, OneCellAnchor）
-  - CSV抽出との統合テスト
-  - エラーハンドリングとエッジケーステスト
-  - 実際のopenpyxlワークシートを使用した統合テスト
+### Tests
+- Added comprehensive unit tests for image extraction (18 test cases)
+  - Image format detection tests (PNG, JPEG, GIF)
+  - Anchor position extraction tests (TwoCellAnchor, OneCellAnchor)
+  - Integration tests with CSV extraction
+  - Error handling and edge case tests
+  - Integration tests using actual openpyxl worksheets
 
-### ドキュメント
-- README.mdに画像抽出機能の説明を追加
-  - 特徴リストに画像抽出を追加
-  - 使用例と出力例を追加
-  - 画像抽出の詳細な動作説明を追加
-- spec.md（v1.7）に技術仕様を追加
-  - §7.8 画像抽出とMarkdownリンク生成セクションを追加
-  - 画像処理フロー、フォーマット判定、エラーハンドリングを文書化
+### Documentation
+- Added image extraction feature description to README.md
+  - Added image extraction to feature list
+  - Added usage examples and output examples
+  - Added detailed behavior description of image extraction
+- Added technical specifications to spec.md (v1.7)
+  - Added section 7.8: Image Extraction and Markdown Link Generation
+  - Documented image processing flow, format detection, and error handling
 
-### コード品質
-- PEP 8スタイルガイドラインに準拠
-- 包括的なdocstringsを追加（PEP 257準拠）
-- 複雑なロジックに詳細なインラインコメントを追加
-- より説明的な変数名を使用（ext → file_extension等）
+### Code Quality
+- Compliant with PEP 8 style guidelines
+- Added comprehensive docstrings (PEP 257 compliant)
+- Added detailed inline comments for complex logic
+- Used more descriptive variable names (ext -> file_extension, etc.)
 
 ## [1.7.0] - 2025-12-25
 
-### 追加
-- **CSVマークダウンでのMermaid出力対応**
-  - `--mermaid-enabled` オプションがCSVマークダウンでも有効に
-  - `mermaid_detect_mode="shapes"` の場合のみ対応（Excelの図形からフローチャート抽出）
-  - `column_headers` / `heuristic` モードはCSVマークダウンでは非対応（WARNログを出力してスキップ）
-  - 各シートのCSVブロック直後にMermaidコードブロックを出力
+### Added
+- **Mermaid output support in CSV Markdown**
+  - `--mermaid-enabled` option now works with CSV Markdown
+  - Only supported for `mermaid_detect_mode="shapes"` (extracts flowcharts from Excel shapes)
+  - `column_headers` / `heuristic` modes are not supported in CSV Markdown (outputs WARN log and skips)
+  - Outputs Mermaid code block immediately after each sheet's CSV block
 
-- **概要セクション除外オプション**
-  - `--csv-include-description` / `--no-csv-include-description` オプションを追加
-  - CSVマークダウンの概要セクション（説明文）を除外可能
-  - 複数ファイルを変換・結合する際のトークン数削減に対応
-  - デフォルトは `true`（従来通り概要セクションを出力）
+- **Description section exclusion option**
+  - Added `--csv-include-description` / `--no-csv-include-description` options
+  - Allows exclusion of CSV Markdown description section
+  - Supports token count reduction when converting and combining multiple files
+  - Default is `true` (outputs description section as before)
 
-### 変更
-- v1.6との後方互換性を維持
+### Changed
+- Maintained backward compatibility with v1.6
 
 ## [1.6.0] - 2025-11-18
 
-### 追加
-- **ハイパーリンク平文出力モード（inline_plain）**
-  - `--hyperlink-mode inline_plain` オプションを追加
-  - セル内のハイパーリンクを平文形式で出力: `表示テキスト (URL)`
-  - 内部リンクの場合: `表示テキスト (→場所)`
-  - Markdown記法を使わずにリンク情報を明示的に表示
+### Added
+- **Hyperlink plain text output mode (inline_plain)**
+  - Added `--hyperlink-mode inline_plain` option
+  - Outputs cell hyperlinks in plain text format: `display text (URL)`
+  - For internal links: `display text (-> location)`
+  - Explicitly displays link information without Markdown syntax
 
-- **シート分割出力機能**
-  - `--split-by-sheet` オプションを追加
-  - 各シートを個別のMarkdownファイルとして出力
-  - ファイル名形式: `{出力ファイル名}_{シート名}.md`
-  - 各シートファイルには、シート名、仕様バージョン、元ファイル名を記載
-  - シートごとに独立した脚注番号を使用
+- **Split by sheet output**
+  - Added `--split-by-sheet` option
+  - Outputs each sheet as an individual Markdown file
+  - Filename format: `{output_filename}_{sheet_name}.md`
+  - Each sheet file includes sheet name, spec version, and source filename
+  - Uses independent footnote numbering per sheet
 
-### 変更
-- v1.5との後方互換性を維持
+### Changed
+- Maintained backward compatibility with v1.5
 
 ## [1.5.0] - 2025-11-11
 
-### 追加
-- **CSVマークダウン出力機能（デフォルト有効）**
-  - ファイル名形式: `{basename}_csv.md`
-  - 各シートの印刷領域をCSVコードブロックとして記載
-  - 概要セクションと検証用メタデータセクションを自動生成
-  - セル内改行を半角スペースに変換（1レコード=1行を保証）
-  - ハイパーリンクは表示テキストのみ出力
+### Added
+- **CSV Markdown output (enabled by default)**
+  - Filename format: `{basename}_csv.md`
+  - Each sheet's print area as CSV code blocks
+  - Auto-generated summary section and validation metadata section
+  - Converts cell line breaks to spaces (guarantees 1 record = 1 line)
+  - Outputs display text only for hyperlinks
 
-- **バッチ処理対応**
-  - `batch_test.py` をv1.5対応に更新
-  - CSVマークダウン出力統計の表示機能を追加
+- **Batch processing support**
+  - Updated `batch_test.py` for v1.5
+  - Added CSV Markdown output statistics display
 
-- **新しいオプション**
-  - `--csv-markdown-enabled` / `--no-csv-markdown-enabled`: CSVマークダウン出力の有効化/無効化
-  - `--csv-output-dir`: CSVマークダウンの出力先ディレクトリ
-  - `--csv-include-metadata` / `--no-csv-include-metadata`: 検証用メタデータを含めるか
-  - `--csv-apply-merge-policy` / `--no-csv-apply-merge-policy`: CSV抽出時にmerge_policyを適用するか
-  - `--csv-normalize-values` / `--no-csv-normalize-values`: CSV値に数値正規化を適用するか
+- **New options**
+  - `--csv-markdown-enabled` / `--no-csv-markdown-enabled`: Enable/disable CSV Markdown output
+  - `--csv-output-dir`: Output directory for CSV Markdown
+  - `--csv-include-metadata` / `--no-csv-include-metadata`: Include validation metadata
+  - `--csv-apply-merge-policy` / `--no-csv-apply-merge-policy`: Apply merge_policy during CSV extraction
+  - `--csv-normalize-values` / `--no-csv-normalize-values`: Apply numeric normalization to CSV values
 
-### 変更
-- v1.4との後方互換性を維持
+### Changed
+- Maintained backward compatibility with v1.4
 
 ## [1.4.0] - 2025-11-08
 
-### 追加
-- **Mermaidフローチャート変換機能**
-  - 列名ベース検出: `From` / `To` / `Label` 列を検出してフローチャート化
-  - ヒューリスティック検出: テーブル構造から自動判定
-  - シェイプ検出: ExcelのDrawingML図形からフローチャートを抽出
-  - ノードID自動生成、重複エッジ除去、サブグラフ対応
+### Added
+- **Mermaid flowchart conversion**
+  - Column name-based detection: Detects `From` / `To` / `Label` columns for flowchart generation
+  - Heuristic detection: Automatic detection from table structure
+  - Shape detection: Extracts flowcharts from Excel DrawingML shapes
+  - Automatic node ID generation, duplicate edge removal, subgraph support
 
-- **新しいオプション**
-  - `--mermaid-enabled`: Mermaidフローチャート変換を有効化
-  - `--mermaid-detect-mode`: 検出モード（`shapes` / `column_headers` / `heuristic`）
-  - `--mermaid-direction`: フローチャートの方向（`TD` / `LR` / `BT` / `RL`）
-  - `--mermaid-keep-source-table`: 元のテーブルも出力するか
+- **New options**
+  - `--mermaid-enabled`: Enable Mermaid flowchart conversion
+  - `--mermaid-detect-mode`: Detection mode (`shapes` / `column_headers` / `heuristic`)
+  - `--mermaid-direction`: Flowchart direction (`TD` / `LR` / `BT` / `RL`)
+  - `--mermaid-keep-source-table`: Output original table alongside Mermaid
 
 ## [1.3.0] - 2025-11-08
 
-### 追加
-- **基本機能の実装**
-  - 最大長方形分解アルゴリズム（ヒストグラム法＋彫り抜き法）
-  - 印刷領域と空セル判定
-  - 結合セルと空判定
-  - Markdown出力（テーブル形式）
-  - ハイパーリンク処理（脚注形式）
-  - パフォーマンス最適化と制限
+### Added
+- **Core implementation**
+  - Maximal rectangle decomposition algorithm (histogram method + carving method)
+  - Print area and empty cell detection
+  - Merged cell and empty detection
+  - Markdown output (table format)
+  - Hyperlink processing (footnote format)
+  - Performance optimization and limits
 
-- **基本オプション**
-  - `-o`, `--output`: 出力ファイルパス
-  - `--header-detection`: テーブル先頭行をヘッダとして扱う
-  - `--align-detection`: 数値列の右寄せ判定（80%ルール）
-  - `--no-print-area-mode`: 印刷領域未設定時の動作
-  - `--max-cells-per-table`: テーブル1つあたりの最大セル数
-  - `--markdown-escape-level`: Markdown記号のエスケープレベル
-  - `--hyperlink-mode`: ハイパーリンクの出力方法
-  - `--footnote-scope`: 脚注番号の採番スコープ
+- **Basic options**
+  - `-o`, `--output`: Output file path
+  - `--header-detection`: Treat first row as header
+  - `--align-detection`: Right-align numeric columns (80% rule)
+  - `--no-print-area-mode`: Behavior when print area not set
+  - `--max-cells-per-table`: Maximum cells per table
+  - `--markdown-escape-level`: Markdown symbol escape level
+  - `--hyperlink-mode`: Hyperlink output method
+  - `--footnote-scope`: Footnote numbering scope
 
-### 技術詳細
-- Python 3.9以上をサポート
-- openpyxl 3.1.5以上を依存ライブラリとして使用
-- `read_only=True, data_only=True` モードで安全なファイル読み込み
+### Technical Details
+- Supports Python 3.9 and above
+- Uses openpyxl 3.1.5+ as dependency
+- Safe file reading with `read_only=True, data_only=True` mode
 
-## リンク
+## Links
 
-- [リポジトリ](https://github.com/elvezjp/excel2md)
-- [Issue](https://github.com/elvezjp/excel2md/issues)
+- [Repository](https://github.com/elvezjp/excel2md)
+- [Issues](https://github.com/elvezjp/excel2md/issues)
 
 ---
 
-## バージョン比較
+## Version Comparison
 
-| バージョン | 主な機能 |
-|------------|----------|
-| 2.0.1      | mermaid_generator.py のバグ修正（import 漏れ・重複解消） |
-| 2.0.0      | コードベースのモジュール化 |
-| 1.8.0      | 画像抽出機能（Excelファイル内の画像を外部ファイルとして抽出） |
-| 1.7.0      | CSVマークダウンモード拡張（Mermaid出力、説明文除外） |
-| 1.6.0      | ハイパーリンク平文出力、シート分割出力 |
-| 1.5.0      | CSVマークダウン出力 |
-| 1.4.0      | Mermaidフローチャート変換 |
-| 1.3.0      | 基本実装 |
+| Version | Key Features |
+|---------|-------------|
+| 2.0.1   | Bug fix in mermaid_generator.py (missing import, duplicate resolution) |
+| 2.0.0   | Codebase modularization |
+| 1.8.0   | Image extraction (extract images from Excel as external files) |
+| 1.7.0   | CSV Markdown mode extensions (Mermaid output, description exclusion) |
+| 1.6.0   | Hyperlink plain text output, split by sheet output |
+| 1.5.0   | CSV Markdown output |
+| 1.4.0   | Mermaid flowchart conversion |
+| 1.3.0   | Core implementation |

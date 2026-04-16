@@ -33,7 +33,7 @@ Excel to Markdown converter. Reads Excel workbooks (.xlsx/.xlsm) and automatical
 - [CHANGELOG.md](CHANGELOG.md) - Version history
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
 - [SECURITY.md](SECURITY.md) - Security policy and best practices
-- [v2.0.1/spec.md](v2.0.1/spec.md) - Technical specification (v2.0)
+- [v2.0.1/spec.md](v2.0.1/spec.md) - Technical specification (v2.0.1)
 - [v1.8/spec.md](v1.8/spec.md) - Technical specification (v1.8)
 
 ## Setup

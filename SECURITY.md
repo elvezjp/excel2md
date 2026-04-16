@@ -1,147 +1,148 @@
-# セキュリティポリシー
+# Security Policy
 
-## サポートバージョン
+[English](./SECURITY.md) | [日本語](./SECURITY_ja.md)
 
-最新バージョンをサポートしています：
+## Supported Versions
 
-| バージョン | サポート状況       |
-| ---------- | ------------------ |
-| 2.0.x      | :white_check_mark: |
-| < 2.0      | :x:                |
+We support the latest version:
 
-## 脆弱性の報告
+| Version | Supported          |
+| ------- | ------------------ |
+| 2.0.x   | :white_check_mark: |
+| < 2.0   | :x:                |
 
-excel2md にセキュリティ上の脆弱性を発見した場合は、以下の手順に従って責任ある報告をお願いします：
+## Reporting a Vulnerability
 
-### 報告方法
+If you discover a security vulnerability in excel2md, please follow responsible disclosure practices:
 
-1. セキュリティ脆弱性に関して公開の GitHub Issue を作成**しないでください**
-2. 以下の方法でメンテナーに詳細なレポートを送信してください：
-   - GitHub のプライベートセキュリティアドバイザリを作成する（推奨）
-   - 重大度の低い問題については「security」ラベルを付けて Issue を作成する
+### How to Report
 
-### 報告に含める内容
+1. **Do NOT** create a public GitHub Issue for security vulnerabilities
+2. Send a detailed report to the maintainers via:
+   - Create a GitHub Private Security Advisory (recommended)
+   - Create an Issue with the "security" label for lower-severity issues
 
-レポートには以下の情報を含めてください：
+### What to Include
 
-- 脆弱性の説明
-- 問題を再現する手順
-- 潜在的な影響と重大度
-- 修正案や緩和策の提案
-- 連絡先情報（任意）
+Please include the following information in your report:
 
-### 報告例
+- Description of the vulnerability
+- Steps to reproduce the issue
+- Potential impact and severity
+- Suggested fix or mitigation
+- Contact information (optional)
+
+### Example Report
 
 ```
-件名: [SECURITY] Excel パース時の潜在的な XXE 脆弱性
+Subject: [SECURITY] Potential XXE vulnerability during Excel parsing
 
-説明:
-特別に細工された Excel ファイルを処理する際、openpyxl ライブラリは
-XML 外部エンティティ（XXE）攻撃に対して脆弱である可能性があります。
+Description:
+When processing a specially crafted Excel file, the openpyxl library may be
+vulnerable to XML External Entity (XXE) attacks.
 
-再現手順:
-1. 外部エンティティ参照を含む悪意のある Excel ファイルを作成
-2. そのファイルに対して excel2md を実行
-3. 情報漏洩の可能性を確認
+Steps to reproduce:
+1. Create a malicious Excel file containing external entity references
+2. Run excel2md against the file
+3. Observe potential information disclosure
 
-影響:
-攻撃者がローカルファイルを読み取ったり、サービス拒否を引き起こす可能性があります。
+Impact:
+An attacker could potentially read local files or cause denial of service.
 
-修正案:
-openpyxl の設定で外部エンティティ処理を無効化する。
+Suggested fix:
+Disable external entity processing in openpyxl configuration.
 ```
 
-## 対応スケジュール
+## Response Timeline
 
-- **初回応答**: 48時間以内
-- **状況更新**: 7日以内
-- **解決**: 重大度に応じて
-  - 緊急: 14日以内
-  - 高: 30日以内
-  - 中: 60日以内
-  - 低: 次回リリースサイクル
+- **Initial response**: Within 48 hours
+- **Status update**: Within 7 days
+- **Resolution**: Depending on severity
+  - Critical: Within 14 days
+  - High: Within 30 days
+  - Medium: Within 60 days
+  - Low: Next release cycle
 
-## セキュリティに関する考慮事項
+## Security Considerations
 
-### ファイル処理
+### File Processing
 
-excel2md は以下を含む可能性のある Excel ファイルを処理します：
+excel2md processes Excel files that may contain:
 
-- マクロ（`.xlsm` ファイル）
-- 外部リンクと参照
-- 埋め込みオブジェクト
-- 副作用を持つ可能性のある数式
+- Macros (`.xlsm` files)
+- External links and references
+- Embedded objects
+- Formulas with potential side effects
 
-**推奨事項:**
+**Recommendations:**
 
-1. 信頼できるソースからの Excel ファイルのみを処理する
-2. 外部ソースから受け取ったファイルは処理前に確認する
-3. 信頼できないファイルを処理する場合は、サンドボックス環境で excel2md を実行する
-4. マクロを含むファイルには注意する（ただし excel2md 自体はマクロを実行しません）
+1. Only process Excel files from trusted sources
+2. Verify files received from external sources before processing
+3. Run excel2md in a sandboxed environment when processing untrusted files
+4. Be cautious with files containing macros (though excel2md does not execute macros)
 
-### 入力検証
+### Input Validation
 
-excel2md には以下のセキュリティ対策が含まれています：
+excel2md includes the following security measures:
 
-- openpyxl で `read_only=True` モードを使用してファイルの変更を防止
-- `data_only=True` を使用して数式の実行を回避
-- `max_cells_per_table` オプションでセル処理を制限
-- インジェクション攻撃を防ぐため Markdown 出力をサニタイズ
+- Uses `read_only=True` mode in openpyxl to prevent file modification
+- Uses `data_only=True` to avoid formula execution
+- Limits cell processing with the `max_cells_per_table` option
+- Sanitizes Markdown output to prevent injection attacks
 
-### 出力のセキュリティ
+### Output Security
 
-生成された Markdown ファイルを使用する際の注意点：
+When using generated Markdown files, be aware that:
 
-- Excel ファイルのハイパーリンクは出力に保持されることに注意
-- 公開前に生成された Markdown を確認する
-- ソースの Excel ファイルに含まれる悪意のある URL に注意する
-- URL を除外したい場合は `--hyperlink-mode text_only` を使用する
+- Hyperlinks from Excel files are preserved in the output
+- Review generated Markdown before publishing
+- Be cautious of malicious URLs from source Excel files
+- Use `--hyperlink-mode text_only` to exclude URLs
 
-### 依存関係
+### Dependencies
 
-このプロジェクトは以下に依存しています：
+This project depends on:
 
-- `openpyxl >= 3.1.5`: Excel ファイル処理
+- `openpyxl >= 3.1.5`: Excel file processing
 
-これらの依存関係のセキュリティアドバイザリを監視し、必要に応じて更新しています。
+We monitor security advisories for these dependencies and update as needed.
 
-## セキュリティのベストプラクティス
+## Security Best Practices
 
-excel2md を使用する際の推奨事項：
+Recommendations when using excel2md:
 
-1. **最新版を維持**: 常に最新バージョンを使用する
-2. **入力を確認**: 処理前に Excel ファイルを検査する
-3. **サンドボックス処理**: 信頼できないファイルにはコンテナや VM を使用する
-4. **出力を検証**: 使用前に生成された Markdown を確認する
-5. **権限を制限**: 必要最小限の権限で実行する
-6. **依存関係を監視**: openpyxl やその他の依存関係を最新に保つ
+1. **Keep up to date**: Always use the latest version
+2. **Verify input**: Inspect Excel files before processing
+3. **Sandbox processing**: Use containers or VMs for untrusted files
+4. **Validate output**: Review generated Markdown before use
+5. **Limit permissions**: Run with minimal required privileges
+6. **Monitor dependencies**: Keep openpyxl and other dependencies updated
 
-## 既知のセキュリティ制限
+## Known Security Limitations
 
-1. **マクロ検出**: excel2md はマクロを実行しませんが、その存在を警告しません
-2. **外部リンク**: Excel ファイル内の外部リンクは処理されますが、検証されません
-3. **ファイルサイズ**: 非常に大きなファイルはメモリの問題を引き起こす可能性があります。`max_cells_per_table` で制限してください
-4. **数式処理**: 数式は値として表示されます。複雑な数式は検証されません
+1. **Macro detection**: excel2md does not execute macros but does not warn about their presence
+2. **External links**: External links in Excel files are processed but not validated
+3. **File size**: Very large files may cause memory issues. Use `max_cells_per_table` to limit
+4. **Formula handling**: Formulas are displayed as values. Complex formulas are not validated
 
-## セキュリティアップデート
+## Security Updates
 
-セキュリティアップデートは以下の形式でリリースされます：
+Security updates are released as:
 
-- 軽微な問題にはパッチバージョン（例: 2.0.1）
-- 重大な問題にはマイナーバージョン（例: 2.1.0）
-- CHANGELOG.md に `[SECURITY]` プレフィックス付きで記載
+- Patch versions for minor issues (e.g., 2.0.1)
+- Minor versions for significant issues (e.g., 2.1.0)
+- Documented in CHANGELOG.md with `[SECURITY]` prefix
 
-## 謝辞
+## Acknowledgments
 
-脆弱性を責任を持って報告してくださるセキュリティ研究者に感謝します。有効なセキュリティ問題を報告された方は、以下で謝辞を記載します：
+We appreciate security researchers who report vulnerabilities responsibly. Those who report valid security issues will be acknowledged in:
 
-- CHANGELOG.md（匿名を希望される場合を除く）
-- 修正のリリースノート
+- CHANGELOG.md (unless anonymity is preferred)
+- Release notes for the fix
 
-## ご質問
+## Questions
 
-脆弱性ではないセキュリティ関連のご質問は、以下の方法でお問い合わせください：
+For security-related questions that are not vulnerabilities, please:
 
-- 「security」ラベルを付けて Issue を作成
-- メンテナーに連絡
-
+- Create an Issue with the "security" label
+- Contact the maintainers
