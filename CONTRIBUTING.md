@@ -161,7 +161,6 @@ When contributing:
 - Be respectful and inclusive
 - Provide constructive feedback
 - Help others when possible
-- Follow the code of conduct
 
 ## Questions
 

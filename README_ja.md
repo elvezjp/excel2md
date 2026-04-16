@@ -30,9 +30,9 @@ Excel → Markdown 変換ツール。Excelブック（.xlsx/.xlsm）を読み取
 
 ## ドキュメント
 
-- [CHANGELOG.md](CHANGELOG.md) - バージョン履歴
-- [CONTRIBUTING.md](CONTRIBUTING.md) - コントリビューション方法
-- [SECURITY.md](SECURITY.md) - セキュリティポリシーとベストプラクティス
+- [CHANGELOG_ja.md](CHANGELOG_ja.md) - バージョン履歴
+- [CONTRIBUTING_ja.md](CONTRIBUTING_ja.md) - コントリビューション方法
+- [SECURITY_ja.md](SECURITY_ja.md) - セキュリティポリシーとベストプラクティス
 - [v2.0.1/spec.md](v2.0.1/spec.md) - 技術仕様書（v2.0.1）
 - [v1.8/spec.md](v1.8/spec.md) - 技術仕様書（v1.8）
 
