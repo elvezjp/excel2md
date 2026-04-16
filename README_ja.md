@@ -30,10 +30,10 @@ Excel → Markdown 変換ツール。Excelブック（.xlsx/.xlsm）を読み取
 
 ## ドキュメント
 
-- [CHANGELOG.md](CHANGELOG.md) - バージョン履歴
-- [CONTRIBUTING.md](CONTRIBUTING.md) - コントリビューション方法
-- [SECURITY.md](SECURITY.md) - セキュリティポリシーとベストプラクティス
-- [v2.0/spec.md](v2.0/spec.md) - 技術仕様書（v2.0）
+- [CHANGELOG_ja.md](CHANGELOG_ja.md) - バージョン履歴
+- [CONTRIBUTING_ja.md](CONTRIBUTING_ja.md) - コントリビューション方法
+- [SECURITY_ja.md](SECURITY_ja.md) - セキュリティポリシーとベストプラクティス
+- [v2.0.1/spec.md](v2.0.1/spec.md) - 技術仕様書（v2.0.1）
 - [v1.8/spec.md](v1.8/spec.md) - 技術仕様書（v1.8）
 
 ## セットアップ
@@ -56,7 +56,7 @@ uv sync
 ## 使い方
 
 ```bash
-uv run python v2.0/excel_to_md.py input.xlsx
+uv run python v2.0.1/excel_to_md.py input.xlsx
 ```
 これにより以下が生成されます:
 - `input_csv.md`: CSVマークダウン形式（デフォルト）
@@ -70,34 +70,34 @@ uv run python v2.0/excel_to_md.py input.xlsx
 
 **Mermaidフローチャート対応で変換:**
 ```bash
-uv run python v2.0/excel_to_md.py input.xlsx --mermaid-enabled
+uv run python v2.0.1/excel_to_md.py input.xlsx --mermaid-enabled
 ```
 
 **シートごとに個別ファイルを生成:**
 ```bash
-uv run python v2.0/excel_to_md.py input.xlsx --split-by-sheet
+uv run python v2.0.1/excel_to_md.py input.xlsx --split-by-sheet
 ```
 
 **CSVマークダウンの出力先を指定:**
 ```bash
-uv run python v2.0/excel_to_md.py input.xlsx --csv-output-dir ./output
+uv run python v2.0.1/excel_to_md.py input.xlsx --csv-output-dir ./output
 # CSVマークダウン: ./output/input_csv.md
 # 画像: ./output/input_images/
 ```
 
 **標準Markdownのみ出力（CSV出力なし）:**
 ```bash
-uv run python v2.0/excel_to_md.py input.xlsx -o output.md --no-csv-markdown-enabled
+uv run python v2.0.1/excel_to_md.py input.xlsx -o output.md --no-csv-markdown-enabled
 ```
 
 **平文ハイパーリンク（Markdown記法なし）:**
 ```bash
-uv run python v2.0/excel_to_md.py input.xlsx --hyperlink-mode inline_plain
+uv run python v2.0.1/excel_to_md.py input.xlsx --hyperlink-mode inline_plain
 ```
 
 **トークン数削減（CSV概要セクション除外）:**
 ```bash
-uv run python v2.0/excel_to_md.py input.xlsx --no-csv-include-description
+uv run python v2.0.1/excel_to_md.py input.xlsx --no-csv-include-description
 ```
 
 ## 主要オプション
@@ -111,6 +111,7 @@ uv run python v2.0/excel_to_md.py input.xlsx --no-csv-include-description
 | `--csv-output-dir` | 入力ファイルと同じ | CSVマークダウンの出力先ディレクトリ |
 | `--csv-include-description` | true | CSV出力に概要セクションを含める |
 | `--csv-include-metadata` | true | CSV出力に検証メタデータを含める |
+| `--image-extraction` | true | 画像抽出を有効化 |
 | `-o`, `--output` | - | 標準Markdownの出力ファイルパス |
 
 ### ハイパーリンク形式
@@ -231,7 +232,7 @@ Excelのセル位置 (B2) に会社ロゴ画像がある場合:
 全オプションの一覧:
 
 ```bash
-uv run python v2.0/excel_to_md.py --help
+uv run python v2.0.1/excel_to_md.py --help
 ```
 
 主な高度なオプション:
@@ -247,12 +248,13 @@ uv run python v2.0/excel_to_md.py --help
 
 ```
 excel2md/
-├── v2.0/                       # 最新バージョン
+├── v2.0.1/                     # 最新バージョン
 │   ├── excel_to_md.py          # エントリーポイント
 │   ├── excel2md/               # メインパッケージ
 │   ├── tests/                  # テストスイート
 │   ├── spec.md                 # 仕様書
 │   └── spec_appendix.md        # 仕様書付録
+├── v2.0/                       # 旧バージョン
 ├── v1.8/                       # 旧バージョン
 │   ├── excel_to_md.py          # メイン変換プログラム
 │   ├── spec.md                 # 仕様書
@@ -264,15 +266,15 @@ excel2md/
 ├── docs/                   # ドキュメント
 ├── pyproject.toml          # プロジェクトメタデータ
 ├── LICENSE                 # MITライセンス
-├── README.md               # このファイル
-├── CONTRIBUTING.md         # コントリビューションガイド
-├── SECURITY.md             # セキュリティポリシー
-└── CHANGELOG.md            # バージョン履歴
+├── README.md / _ja.md     # README（英語 / 日本語）
+├── CONTRIBUTING.md / _ja.md # コントリビューションガイド（英語 / 日本語）
+├── SECURITY.md / _ja.md   # セキュリティポリシー（英語 / 日本語）
+└── CHANGELOG.md / _ja.md  # バージョン履歴（英語 / 日本語）
 ```
 
 ## セキュリティ
 
-セキュリティに関する懸念は [SECURITY.md](SECURITY.md) をご確認ください。
+セキュリティに関する懸念は [SECURITY_ja.md](SECURITY_ja.md) をご確認ください。
 
 **主要なセキュリティ注意事項:**
 - 信頼できるソースからのExcelファイルのみを処理してください
@@ -282,16 +284,16 @@ excel2md/
 
 ## コントリビューション
 
-コントリビューションを歓迎します！詳細は [CONTRIBUTING.md](CONTRIBUTING.md) をご覧ください。
+コントリビューションを歓迎します！詳細は [CONTRIBUTING_ja.md](CONTRIBUTING_ja.md) をご覧ください。
 
-- バグ報告は [GitHub Issues](https://github.com/elvez/excel2md/issues) へ
+- バグ報告は [GitHub Issues](https://github.com/elvezjp/excel2md/issues) へ
 - 改善のためのプルリクエストを提出
 - 既存のコードスタイルに従ってください
 - 新機能にはテストを追加してください
 
 ## 変更履歴
 
-詳細は [CHANGELOG.md](CHANGELOG.md) を参照してください。
+詳細は [CHANGELOG_ja.md](CHANGELOG_ja.md) を参照してください。
 
 ## 開発の背景
 
