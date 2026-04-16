@@ -265,10 +265,10 @@ excel2md/
 ├── docs/                   # Documentation
 ├── pyproject.toml          # Project metadata
 ├── LICENSE                 # MIT License
-├── README.md               # This file
-├── CONTRIBUTING.md         # Contribution guide
-├── SECURITY.md             # Security policy
-└── CHANGELOG.md            # Version history
+├── README.md / _ja.md     # README (English / Japanese)
+├── CONTRIBUTING.md / _ja.md # Contribution guide (English / Japanese)
+├── SECURITY.md / _ja.md   # Security policy (English / Japanese)
+└── CHANGELOG.md / _ja.md  # Version history (English / Japanese)
 ```
 
 ## Security

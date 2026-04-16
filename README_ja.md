@@ -266,15 +266,15 @@ excel2md/
 ├── docs/                   # ドキュメント
 ├── pyproject.toml          # プロジェクトメタデータ
 ├── LICENSE                 # MITライセンス
-├── README.md               # このファイル
-├── CONTRIBUTING.md         # コントリビューションガイド
-├── SECURITY.md             # セキュリティポリシー
-└── CHANGELOG.md            # バージョン履歴
+├── README.md / _ja.md     # README（英語 / 日本語）
+├── CONTRIBUTING.md / _ja.md # コントリビューションガイド（英語 / 日本語）
+├── SECURITY.md / _ja.md   # セキュリティポリシー（英語 / 日本語）
+└── CHANGELOG.md / _ja.md  # バージョン履歴（英語 / 日本語）
 ```
 
 ## セキュリティ
 
-セキュリティに関する懸念は [SECURITY.md](SECURITY.md) をご確認ください。
+セキュリティに関する懸念は [SECURITY_ja.md](SECURITY_ja.md) をご確認ください。
 
 **主要なセキュリティ注意事項:**
 - 信頼できるソースからのExcelファイルのみを処理してください
@@ -284,7 +284,7 @@ excel2md/
 
 ## コントリビューション
 
-コントリビューションを歓迎します！詳細は [CONTRIBUTING.md](CONTRIBUTING.md) をご覧ください。
+コントリビューションを歓迎します！詳細は [CONTRIBUTING_ja.md](CONTRIBUTING_ja.md) をご覧ください。
 
 - バグ報告は [GitHub Issues](https://github.com/elvezjp/excel2md/issues) へ
 - 改善のためのプルリクエストを提出
@@ -293,7 +293,7 @@ excel2md/
 
 ## 変更履歴
 
-詳細は [CHANGELOG.md](CHANGELOG.md) を参照してください。
+詳細は [CHANGELOG_ja.md](CHANGELOG_ja.md) を参照してください。
 
 ## 開発の背景
 
