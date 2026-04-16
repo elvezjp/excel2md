@@ -27,9 +27,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/elvez/excel2md"
-Repository = "https://github.com/elvez/excel2md"
-Issues = "https://github.com/elvez/excel2md/issues"
+Homepage = "https://github.com/elvezjp/excel2md"
+Repository = "https://github.com/elvezjp/excel2md"
+Issues = "https://github.com/elvezjp/excel2md/issues"
 
 [project.optional-dependencies]
 test = [

@@ -285,7 +285,7 @@ excel2md/
 
 コントリビューションを歓迎します！詳細は [CONTRIBUTING.md](CONTRIBUTING.md) をご覧ください。
 
-- バグ報告は [GitHub Issues](https://github.com/elvez/excel2md/issues) へ
+- バグ報告は [GitHub Issues](https://github.com/elvezjp/excel2md/issues) へ
 - 改善のためのプルリクエストを提出
 - 既存のコードスタイルに従ってください
 - 新機能にはテストを追加してください

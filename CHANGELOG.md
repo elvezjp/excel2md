@@ -8,11 +8,11 @@
 ## [2.0.1] - 2026-04-16
 
 ### 修正
-- **mermaid_generator.py の `is_code_block` import 漏れを修正** ([#13](https://github.com/elvezjp/20260105excel2md/issues/13))
+- **mermaid_generator.py の `is_code_block` import 漏れを修正** ([#13](https://github.com/elvezjp/excel2md/issues/13))
   - heuristic 検出モードで `NameError` が発生するバグを修正
   - `from .table_formatting import is_code_block` を追加
 
-- **`import re` の重複を解消** ([#13](https://github.com/elvezjp/20260105excel2md/issues/13))
+- **`import re` の重複を解消** ([#13](https://github.com/elvezjp/excel2md/issues/13))
   - `import re` と `import re as _re` の重複を削除（v1.8 からの移植残り）
   - `_re` に統一
 
@@ -179,8 +179,8 @@
 
 ## リンク
 
-- [リポジトリ](https://github.com/elvez/excel2md)
-- [Issue](https://github.com/elvez/excel2md/issues)
+- [リポジトリ](https://github.com/elvezjp/excel2md)
+- [Issue](https://github.com/elvezjp/excel2md/issues)
 
 ---
 

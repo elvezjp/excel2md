@@ -2,7 +2,7 @@
 
 > **ステータス**: 検証完了
 > **ブランチ**: `tominaga/20260416-fix-mermaid-import-bug`
-> **対象Issue**: [#13 2.0における潜在的なバグの可能性について](https://github.com/elvezjp/20260105excel2md/issues/13)
+> **対象Issue**: [#13 2.0における潜在的なバグの可能性について](https://github.com/elvezjp/excel2md/issues/13)
 
 ---
 

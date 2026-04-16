@@ -285,7 +285,7 @@ For security concerns, please see [SECURITY.md](SECURITY.md).
 
 Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
-- Report bugs via [GitHub Issues](https://github.com/elvez/excel2md/issues)
+- Report bugs via [GitHub Issues](https://github.com/elvezjp/excel2md/issues)
 - Submit pull requests for improvements
 - Follow existing code style
 - Add tests for new features
