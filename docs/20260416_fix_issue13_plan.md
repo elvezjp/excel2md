@@ -1,6 +1,6 @@
 # Issue #13 修正計画書（v2.0.1）
 
-> **ステータス**: 作業中
+> **ステータス**: 検証完了
 > **ブランチ**: `tominaga/20260416-fix-mermaid-import-bug`
 > **対象Issue**: [#13 2.0における潜在的なバグの可能性について](https://github.com/elvezjp/20260105excel2md/issues/13)
 
@@ -149,28 +149,28 @@ v2.0 の `mermaid_generator.py` に以下2件のバグが存在する。
 
 ### 4.1 バグA: `is_code_block` import 漏れの修正確認
 
-- [ ] `mermaid_generator.py` に `from .table_formatting import is_code_block` が存在すること
-- [ ] heuristic モードで `is_code_block` が正常に呼び出されること（`NameError` が発生しないこと）
+- [x] `mermaid_generator.py` に `from .table_formatting import is_code_block` が存在すること
+- [x] heuristic モードで `is_code_block` が正常に呼び出されること（`NameError` が発生しないこと）
 
 ### 4.2 バグB: `import re` 重複解消の確認
 
-- [ ] `mermaid_generator.py` 内に `import re` と `import re as _re` の重複が存在しないこと
-- [ ] `re.` / `_re.` の参照が統一されていること
-- [ ] 正規表現を使用する処理が正しく動作すること
+- [x] `mermaid_generator.py` 内に `import re` と `import re as _re` の重複が存在しないこと
+- [x] `re.` / `_re.` の参照が統一されていること
+- [x] 正規表現を使用する処理が正しく動作すること
 
 ### 4.3 リグレッション確認
 
-- [ ] 既存テストスイートが全件パスすること
-- [ ] v2.0 の出力結果と v2.0.1 の出力結果が同一であること（バグ修正箇所を除く）
+- [x] 既存テストスイートが全件パスすること（253 passed）
+- [ ] v2.0 の出力結果と v2.0.1 の出力結果が同一であること（バグ修正箇所を除く）※テスト用Excelファイルによる出力比較は未実施
 
 ### 4.4 仕様整合性確認
 
-- [ ] `spec.md` のモジュール依存関係図が実装と一致していること
-- [ ] `spec.md` の heuristic 検出モード記述が実装と一致していること
+- [x] `spec.md` のモジュール依存関係図が実装と一致していること
+- [x] `spec.md` の heuristic 検出モード記述が実装と一致していること
 
 ### 検証実施記録
 
-- 実施日:
-- 実施者:
-- テスト結果サマリ:
-- 備考:
+- 実施日: 2026-04-16
+- 実施者: tominaga
+- テスト結果サマリ: 253 tests passed (0.22s)、バグ修正確認OK、仕様整合性OK
+- 備考: v2.0 vs v2.0.1 の出力比較は手動確認が必要（テスト用Excelファイルでの実行比較）
