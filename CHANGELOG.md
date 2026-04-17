@@ -7,6 +7,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-04-17
+
+### Changed
+- **Raised minimum supported Python version to 3.10**
+  - Python 3.9 has reached end-of-life (2025-10) and is no longer supported
+  - `requires-python` updated to `>=3.10`
+  - CI matrix updated to test against minimum (3.10) and latest (3.14) Python versions
+
+### Security
+- **Updated pytest to 9.0.3** ([CVE-2025-71176](https://github.com/advisories/GHSA-6w46-j5rx-g56g))
+  - Fixes vulnerable tmpdir handling in pytest
+- **Updated Pygments to 2.20.0** ([CVE-2026-4539](https://github.com/advisories/GHSA-5239-wwwm-4pmq))
+  - Fixes ReDoS caused by inefficient regex for GUID matching
+
+### Documentation
+- Updated spec.md / spec_appendix.md headers to v2.1
+- Updated README.md / README_ja.md Python badge and path references
+
 ## [2.0.1] - 2026-04-16
 
 ### Fixed
@@ -190,6 +208,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Key Features |
 |---------|-------------|
+| 2.1.0   | Raised minimum Python to 3.10, security updates (pytest, Pygments) |
 | 2.0.1   | Bug fix in mermaid_generator.py (missing import, duplicate resolution) |
 | 2.0.0   | Codebase modularization |
 | 1.8.0   | Image extraction (extract images from Excel as external files) |

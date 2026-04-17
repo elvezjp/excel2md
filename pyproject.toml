@@ -1,9 +1,9 @@
 [project]
 name = "excel2md"
-version = "2.0.1"
+version = "2.1.0"
 description = "Excel to Markdown converter with CSV markdown output support"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [
     {name = "Elvez"}
@@ -14,10 +14,11 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Documentation",
     "Topic :: Text Processing :: Markup :: Markdown",
     "Topic :: Utilities",
@@ -38,7 +39,7 @@ test = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["v2.0.1/tests"]
+testpaths = ["v2.1.0/tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -49,8 +50,8 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["v2.0.1"]
-omit = ["v2.0.1/tests/*"]
+source = ["v2.1.0"]
+omit = ["v2.1.0/tests/*"]
 
 [tool.coverage.report]
 exclude_lines = [
