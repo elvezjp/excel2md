@@ -197,16 +197,16 @@ Dependabot は Pygments の修正 PR を自動作成したが、pytest につい
 
 ### 4.1 単体テストの実施
 
-- [ ] ローカル環境で `uv run pytest` が全件パスすること（253 件を目安）
-- [ ] CI が対象マトリクス（Python 3.10 / 3.14 × ubuntu / windows / macos）で全ジョブ成功すること
+- [x] ローカル環境で `uv run pytest` が全件パスすること（253 件を目安）
+- [ ] CI が対象マトリクス（Python 3.10 / 3.14 × ubuntu / windows / macos）で全ジョブ成功すること（PR push 後に確認）
 
 ### 4.2 前バージョン（v2.0.1）との出力比較
 
 本リリースはソースコードの変更を伴わないため、同一の入力に対し v2.0.1 と v2.1.0 の変換結果は完全に一致する必要がある。
 
-- [ ] テスト用 Excel ファイルを v2.0.1 と v2.1.0 でそれぞれ変換し、出力 Markdown が同一であること
-- [ ] 主要オプション（`--format`, Mermaid 関連オプション等）の組み合わせで出力差分がないこと
-- [ ] 画像抽出・CSV Markdown 出力についても差分がないこと
+- [x] テスト用 Excel ファイルを v2.0.1 と v2.1.0 でそれぞれ変換し、出力 Markdown が同一であること
+- [x] 主要オプション（`--mermaid-enabled`, `--no-csv-markdown-enabled` 等）の組み合わせで出力差分がないこと
+- [x] 画像抽出・CSV Markdown 出力についても差分がないこと
 
 ### 4.3 Dependabot アラート解消確認
 
@@ -215,11 +215,15 @@ Dependabot は Pygments の修正 PR を自動作成したが、pytest につい
 
 ### 検証実施記録
 
-- 実施日:
-- 実施者:
-- 単体テスト結果サマリ:
-- 出力比較結果サマリ:
-- 備考:
+- 実施日: 2026-04-17
+- 実施者: tominaga
+- 単体テスト結果サマリ: `uv run pytest` で **253 tests passed** を確認（ローカル macOS / Python 3.14）。CI マトリクス（Python 3.10 / 3.14 × 3 OS）は PR 作成後に確認。
+- 出力比較結果サマリ: 下記 4 ケースで差分が意図通りのもの（生成日時 / 仕様バージョン表記）のみであることを確認。
+  - `test_standard.xlsx` + CSV Markdown 出力: 差分は「生成日時」のみ（実行時刻差）
+  - `test_standard.xlsx` + 標準 Markdown 出力（`--no-csv-markdown-enabled`）: 差分は「仕様バージョン: 2.0.1 → 2.1.0」のみ（`__version__` の反映）
+  - `test_standard.xlsx` の抽出画像（`test_standard_images/*`）: 差分なし（完全一致）
+  - `test_mermaid.xlsx` + `--mermaid-enabled` + CSV Markdown 出力: 差分は「生成日時」のみ（実行時刻差）
+- 備考: ソースコード無変更のメンテナンスリリースであり、機能的回帰がないことを確認済み。Dependabot アラートの自動クローズは PR マージ後に確認する。
 
 ---
 
