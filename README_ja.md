@@ -5,7 +5,7 @@
 [![Elvez](https://img.shields.io/badge/Elvez-Product-3F61A7?style=flat-square)](https://elvez.co.jp/)
 [![IXV Ecosystem](https://img.shields.io/badge/IXV-Ecosystem-3F61A7?style=flat-square)](https://elvez.co.jp/ixv/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](https://opensource.org/licenses/MIT)
-[![Python](https://img.shields.io/badge/Python-3.9+-blue?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![Stars](https://img.shields.io/github/stars/elvezjp/excel2md?style=social)](https://github.com/elvezjp/excel2md/stargazers)
 
 Excel → Markdown 変換ツール。Excelブック（.xlsx/.xlsm）を読み取り、Markdown形式で自動生成します。
@@ -33,14 +33,14 @@ Excel → Markdown 変換ツール。Excelブック（.xlsx/.xlsm）を読み取
 - [CHANGELOG_ja.md](CHANGELOG_ja.md) - バージョン履歴
 - [CONTRIBUTING_ja.md](CONTRIBUTING_ja.md) - コントリビューション方法
 - [SECURITY_ja.md](SECURITY_ja.md) - セキュリティポリシーとベストプラクティス
-- [v2.0.1/spec.md](v2.0.1/spec.md) - 技術仕様書（v2.0.1）
+- [v2.1.0/spec.md](v2.1.0/spec.md) - 技術仕様書（v2.1.0）
 - [v1.8/spec.md](v1.8/spec.md) - 技術仕様書（v1.8）
 
 ## セットアップ
 
 ### 必要環境
 
-- Python 3.9 以上
+- Python 3.10 以上
 - [uv](https://docs.astral.sh/uv/) パッケージマネージャー
 
 ### 依存関係のインストール
@@ -56,7 +56,7 @@ uv sync
 ## 使い方
 
 ```bash
-uv run python v2.0.1/excel_to_md.py input.xlsx
+uv run python v2.1.0/excel_to_md.py input.xlsx
 ```
 これにより以下が生成されます:
 - `input_csv.md`: CSVマークダウン形式（デフォルト）
@@ -70,34 +70,34 @@ uv run python v2.0.1/excel_to_md.py input.xlsx
 
 **Mermaidフローチャート対応で変換:**
 ```bash
-uv run python v2.0.1/excel_to_md.py input.xlsx --mermaid-enabled
+uv run python v2.1.0/excel_to_md.py input.xlsx --mermaid-enabled
 ```
 
 **シートごとに個別ファイルを生成:**
 ```bash
-uv run python v2.0.1/excel_to_md.py input.xlsx --split-by-sheet
+uv run python v2.1.0/excel_to_md.py input.xlsx --split-by-sheet
 ```
 
 **CSVマークダウンの出力先を指定:**
 ```bash
-uv run python v2.0.1/excel_to_md.py input.xlsx --csv-output-dir ./output
+uv run python v2.1.0/excel_to_md.py input.xlsx --csv-output-dir ./output
 # CSVマークダウン: ./output/input_csv.md
 # 画像: ./output/input_images/
 ```
 
 **標準Markdownのみ出力（CSV出力なし）:**
 ```bash
-uv run python v2.0.1/excel_to_md.py input.xlsx -o output.md --no-csv-markdown-enabled
+uv run python v2.1.0/excel_to_md.py input.xlsx -o output.md --no-csv-markdown-enabled
 ```
 
 **平文ハイパーリンク（Markdown記法なし）:**
 ```bash
-uv run python v2.0.1/excel_to_md.py input.xlsx --hyperlink-mode inline_plain
+uv run python v2.1.0/excel_to_md.py input.xlsx --hyperlink-mode inline_plain
 ```
 
 **トークン数削減（CSV概要セクション除外）:**
 ```bash
-uv run python v2.0.1/excel_to_md.py input.xlsx --no-csv-include-description
+uv run python v2.1.0/excel_to_md.py input.xlsx --no-csv-include-description
 ```
 
 ## 主要オプション
@@ -232,7 +232,7 @@ Excelのセル位置 (B2) に会社ロゴ画像がある場合:
 全オプションの一覧:
 
 ```bash
-uv run python v2.0.1/excel_to_md.py --help
+uv run python v2.1.0/excel_to_md.py --help
 ```
 
 主な高度なオプション:
@@ -248,12 +248,13 @@ uv run python v2.0.1/excel_to_md.py --help
 
 ```
 excel2md/
-├── v2.0.1/                     # 最新バージョン
+├── v2.1.0/                     # 最新バージョン
 │   ├── excel_to_md.py          # エントリーポイント
 │   ├── excel2md/               # メインパッケージ
 │   ├── tests/                  # テストスイート
 │   ├── spec.md                 # 仕様書
 │   └── spec_appendix.md        # 仕様書付録
+├── v2.0.1/                     # 旧バージョン
 ├── v2.0/                       # 旧バージョン
 ├── v1.8/                       # 旧バージョン
 │   ├── excel_to_md.py          # メイン変換プログラム

@@ -7,6 +7,24 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/spec/v2.0.0.html) に準拠しています。
 
+## [2.1.0] - 2026-04-17
+
+### 変更
+- **サポートする最低 Python バージョンを 3.10 に引き上げ**
+  - Python 3.9 は 2025-10 に公式 EOL を迎え、サポート対象外となりました
+  - `requires-python` を `>=3.10` に更新
+  - CI マトリクスを最低サポート（3.10）と現行最新（3.14）の 2 バージョンに変更
+
+### セキュリティ
+- **pytest を 9.0.3 に更新** ([CVE-2025-71176](https://github.com/advisories/GHSA-6w46-j5rx-g56g))
+  - pytest の tmpdir 処理における脆弱性を修正
+- **Pygments を 2.20.0 に更新** ([CVE-2026-4539](https://github.com/advisories/GHSA-5239-wwwm-4pmq))
+  - GUID マッチング用の非効率な正規表現に起因する ReDoS を修正
+
+### ドキュメント
+- spec.md / spec_appendix.md のヘッダを v2.1 に更新
+- README.md / README_ja.md の Python バッジおよびパス参照を更新
+
 ## [2.0.1] - 2026-04-16
 
 ### 修正
@@ -190,6 +208,7 @@
 
 | バージョン | 主な機能 |
 |------------|----------|
+| 2.1.0      | 最低 Python バージョンを 3.10 に引き上げ、セキュリティ更新（pytest・Pygments） |
 | 2.0.1      | mermaid_generator.py のバグ修正（import 漏れ・重複解消） |
 | 2.0.0      | コードベースのモジュール化 |
 | 1.8.0      | 画像抽出機能（Excelファイル内の画像を外部ファイルとして抽出） |

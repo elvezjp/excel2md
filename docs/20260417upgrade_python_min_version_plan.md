@@ -109,9 +109,9 @@ Dependabot は Pygments の修正 PR を自動作成したが、pytest につい
 - `tool.coverage.run.source` / `omit` を `v2.1.0` に更新
 
 **実装記録**:
-- [ ] 未着手
-- 実施日:
-- 備考:
+- [x] 完了
+- 実施日: 2026-04-17
+- 備考: version・requires-python・classifiers（3.9 削除、3.13/3.14 追加）・testpaths・coverage source/omit を更新。
 
 ---
 
@@ -128,9 +128,9 @@ Dependabot は Pygments の修正 PR を自動作成したが、pytest につい
    - その他の dev 依存（coverage / packaging / pytest-cov / tomli）の更新も許容
 
 **実装記録**:
-- [ ] 未着手
-- 実施日:
-- 備考:
+- [x] 完了
+- 実施日: 2026-04-17
+- 備考: `rm uv.lock && uv sync --all-extras` で再生成。`pytest==9.0.3` / `pygments==2.20.0` を確認。Python 3.10+ 制約となったため Python バージョン別の分岐解消、lockfile が単一解決に。`uv run pytest` で 253 tests passed を確認。
 
 ---
 
@@ -147,9 +147,9 @@ Dependabot は Pygments の修正 PR を自動作成したが、pytest につい
 - OS マトリクス（ubuntu / windows / macos）は従来通り維持
 
 **実装記録**:
-- [ ] 未着手
-- 実施日:
-- 備考:
+- [x] 完了
+- 実施日: 2026-04-17
+- 備考: `python-version: ["3.10", "3.14"]` に変更。OS マトリクス（ubuntu / windows / macos）は維持。
 
 ---
 
@@ -165,9 +165,9 @@ Dependabot は Pygments の修正 PR を自動作成したが、pytest につい
 - サポート Python バージョンの記載があれば `3.10+` に更新
 
 **実装記録**:
-- [ ] 未着手
-- 実施日:
-- 備考:
+- [x] 完了
+- 実施日: 2026-04-17
+- 備考: Python バッジ（3.9+ → 3.10+）、Requirements/必要環境の記載（3.9 以上 → 3.10 以上）、仕様書リンク（v2.0.1 → v2.1.0）、コマンド例のパス（v2.0.1 → v2.1.0）、ディレクトリ構成（v2.1.0 を最新、v2.0.1 を旧バージョン欄へ）を両ファイルで更新。
 
 ---
 
@@ -185,9 +185,9 @@ Dependabot は Pygments の修正 PR を自動作成したが、pytest につい
 - バージョン比較テーブルがあれば v2.1.0 行を追記
 
 **実装記録**:
-- [ ] 未着手
-- 実施日:
-- 備考:
+- [x] 完了
+- 実施日: 2026-04-17
+- 備考: v2.1.0 エントリ（Changed / Security / Documentation セクション）を英日両ファイルに追加し、バージョン比較テーブルにも v2.1.0 行を追記。
 
 ---
 
