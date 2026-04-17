@@ -231,6 +231,3 @@ Dependabot は Pygments の修正 PR を自動作成したが、pytest につい
 
 - [ ] PR 作成 → レビュー → main マージ
 - [ ] 既存の Dependabot 自動生成 PR #21（Pygments 単体更新）は本 PR と重複するためクローズ
-- [ ] `v2.1.0` の Git タグ付け
-- [ ] GitHub Releases でリリースノートを公開
-- [ ] Python 3.9 サポート終了について、利用者向けに README / CHANGELOG で明示
