@@ -1,6 +1,6 @@
 # Python 最低バージョン引き上げ修正計画書（v2.1.0）
 
-> **ステータス**: 計画中
+> **ステータス**: 完了
 > **ブランチ**: `tominaga/20260417-upgrade-python-min-version`（予定）
 > **関連 Dependabot alerts**:
 > - [#2 Pygments ReDoS (CVE-2026-4539)](https://github.com/elvezjp/excel2md/security/dependabot/2)
@@ -198,7 +198,7 @@ Dependabot は Pygments の修正 PR を自動作成したが、pytest につい
 ### 4.1 単体テストの実施
 
 - [x] ローカル環境で `uv run pytest` が全件パスすること（253 件を目安）
-- [ ] CI が対象マトリクス（Python 3.10 / 3.14 × ubuntu / windows / macos）で全ジョブ成功すること（PR push 後に確認）
+- [x] CI が対象マトリクス（Python 3.10 / 3.14 × ubuntu / windows / macos）で全ジョブ成功すること（PR #22 にて全6ジョブ SUCCESS を確認）
 
 ### 4.2 前バージョン（v2.0.1）との出力比較
 
@@ -210,8 +210,8 @@ Dependabot は Pygments の修正 PR を自動作成したが、pytest につい
 
 ### 4.3 Dependabot アラート解消確認
 
-- [ ] PR マージ後、Dependabot alert #2（Pygments）が自動クローズされること
-- [ ] PR マージ後、Dependabot alert #3（pytest）が自動クローズされること
+- [x] PR マージ後、Dependabot alert #2（Pygments）が自動クローズされること（`state: fixed`、2026-04-17 05:51:36 UTC）
+- [x] PR マージ後、Dependabot alert #3（pytest）が自動クローズされること（`state: fixed`、2026-04-17 05:51:36 UTC）
 
 ### 検証実施記録
 
@@ -229,5 +229,5 @@ Dependabot は Pygments の修正 PR を自動作成したが、pytest につい
 
 ## 5. 移行・運用工程（仕様駆動開発 工程⑦）
 
-- [ ] PR 作成 → レビュー → main マージ
-- [ ] 既存の Dependabot 自動生成 PR #21（Pygments 単体更新）は本 PR と重複するためクローズ
+- [x] PR 作成 → レビュー → main マージ（PR #22、マージコミット `2f971cf`）
+- [x] 既存の Dependabot 自動生成 PR #21（Pygments 単体更新）は本 PR と重複するためクローズ
