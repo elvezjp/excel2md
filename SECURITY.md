@@ -17,10 +17,13 @@ If you discover a security vulnerability in excel2md, please follow responsible 
 
 ### How to Report
 
-1. **Do NOT** create a public GitHub Issue for security vulnerabilities
-2. Send a detailed report to the maintainers via:
-   - Create a GitHub Private Security Advisory (recommended)
-   - Create an Issue with the "security" label for lower-severity issues
+Report security vulnerabilities via **GitHub Private Security Advisory**, regardless of severity.
+
+1. **Do NOT** create a public GitHub Issue for security vulnerabilities, regardless of severity
+2. Open a Private Security Advisory at:
+   https://github.com/elvezjp/excel2md/security/advisories/new
+
+For security-related questions that are **not** vulnerabilities (e.g., best practices, configuration), see the [Questions](#questions) section.
 
 ### What to Include
 
