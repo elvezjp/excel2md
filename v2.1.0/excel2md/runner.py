@@ -189,6 +189,7 @@ def run(input_path: str, output_path: Optional[str], args):
                     current_md_lines.append(f"### Table {table_id}")
                 for (n, txt) in note_refs:
                     footnotes.append((n, txt))
+                global_footnote_start += len(note_refs)
 
                 if not md_rows:
                     current_md_lines.append("（テーブルなし）\n")
