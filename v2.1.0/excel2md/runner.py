@@ -231,17 +231,10 @@ def run(input_path: str, output_path: Optional[str], args):
                 cell_to_image = extract_images_from_sheet(ws, Path(csv_output_dir), sname, csv_basename, opts, xlsx_path=input_path)
 
             # CSVデータ収集
+            # 仕様 §「印刷領域内のみが変換対象となる」を満たすため、画像位置で
+            # union_area を拡張しない。印刷領域外の画像は extract_print_area_for_csv
+            # 側の範囲反復で自然にフィルタされる。
             for union_area in unioned:
-                # 画像位置を含むように範囲を拡張
-                if cell_to_image:
-                    min_r, min_c, max_r, max_c = union_area
-                    for (img_row, img_col) in cell_to_image.keys():
-                        min_r = min(min_r, img_row)
-                        min_c = min(min_c, img_col)
-                        max_r = max(max_r, img_row)
-                        max_c = max(max_c, img_col)
-                    union_area = (min_r, min_c, max_r, max_c)
-
                 merged_lookup = build_merged_lookup(ws, union_area)
                 try:
                     csv_rows = extract_print_area_for_csv(ws, union_area, opts, merged_lookup, cell_to_image)

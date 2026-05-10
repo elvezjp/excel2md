@@ -2,6 +2,7 @@
 
 Issue #24: extract_table truncation path must return a 4-tuple (was 3-tuple).
 Issue #25: footnote numbering must be unique across tables within the configured scope.
+Issue #14: CSV markdown must not expand the print area to cover image positions.
 """
 import re
 import sys
@@ -12,6 +13,7 @@ import openpyxl
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from excel2md import runner as runner_module
 from excel2md.cli import build_argparser
 from excel2md.runner import run
 
@@ -159,3 +161,67 @@ class TestIssue25FootnoteNumbering:
                 (1, "https://example.com/s1"),
                 (1, "https://example.com/s2"),
             ]
+
+
+# ============================================================
+# Issue #14: CSV markdown must respect the print area, not expand
+# the union_area to cover image positions outside it.
+# ============================================================
+
+
+def _make_workbook_with_print_area(path: Path) -> None:
+    """Workbook whose print area is A1:B2 but with data also at C5/D6.
+
+    Used to verify the CSV markdown range stays inside the print area even
+    when images are reported at out-of-area positions.
+    """
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "S"
+    ws["A1"] = "h1"
+    ws["B1"] = "h2"
+    ws["A2"] = "v1"
+    ws["B2"] = "v2"
+    # Cells outside the print area
+    ws["C5"] = "leak-c5"
+    ws["D6"] = "leak-d6"
+    ws.print_area = "A1:B2"
+    wb.save(path)
+
+
+class TestIssue14CsvPrintAreaRespect:
+    """CSV markdown output must stay within the declared print area."""
+
+    def test_out_of_area_image_does_not_expand_range(self, monkeypatch):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            xlsx = Path(tmpdir) / "area.xlsx"
+            _make_workbook_with_print_area(xlsx)
+
+            inside_path = "out/inside.png"
+            outside_path = "out/outside.png"
+
+            def fake_extract_images(ws, output_dir, sheet_name, md_basename, opts, xlsx_path=None):
+                # One image inside the print area (B2) and one outside (E5).
+                return {(2, 2): inside_path, (5, 5): outside_path}
+
+            monkeypatch.setattr(runner_module, "extract_images_from_sheet", fake_extract_images)
+
+            args = _parse_args([
+                str(xlsx),
+                "--csv-output-dir", tmpdir,
+            ])
+            result = run(str(xlsx), None, args)
+            assert result is not None
+
+            out_files = list(Path(tmpdir).glob("*.md"))
+            assert out_files, "expected at least one CSV markdown output file"
+            text = "\n".join(p.read_text(encoding="utf-8") for p in out_files)
+
+            # The declared range must remain the print area.
+            assert "A1:B2" in text, text
+            # The inside image must appear; the outside one must NOT.
+            assert inside_path in text
+            assert outside_path not in text
+            # Out-of-area data cells must not leak into the CSV output either.
+            assert "leak-c5" not in text
+            assert "leak-d6" not in text
