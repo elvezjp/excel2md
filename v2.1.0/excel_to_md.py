@@ -48,6 +48,8 @@ from excel2md.table_detection import (
 from excel2md.table_extraction import detect_table_title, extract_table, dispatch_table_output
 from excel2md.table_formatting import (
     is_source_code,
+    is_code_block,
+    build_code_block_from_rows,
     detect_code_language,
     format_table_as_text_or_nested,
     choose_header_row_heuristic,
@@ -103,6 +105,8 @@ __all__ = [
     "has_border",
     "dispatch_table_output",
     "is_source_code",
+    "is_code_block",
+    "build_code_block_from_rows",
     "detect_code_language",
     "format_table_as_text_or_nested",
     "choose_header_row_heuristic",
