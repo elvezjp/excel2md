@@ -270,9 +270,10 @@ def run(input_path: str, output_path: Optional[str], args):
                     # CSV Markdownではcolumn_headers/heuristicモード非対応（テーブル分割なしのため）
                     warn(f"mermaid_detect_mode='{detect_mode}' is not supported for CSV markdown output (only 'shapes' is supported). Mermaid output will be skipped for sheet '{sname}'.")
 
-        # split_by_sheetモード: シートごとの脚注を保存・出力
-        if split_by_sheet:
-            sheet_footnotes_dict[sname] = list(footnotes)
+        # シート単位スコープの脚注を保存・出力
+        if split_by_sheet or opts["footnote_scope"] == "sheet":
+            if split_by_sheet:
+                sheet_footnotes_dict[sname] = list(footnotes)
             if footnotes and opts["hyperlink_mode"] in ("footnote", "both"):
                 footnotes_sorted = sorted(set(footnotes), key=lambda x: x[0])
                 current_md_lines.append("\n")
@@ -281,7 +282,7 @@ def run(input_path: str, output_path: Optional[str], args):
 
     # 通常モード: ドキュメント末尾に脚注を追加
     if not split_by_sheet:
-        if footnotes and opts["hyperlink_mode"] in ("footnote", "both"):
+        if opts["footnote_scope"] != "sheet" and footnotes and opts["hyperlink_mode"] in ("footnote", "both"):
             footnotes_sorted = sorted(set(footnotes), key=lambda x: x[0])
             md_lines.append("\n")
             for idx, txt in footnotes_sorted:

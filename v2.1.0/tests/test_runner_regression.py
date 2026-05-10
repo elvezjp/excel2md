@@ -9,7 +9,6 @@ import tempfile
 from pathlib import Path
 
 import openpyxl
-import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -152,10 +151,11 @@ class TestIssue25FootnoteNumbering:
             run(str(xlsx), str(out_md), args)
 
             text = out_md.read_text(encoding="utf-8")
-            # Each sheet has one link; with sheet scope both start at 1.
-            # The aggregated tail-of-document definitions still reflect the
-            # last-seen footnote list (book-mode bookkeeping in runner), so
-            # the important check here is that the runner does not crash and
-            # produces refs starting from 1 for the first sheet.
-            refs, _ = _footnote_refs_and_defs(text)
-            assert refs.count(1) >= 1
+            refs, defs = _footnote_refs_and_defs(text)
+
+            # Each sheet has one link; with sheet scope each sheet starts at 1.
+            assert refs.count(1) >= 2, f"refs={refs}"
+            assert defs == [
+                (1, "https://example.com/s1"),
+                (1, "https://example.com/s2"),
+            ]
