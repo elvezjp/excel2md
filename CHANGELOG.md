@@ -7,6 +7,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2026-05-11
+
+### Fixed
+- **Restored backward-compatible re-exports of `is_code_block` and `build_code_block_from_rows`** ([#15](https://github.com/elvezjp/excel2md/issues/15))
+  - Both symbols moved into `excel2md.table_formatting` in v2.0 and stopped being importable from the top-level `excel2md` / `excel_to_md` modules
+  - Re-exported from `excel2md/__init__.py` and `excel_to_md.py` to restore the v1.8 public API surface
+- **Fixed inconsistent return arity from `extract_table()` on truncation path** ([#24](https://github.com/elvezjp/excel2md/issues/24))
+  - The `max_cells_per_table` truncation branch returned a 3-tuple while `runner.run()` unpacked a 4-tuple, raising `ValueError`
+  - Truncation path now returns the 4-tuple `(md_rows, note_refs, True, table_title)`
+- **Fixed duplicated footnote numbering across multiple tables** ([#25](https://github.com/elvezjp/excel2md/issues/25))
+  - `runner.run()` passed the same `global_footnote_start` to every table, causing `[^1]` to be re-issued and references to become ambiguous
+  - Now advances the start counter by `len(note_refs)` after each table, so `footnote_scope=book` numbers sequentially across the workbook and `footnote_scope=sheet` resets per sheet
+- **Fixed sheet-scope footnote definitions being dropped in non-`split-by-sheet` mode**
+  - When `footnote_scope=sheet` was used without `--split-by-sheet`, per-sheet footnote definitions were not emitted
+  - Now emits them at the end of each sheet's section as expected
+
+### Tests
+- Added `tests/test_public_api.py` to lock in the v1.x re-export surface
+- Added `tests/test_runner_regression.py` covering the truncation and footnote-numbering regressions
+
+### Notes
+- `v2.1.0/` is preserved as a frozen release snapshot. All fixes above live under `v2.1.1/`.
+
 ## [2.1.0] - 2026-04-17
 
 ### Changed
@@ -208,6 +231,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Key Features |
 |---------|-------------|
+| 2.1.1   | Bug fixes: v1.x re-exports (#15), truncation arity (#24), footnote numbering (#25) |
 | 2.1.0   | Raised minimum Python to 3.10, security updates (pytest, Pygments) |
 | 2.0.1   | Bug fix in mermaid_generator.py (missing import, duplicate resolution) |
 | 2.0.0   | Codebase modularization |
