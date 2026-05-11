@@ -7,6 +7,29 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/spec/v2.0.0.html) に準拠しています。
 
+## [2.1.1] - 2026-05-11
+
+### 修正
+- **`is_code_block` / `build_code_block_from_rows` の v1.x 互換 re-export を復活** ([#15](https://github.com/elvezjp/excel2md/issues/15))
+  - v2.0 で両関数が `excel2md.table_formatting` に切り出され、トップレベルの `excel2md` / `excel_to_md` から import できなくなっていた
+  - `excel2md/__init__.py` および `excel_to_md.py` から再エクスポートし、v1.8 時点の公開 API 互換性を回復
+- **`extract_table()` の打ち切り戻り値の要素数が一致しないバグを修正** ([#24](https://github.com/elvezjp/excel2md/issues/24))
+  - `max_cells_per_table` 超過時に 3 要素を返していたが、`runner.run()` 側は 4 要素 unpack を要求しており `ValueError` が発生していた
+  - 打ち切り経路でも `(md_rows, note_refs, True, table_title)` の 4 要素戻り値に統一
+- **複数テーブルで脚注番号が重複するバグを修正** ([#25](https://github.com/elvezjp/excel2md/issues/25))
+  - `runner.run()` が各テーブルに同じ `global_footnote_start` を渡していたため、`[^1]` が再採番され参照先が曖昧になっていた
+  - テーブル処理後に `len(note_refs)` 分だけ開始番号を前進させ、`footnote_scope=book` ではブック内連番、`footnote_scope=sheet` ではシート単位リセットを正しく動作させる
+- **`--split-by-sheet` 未指定時にシートスコープの脚注定義が出力されないバグを修正**
+  - `footnote_scope=sheet` を `--split-by-sheet` なしで指定した場合、シート末尾の脚注定義ブロックが出力されなかった
+  - 各シートのセクション末尾に脚注定義を出力するよう修正
+
+### テスト
+- `tests/test_public_api.py` を追加し、v1.x 公開 API の再エクスポートを回帰検証
+- `tests/test_runner_regression.py` を追加し、打ち切り戻り値・脚注番号の回帰を検証
+
+### 備考
+- `v2.1.0/` は v2.1.0 リリース時点の凍結スナップショットとしてそのまま残してある。本リリースの修正は `v2.1.1/` 配下に集約されている。
+
 ## [2.1.0] - 2026-04-17
 
 ### 変更
@@ -208,6 +231,7 @@
 
 | バージョン | 主な機能 |
 |------------|----------|
+| 2.1.1      | バグ修正: v1.x re-export (#15)、打ち切り戻り値 (#24)、脚注番号 (#25) |
 | 2.1.0      | 最低 Python バージョンを 3.10 に引き上げ、セキュリティ更新（pytest・Pygments） |
 | 2.0.1      | mermaid_generator.py のバグ修正（import 漏れ・重複解消） |
 | 2.0.0      | コードベースのモジュール化 |
