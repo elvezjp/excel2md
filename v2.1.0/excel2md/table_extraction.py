@@ -202,7 +202,7 @@ def extract_table(ws, table, opts, footnotes, footnote_index_start, merged_looku
         for C in used_cols:
             count_cells += 1
             if count_cells > max_cells:
-                return md_rows, note_refs, True, table_title
+                return md_rows, note_refs, True
             if (R,C) not in mask:
                 row_vals.append("")
                 continue
