@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "excel2md"
 version = "2.1.1"
@@ -32,10 +36,39 @@ Homepage = "https://github.com/elvezjp/excel2md"
 Repository = "https://github.com/elvezjp/excel2md"
 Issues = "https://github.com/elvezjp/excel2md/issues"
 
+[project.scripts]
+excel2md = "excel2md.cli:main"
+
 [project.optional-dependencies]
 test = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["v2.1.1/excel2md"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "v2.1.1/excel2md/**",
+    "README.md",
+    "README_ja.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "CHANGELOG_ja.md",
+    "pyproject.toml",
+]
+exclude = [
+    "v1.7/**",
+    "v1.8/**",
+    "v2.0/**",
+    "v2.0.1/**",
+    "v2.1.0/**",
+    "docs/**",
+    "v2.1.1/tests/**",
+    "v2.1.1/spec*.md",
+    "v2.1.1/verify_csv_markdown.py",
+    "v2.1.1/excel_to_md.py",
 ]
 
 [tool.pytest.ini_options]
