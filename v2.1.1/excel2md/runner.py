@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import List, Tuple, Optional
 
 from . import __version__ as VERSION
+from .config import ConversionConfig
 from .output import warn, info
 from .workbook_loader import load_workbook_safe, get_print_areas
 from .mermaid_generator import _v14_extract_shapes_to_mermaid
@@ -18,12 +19,20 @@ from .image_extraction import extract_images_from_sheet
 from .csv_export import coords_to_excel_range, write_csv_markdown, extract_print_area_for_csv
 
 def run(input_path: str, output_path: Optional[str], args):
-    """Excel→Markdown変換のメイン処理を実行する。"""
+    """Excel→Markdown変換のメイン処理を実行する。
+
+    ``args`` には argparse.Namespace (CLI 経由) または ConversionConfig
+    (ライブラリ呼び出し / ExcelConverter 経由) のいずれも渡せる。両者は
+    同じ属性インタフェースを持つが、内部処理は ConversionConfig に
+    正規化して扱う (Issue #16 Phase 4)。
+    """
+    config = args if isinstance(args, ConversionConfig) else ConversionConfig.from_args(args)
+
     # ワークブック読み込み
-    wb = load_workbook_safe(input_path, read_only=args.read_only)
+    wb = load_workbook_safe(input_path, read_only=config.read_only)
     sheets = wb.sheetnames
 
-    split_by_sheet = getattr(args, "split_by_sheet", False)
+    split_by_sheet = config.split_by_sheet
 
     # split_by_sheetモード: シートごとにMarkdown行と脚注を管理
     if split_by_sheet:
@@ -44,65 +53,11 @@ def run(input_path: str, output_path: Optional[str], args):
     sheet_counter = 0
 
     # オプション辞書の構築
-    opts = {
-        "no_print_area_mode": args.no_print_area_mode,
-        "value_mode": args.value_mode,
-        "merge_policy": args.merge_policy,
-        "hyperlink_mode": args.hyperlink_mode,
-        "header_detection": (args.header_detection == "first_row"),
-        "hidden_policy": args.hidden_policy,
-        "strip_whitespace": args.strip_whitespace,
-        "escape_pipes": args.escape_pipes,
-        "date_format_override": args.date_format_override,
-        "date_default_format": args.date_default_format,
-        "numeric_thousand_sep": args.numeric_thousand_sep,
-        "percent_format": args.percent_format,
-        "currency_symbol": args.currency_symbol,
-        "percent_divide_100": args.percent_divide_100,
-        "readonly_fill_policy": getattr(args, "readonly_fill_policy", "assume_no_fill"),
-        "align_detection": (args.align_detection == "numbers_right"),
-        "numbers_right_threshold": args.numbers_right_threshold,
-        "max_sheet_count": args.max_sheet_count,
-        "max_cells_per_table": args.max_cells_per_table,
-        "sort_tables": args.sort_tables,
-        "footnote_scope": args.footnote_scope,
-        "locale": args.locale,
-        "markdown_escape_level": args.markdown_escape_level,
-        "mermaid_enabled": args.mermaid_enabled,
-        "mermaid_detect_mode": args.mermaid_detect_mode,
-        "mermaid_diagram_type": getattr(args, "mermaid_diagram_type", "flowchart"),
-        "mermaid_direction": args.mermaid_direction,
-        "mermaid_keep_source_table": getattr(args, "mermaid_keep_source_table", True),
-        "mermaid_dedupe_edges": getattr(args, "mermaid_dedupe_edges", True),
-        "mermaid_node_id_policy": getattr(args, "mermaid_node_id_policy", "auto"),
-        "mermaid_group_column_behavior": getattr(args, "mermaid_group_column_behavior", "subgraph"),
-        "mermaid_columns": (lambda s: {
-            "from": (s.split(",")[0].strip() if len(s.split(","))>0 else "From"),
-            "to": (s.split(",")[1].strip() if len(s.split(","))>1 else "To"),
-            "label": (s.split(",")[2].strip() if len(s.split(","))>2 else "Label"),
-            "group": (s.split(",")[3].strip() if len(s.split(","))>3 else None),
-            "note": (s.split(",")[4].strip() if len(s.split(","))>4 else None),
-        })(args.mermaid_columns),
-        "mermaid_heuristic_min_rows": args.mermaid_heuristic_min_rows,
-        "mermaid_heuristic_arrow_ratio": args.mermaid_heuristic_arrow_ratio,
-        "mermaid_heuristic_len_median_ratio_min": args.mermaid_heuristic_len_median_ratio_min,
-        "mermaid_heuristic_len_median_ratio_max": args.mermaid_heuristic_len_median_ratio_max,
-        "dispatch_skip_code_and_mermaid_on_fallback": getattr(args, "dispatch_skip_code_and_mermaid_on_fallback", True),
-
-        "detect_dates": True,
-        "prefer_excel_display": args.prefer_excel_display,
-
-        # CSV Markdown出力オプション
-        "csv_output_dir": getattr(args, "csv_output_dir", None),
-        "csv_apply_merge_policy": getattr(args, "csv_apply_merge_policy", True),
-        "csv_normalize_values": getattr(args, "csv_normalize_values", True),
-        "csv_markdown_enabled": getattr(args, "csv_markdown_enabled", True),
-        "csv_include_metadata": getattr(args, "csv_include_metadata", True),
-        "csv_include_description": getattr(args, "csv_include_description", True),
-
-        # 画像抽出オプション
-        "image_extraction": getattr(args, "image_extraction", True),
-    }
+    # ConversionConfig.to_opts_dict() がかつての inline 辞書と完全に同等の
+    # 形を返すため、ここでは委譲するだけで振る舞いは変わらない。
+    # test_config.py の test_to_opts_dict_matches_runner_inline_dict_* が
+    # この同等性を回帰テストとして担保している。
+    opts = config.to_opts_dict()
 
     # CSV Markdown出力の準備
     csv_output_dir = opts.get("csv_output_dir") or str(Path(input_path).parent)

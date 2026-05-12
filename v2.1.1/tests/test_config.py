@@ -17,9 +17,15 @@ from excel2md.cli import build_argparser
 
 
 # =============================================================
-# Snapshot of the inline opts-dict construction currently inside
-# runner.run() (v2.1.1/excel2md/runner.py lines 47-105 as of 2026-05-13).
-# Kept verbatim here as the ground-truth baseline.
+# Frozen baseline of the inline opts-dict construction that runner.run()
+# *used to* build inline (v2.1.1/excel2md/runner.py lines 47-105 as of
+# 2026-05-13, before Commit D of issue #16).
+#
+# Commit D replaced that inline block with ``config.to_opts_dict()``; from
+# that point this helper stops being "the current runner code" and becomes
+# the **immutable contract reference** that ``to_opts_dict()`` must continue
+# to satisfy. Do not modify it to track later runner changes — instead,
+# update ``to_opts_dict()`` and add new test cases for new behavior.
 # =============================================================
 
 def _build_opts_dict_inline(args):
