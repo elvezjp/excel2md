@@ -104,6 +104,10 @@ class ExcelConverter:
             "result": result,
         }
 
+    # =============================================================
+    # Internal helpers
+    # =============================================================
+
     @staticmethod
     def _resolve_output_path(result: Any, fallback_path: str) -> Optional[Path]:
         """runner.run の戻り値から実際の Markdown ファイルパスを判定する。"""
@@ -126,3 +130,34 @@ class ExcelConverter:
             return candidate
 
         return None
+
+
+# =============================================================
+# Convenience function (one-shot conversion)
+# =============================================================
+
+def convert_to_markdown(
+    source: InputType,
+    output_path: Optional[OutputPathType] = None,
+    **config_kwargs: Any,
+) -> Dict[str, Any]:
+    """``ExcelConverter`` のワンショット版。
+
+    ``ConversionConfig`` を ``config_kwargs`` から組み立て、``ExcelConverter`` に
+    委譲する薄いラッパー。簡単な使い方:
+
+        >>> from excel2md import convert_to_markdown
+        >>> md = convert_to_markdown("spec.xlsx")["markdown"]
+        >>> md_inline = convert_to_markdown(
+        ...     "spec.xlsx", hyperlink_mode="inline"
+        ... )["markdown"]
+        >>> md_from_bytes = convert_to_markdown(open("spec.xlsx", "rb").read())["markdown"]
+
+    細かい設定や複数回の変換には ``ExcelConverter`` を直接使う方が効率的:
+
+        >>> cfg = ConversionConfig(hyperlink_mode="inline")
+        >>> conv = ExcelConverter(cfg)
+        >>> r1 = conv.convert(b1); r2 = conv.convert(b2)
+    """
+    cfg = ConversionConfig(**config_kwargs)
+    return ExcelConverter(cfg).convert(source, output_path=output_path)
