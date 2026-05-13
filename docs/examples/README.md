@@ -8,7 +8,7 @@
 
 ```
 docs/examples/
-└── v2.2.0/
+└── バージョン番号/
     ├── test_standard.xlsx              # 入力: 標準テーブル / 結合セル / ハイパーリンク / 画像
     ├── test_mermaid.xlsx               # 入力: Mermaid 検出用のフロー記述
     ├── output-default/                 # デフォルト設定 (CSV markdown + 画像抽出)
@@ -27,26 +27,26 @@ docs/examples/
 | `test_standard.xlsx` | 標準的なテーブル、結合セル、複数テーブル、ハイパーリンク、画像を含む 5 シート |
 | `test_mermaid.xlsx` | `From` / `To` / `Label` 列を持つフローテーブル（Mermaid フローチャート検出のサンプル） |
 
-いずれも `v2.1.1/tests/fixtures/` のテスト用 fixture と同一ファイル。
+## 生成方法
 
-## 再生成コマンド
-
-### v2.2.0
+対象バージョンのディレクトリで作業する。先頭で `VERSION` を設定しておくと以下のコマンドをそのまま使い回せる。
 
 ```bash
+VERSION=vX.Y.Z
+
 # デフォルト設定 (CSV markdown + 画像抽出)
-excel2md docs/examples/v2.2.0/test_standard.xlsx \
-  --csv-output-dir docs/examples/v2.2.0/output-default
+excel2md docs/examples/${VERSION}/test_standard.xlsx \
+  --csv-output-dir docs/examples/${VERSION}/output-default
 
 # 標準 Markdown モード (CSV markdown 無効)
-excel2md docs/examples/v2.2.0/test_standard.xlsx \
-  -o docs/examples/v2.2.0/output-markdown/test_standard.md \
+excel2md docs/examples/${VERSION}/test_standard.xlsx \
+  -o docs/examples/${VERSION}/output-markdown/test_standard.md \
   --no-csv-markdown-enabled
 
 # Mermaid フローチャート有効
-excel2md docs/examples/v2.2.0/test_mermaid.xlsx \
+excel2md docs/examples/${VERSION}/test_mermaid.xlsx \
   --mermaid-enabled \
-  --csv-output-dir docs/examples/v2.2.0/output-mermaid
+  --csv-output-dir docs/examples/${VERSION}/output-mermaid
 ```
 
 ソースから動かす場合は各コマンドの先頭に `uv run` を付ける。
