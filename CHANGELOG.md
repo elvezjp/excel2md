@@ -20,6 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `.github/workflows/publish-testpypi.yml` — manual TestPyPI rehearsal
   - See [docs/20260513_pypi_trusted_publisher_setup.md](docs/20260513_pypi_trusted_publisher_setup.md) for administrator setup
 - **First public release on PyPI as `excel2md`**
+- Registered the standalone verification CLI as `excel2md-verify` under `project.scripts` ([#38](https://github.com/elvezjp/excel2md/issues/38))
+
+### Fixed
+- **Fixed missing `verify_csv_markdown` module that silently disabled CSV Markdown verification metadata** ([#38](https://github.com/elvezjp/excel2md/issues/38))
+  - `csv_export.py` imported the sibling file `v2.2.0/verify_csv_markdown.py` via a `sys.path` hack, but the module was not included in the wheel/sdist
+  - In development it only resolved because Python automatically prepends the cwd to `sys.path` when running scripts; after `pip install` users hit `[WARN] Failed to append verification metadata: No module named 'verify_csv_markdown'` and the verification metadata block was dropped
+  - Moved `verify_csv_markdown.py` into `v2.2.0/excel2md/` and switched to a relative import (`from .verify_csv_markdown import ...`)
 
 ### Changed
 - `runner.run()` internally normalizes both `argparse.Namespace` (CLI) and `ConversionConfig` (library) inputs. CLI behavior is unchanged; the inline options dictionary was replaced with `ConversionConfig.to_opts_dict()`, with a roundtrip test guaranteeing exact equivalence

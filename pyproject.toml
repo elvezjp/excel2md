@@ -38,6 +38,7 @@ Issues = "https://github.com/elvezjp/excel2md/issues"
 
 [project.scripts]
 excel2md = "excel2md.cli:main"
+excel2md-verify = "excel2md.verify_csv_markdown:main"
 
 [project.optional-dependencies]
 test = [
@@ -68,7 +69,6 @@ exclude = [
     "docs/**",
     "v2.2.0/tests/**",
     "v2.2.0/spec*.md",
-    "v2.2.0/verify_csv_markdown.py",
     "v2.2.0/excel_to_md.py",
 ]
 

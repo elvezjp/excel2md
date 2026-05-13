@@ -20,6 +20,13 @@
   - `.github/workflows/publish-testpypi.yml` — 手動トリガーの TestPyPI リハーサル
   - 管理者セットアップ手順は [docs/20260513_pypi_trusted_publisher_setup.md](docs/20260513_pypi_trusted_publisher_setup.md) を参照
 - **PyPI に `excel2md` として初公開**
+- 検証用スタンドアロン CLI を `excel2md-verify` として `project.scripts` に登録（[#38](https://github.com/elvezjp/excel2md/issues/38)）
+
+### 修正
+- **`verify_csv_markdown` モジュールが配布物に含まれず、CSV Markdown 検証メタデータの追記が silent に失敗していたバグを修正** ([#38](https://github.com/elvezjp/excel2md/issues/38))
+  - `csv_export.py` が `sys.path` 細工経由で兄弟ファイル `v2.2.0/verify_csv_markdown.py` を import していたが、wheel/sdist には同モジュールが含まれていなかった
+  - 開発時は cwd が自動的に `sys.path` に入る偶然動作で解決されていただけで、`pip install` 後のユーザーでは `[WARN] Failed to append verification metadata: No module named 'verify_csv_markdown'` が発生し、検証メタデータが欠落していた
+  - `verify_csv_markdown.py` を `v2.2.0/excel2md/` 配下に移動し、相対 import (`from .verify_csv_markdown import ...`) に変更
 
 ### 変更
 - `runner.run()` は内部で `argparse.Namespace`（CLI 経路）と `ConversionConfig`（ライブラリ経路）の両方を受け取り、`ConversionConfig` に正規化する。CLI 挙動は不変。従来 inline で組み立てていた options 辞書は `ConversionConfig.to_opts_dict()` への委譲に置換され、roundtrip テストで旧 inline 辞書との完全一致を保証
