@@ -111,7 +111,7 @@ class ConversionConfig:
     def to_opts_dict(self) -> Dict[str, Any]:
         """runner.run() が期待する opts 辞書を返す。
 
-        現状の runner.run() における opts 辞書構築箇所 (v2.1.1/excel2md/runner.py
+        現状の runner.run() における opts 辞書構築箇所 (v2.2.0/excel2md/runner.py
         の lines 47-105 相当) と **完全に一致** する辞書を返す。PR D で runner を
         ConversionConfig ベースに置換する際、この一致が振る舞いの不変性を担保する。
         test_config.py の test_to_opts_dict_matches_runner_inline_dict_* がこの

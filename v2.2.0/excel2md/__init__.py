@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""excel2md package (v2.1.1)."""
+"""excel2md package (v2.2.0)."""
 
-__version__ = "2.1.1"
+__version__ = "2.2.0"
 
 # ライブラリとしての公開 API (issue #16)
 from .config import ConversionConfig

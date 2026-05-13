@@ -629,9 +629,9 @@ excel2md/
 #### 11.1.3 テスト実行方法
 
 ```bash
-uv run pytest v2.1.1/tests -v                    # 全テスト実行
-uv run pytest v2.1.1/tests/test_cell_utils.py -v  # 特定ファイルのみ
-uv run pytest v2.1.1/tests --cov=v2.1.1 --cov-report=html  # カバレッジ付き
+uv run pytest v2.2.0/tests -v                    # 全テスト実行
+uv run pytest v2.2.0/tests/test_cell_utils.py -v  # 特定ファイルのみ
+uv run pytest v2.2.0/tests --cov=v2.2.0 --cov-report=html  # カバレッジ付き
 ```
 
 ### 11.2 テスト方針
@@ -675,7 +675,7 @@ uv run pytest v2.1.1/tests --cov=v2.1.1 --cov-report=html  # カバレッジ付�
 
 #### 必要なテスト用Excelファイル
 
-以下のExcelファイルを `v2.1.1/tests/fixtures/` ディレクトリに準備する。
+以下のExcelファイルを `v2.2.0/tests/fixtures/` ディレクトリに準備する。
 
 **test_standard.xlsx** - 標準テスト用（複数シート構成）
 - Sheet1「基本テーブル」: 通常のテーブル（ヘッダー行あり、数値・文字列混在）
@@ -691,8 +691,8 @@ uv run pytest v2.1.1/tests --cov=v2.1.1 --cov-report=html  # カバレッジ付�
 #### 11.3.1 CLI基本動作確認
 
 ```bash
-uv run python v2.1.1/excel_to_md.py --help
-uv run python v2.1.1/excel_to_md.py nonexistent.xlsx
+uv run python v2.2.0/excel_to_md.py --help
+uv run python v2.2.0/excel_to_md.py nonexistent.xlsx
 ```
 
 - [ ] `--help` で全オプションの説明が表示される
@@ -702,7 +702,7 @@ uv run python v2.1.1/excel_to_md.py nonexistent.xlsx
 
 **基本変換**
 ```bash
-uv run python v2.1.1/excel_to_md.py test_standard.xlsx
+uv run python v2.2.0/excel_to_md.py test_standard.xlsx
 ```
 - [ ] エラーなく `test_standard_csv.md` が生成される
 - [ ] 5シート分のCSVコードブロックが出力される
@@ -710,9 +710,9 @@ uv run python v2.1.1/excel_to_md.py test_standard.xlsx
 
 **出力形式オプション**
 ```bash
-uv run python v2.1.1/excel_to_md.py test_standard.xlsx --no-csv-markdown-enabled -o out.md
-uv run python v2.1.1/excel_to_md.py test_standard.xlsx --split-by-sheet
-uv run python v2.1.1/excel_to_md.py test_standard.xlsx --csv-output-dir ./output
+uv run python v2.2.0/excel_to_md.py test_standard.xlsx --no-csv-markdown-enabled -o out.md
+uv run python v2.2.0/excel_to_md.py test_standard.xlsx --split-by-sheet
+uv run python v2.2.0/excel_to_md.py test_standard.xlsx --csv-output-dir ./output
 ```
 - [ ] `--no-csv-markdown-enabled -o out.md` でGFMテーブル形式のMarkdownが出力される
 - [ ] `--split-by-sheet` でシートごとに個別ファイル（5ファイル）が生成される
@@ -732,9 +732,9 @@ uv run python v2.1.1/excel_to_md.py test_standard.xlsx --csv-output-dir ./output
 
 **Sheet4「ハイパーリンク」の確認**
 ```bash
-uv run python v2.1.1/excel_to_md.py test_standard.xlsx --hyperlink-mode inline
-uv run python v2.1.1/excel_to_md.py test_standard.xlsx --hyperlink-mode inline_plain
-uv run python v2.1.1/excel_to_md.py test_standard.xlsx --hyperlink-mode footnote
+uv run python v2.2.0/excel_to_md.py test_standard.xlsx --hyperlink-mode inline
+uv run python v2.2.0/excel_to_md.py test_standard.xlsx --hyperlink-mode inline_plain
+uv run python v2.2.0/excel_to_md.py test_standard.xlsx --hyperlink-mode footnote
 ```
 - [ ] `inline` モードで `[テキスト](URL)` 形式で出力される
 - [ ] `inline_plain` モードで `テキスト (URL)` 形式で出力される
@@ -749,7 +749,7 @@ uv run python v2.1.1/excel_to_md.py test_standard.xlsx --hyperlink-mode footnote
 - [ ] CSVに `![alt](test_standard_images/...)` 形式でリンクが出力される
 
 ```bash
-uv run python v2.1.1/excel_to_md.py test_standard.xlsx --no-image-extraction
+uv run python v2.2.0/excel_to_md.py test_standard.xlsx --no-image-extraction
 ```
 - [ ] `--no-image-extraction` で画像が抽出されない
 
@@ -757,8 +757,8 @@ uv run python v2.1.1/excel_to_md.py test_standard.xlsx --no-image-extraction
 
 **Sheet1「図形フロー」の確認**
 ```bash
-uv run python v2.1.1/excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermaid-detect-mode shapes
-uv run python v2.1.1/excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermaid-detect-mode shapes --mermaid-direction LR
+uv run python v2.2.0/excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermaid-detect-mode shapes
+uv run python v2.2.0/excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermaid-detect-mode shapes --mermaid-direction LR
 ```
 - [ ] フローチャート図形からMermaidコードが生成される
 - [ ] 矩形が `[テキスト]`、ひし形が `{テキスト}`、楕円が `([テキスト])` で出力される
@@ -767,8 +767,8 @@ uv run python v2.1.1/excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermai
 
 **Sheet2「テーブルフロー」の確認**
 ```bash
-uv run python v2.1.1/excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermaid-detect-mode column_headers
-uv run python v2.1.1/excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermaid-detect-mode column_headers --no-mermaid-keep-source-table
+uv run python v2.2.0/excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermaid-detect-mode column_headers
+uv run python v2.2.0/excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermaid-detect-mode column_headers --no-mermaid-keep-source-table
 ```
 - [ ] From/To/Label列からMermaidコードが生成される
 - [ ] `--no-mermaid-keep-source-table` で元テーブルが出力されない
