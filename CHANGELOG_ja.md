@@ -7,6 +7,29 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/spec/v2.0.0.html) に準拠しています。
 
+## [2.2.0] - 2026-05-13
+
+### 追加
+- **ライブラリ公開 API**: `ConversionConfig` / `ExcelConverter` / `convert_to_markdown` を `excel2md` および `excel_to_md` から公開 ([#16](https://github.com/elvezjp/excel2md/issues/16))
+  - `convert_to_markdown(data: bytes | str | Path, **opts) -> dict` — CLI 経由でない呼び出し元（Pyodide / MCP サーバー / ノートブック / Web サービス）向けのワンショット便宜関数
+  - `ConversionConfig` — CLI オプションを反映した型ヒント付き dataclass。`from_args()` と `to_opts_dict()` を提供
+  - `ExcelConverter` — config を保持して bytes 入力 / dict 出力で変換する再利用可能クラス
+- pure Python 実装のため、Pyodide でも `micropip.install('excel2md')` でそのまま動作（ネイティブ依存なし）
+- PyPI / TestPyPI 公開用 GitHub Actions ワークフロー（Trusted Publisher 方式、API トークン不要）を追加 ([#19](https://github.com/elvezjp/excel2md/issues/19))
+  - `.github/workflows/publish.yml` — tag 起点の本番リリース
+  - `.github/workflows/publish-testpypi.yml` — 手動トリガーの TestPyPI リハーサル
+  - 管理者セットアップ手順は [docs/20260513_pypi_trusted_publisher_setup.md](docs/20260513_pypi_trusted_publisher_setup.md) を参照
+- **PyPI に `excel2md` として初公開**
+
+### 変更
+- `runner.run()` は内部で `argparse.Namespace`（CLI 経路）と `ConversionConfig`（ライブラリ経路）の両方を受け取り、`ConversionConfig` に正規化する。CLI 挙動は不変。従来 inline で組み立てていた options 辞書は `ConversionConfig.to_opts_dict()` への委譲に置換され、roundtrip テストで旧 inline 辞書との完全一致を保証
+- `pyproject.toml` の `authors` に `email = "info@elvez.co.jp"` を追加（PyPI メタデータの連絡先明示）
+- v2.2.0 開発用ディレクトリ `v2.2.0/` を新規追加。`v2.1.1/` は v2.1.1 リリース時点（commit 034fa57）の凍結スナップショットとしてそのまま残す（リポのバージョン管理ポリシーに準拠 — 既存 v*/ は凍結し、新バージョンは新規ディレクトリで作業）
+
+### 備考
+- `v2.1.1/` は内部バージョン番号として割り振っただけで PyPI には公開されていない。`v2.2.0` が PyPI 初公開バージョン
+- `v2.1.1/` ディレクトリは凍結スナップショットとして残してあるが、本リリースで導入したライブラリ API（`ConversionConfig` / `ExcelConverter` / `convert_to_markdown`）は含まない（v2.2.0 で初導入）
+
 ## [2.1.1] - 2026-05-11
 
 ### 修正

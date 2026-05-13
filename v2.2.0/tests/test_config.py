@@ -18,7 +18,7 @@ from excel2md.cli import build_argparser
 
 # =============================================================
 # Frozen baseline of the inline opts-dict construction that runner.run()
-# *used to* build inline (v2.1.1/excel2md/runner.py lines 47-105 as of
+# *used to* build inline (v2.2.0/excel2md/runner.py lines 47-105 as of
 # 2026-05-13, before Commit D of issue #16).
 #
 # Commit D replaced that inline block with ``config.to_opts_dict()``; from

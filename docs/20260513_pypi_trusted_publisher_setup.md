@@ -13,7 +13,7 @@ GitHub Actions から API トークンを使わずに PyPI / TestPyPI へ自動�
 ## 2. アーキテクチャ
 
 ```
-[開発者]  git tag v2.1.1 && git push origin v2.1.1
+[開発者]  git tag v2.2.0 && git push origin v2.2.0
                 ↓
 [GitHub]  tag push を検知して publish.yml を起動
                 ↓

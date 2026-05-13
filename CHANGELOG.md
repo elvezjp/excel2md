@@ -7,6 +7,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-05-13
+
+### Added
+- **Library API surface**: `ConversionConfig`, `ExcelConverter`, and `convert_to_markdown` are now exposed from both `excel2md` and `excel_to_md` ([#16](https://github.com/elvezjp/excel2md/issues/16))
+  - `convert_to_markdown(data: bytes | str | Path, **opts) -> dict` — one-shot convenience for non-CLI callers (Pyodide / MCP servers / notebooks / web services)
+  - `ConversionConfig` — type-hinted dataclass mirroring CLI options, with `from_args()` and `to_opts_dict()` helpers
+  - `ExcelConverter` — reusable class wrapping config + bytes-in/dict-out conversion
+- Pure Python implementation works inside Pyodide via `micropip.install('excel2md')`; no native dependencies
+- GitHub Actions Trusted Publisher workflows for PyPI and TestPyPI publishing ([#19](https://github.com/elvezjp/excel2md/issues/19))
+  - `.github/workflows/publish.yml` — tag-triggered production release
+  - `.github/workflows/publish-testpypi.yml` — manual TestPyPI rehearsal
+  - See [docs/20260513_pypi_trusted_publisher_setup.md](docs/20260513_pypi_trusted_publisher_setup.md) for administrator setup
+- **First public release on PyPI as `excel2md`**
+
+### Changed
+- `runner.run()` internally normalizes both `argparse.Namespace` (CLI) and `ConversionConfig` (library) inputs. CLI behavior is unchanged; the inline options dictionary was replaced with `ConversionConfig.to_opts_dict()`, with a roundtrip test guaranteeing exact equivalence
+- `pyproject.toml` `authors` now includes `email = "info@elvez.co.jp"` for PyPI metadata
+- Added new active development directory `v2.2.0/`. `v2.1.1/` is preserved as a frozen snapshot at the v2.1.1 release point (commit 034fa57), per the repository versioning policy (existing `v*/` directories are frozen; new versions go into a new directory)
+
+### Notes
+- `v2.1.1/` was assigned an internal version number only and was never published to PyPI; `v2.2.0` is the first PyPI release
+- The frozen `v2.1.1/` snapshot does **not** contain the library API (`ConversionConfig` / `ExcelConverter` / `convert_to_markdown`) introduced in this release — those are only present in `v2.2.0/`
+
 ## [2.1.1] - 2026-05-11
 
 ### Fixed

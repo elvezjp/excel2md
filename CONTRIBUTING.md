@@ -42,10 +42,10 @@ Feature requests are welcome! Please create an Issue with:
 3. **Write tests** for your changes
    ```bash
    # Run tests
-   uv run pytest v2.1.1/tests
+   uv run pytest v2.2.0/tests
 
    # Run tests with coverage
-   uv run pytest v2.1.1/tests --cov=v2.1.1 --cov-report=html
+   uv run pytest v2.2.0/tests --cov=v2.2.0 --cov-report=html
    ```
 
 4. **Update documentation** as needed
@@ -91,13 +91,13 @@ uv sync --extra test
 
 ```bash
 # Run all tests
-uv run pytest v2.1.1/tests
+uv run pytest v2.2.0/tests
 
 # Run a specific test file
-uv run pytest v2.1.1/tests/test_csv_markdown.py
+uv run pytest v2.2.0/tests/test_csv_markdown.py
 
 # Run with coverage
-uv run pytest v2.1.1/tests --cov=v2.1.1 --cov-report=html
+uv run pytest v2.2.0/tests --cov=v2.2.0 --cov-report=html
 ```
 
 ### Testing Your Changes
@@ -145,7 +145,7 @@ Closes #123
 ## Versioning
 
 When contributing:
-- Focus on the latest version (`v2.1.1/`)
+- Focus on the latest version (`v2.2.0/`)
 - Maintain backward compatibility where possible
 - Document breaking changes clearly
 
