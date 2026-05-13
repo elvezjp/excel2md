@@ -4,9 +4,12 @@
 
 [![Elvez](https://img.shields.io/badge/Elvez-Product-3F61A7?style=flat-square)](https://elvez.co.jp/)
 [![IXV Ecosystem](https://img.shields.io/badge/IXV-Ecosystem-3F61A7?style=flat-square)](https://elvez.co.jp/ixv/)
+[![PyPI version](https://img.shields.io/pypi/v/excel2md?style=flat-square)](https://pypi.org/project/excel2md/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](https://opensource.org/licenses/MIT)
 [![Python](https://img.shields.io/badge/Python-3.10+-blue?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![Stars](https://img.shields.io/github/stars/elvezjp/excel2md?style=social)](https://github.com/elvezjp/excel2md/stargazers)
+
+![excel2md conversion example: from Excel sheets to Markdown / CSV markdown / Mermaid flowchart](https://raw.githubusercontent.com/elvezjp/excel2md/main/docs/assets/example.png)
 
 Excel to Markdown converter. Reads Excel workbooks (.xlsx/.xlsm) and automatically generates Markdown format output.
 
@@ -37,27 +40,22 @@ Excel to Markdown converter. Reads Excel workbooks (.xlsx/.xlsm) and automatical
 - [v2.1.0/spec.md](https://github.com/elvezjp/excel2md/blob/main/v2.1.0/spec.md) - Technical specification (v2.1.0, frozen snapshot)
 - [v1.8/spec.md](https://github.com/elvezjp/excel2md/blob/main/v1.8/spec.md) - Technical specification (v1.8)
 
-## Setup
+## Installation
 
-### Requirements
-
-- Python 3.10 or higher
-- [uv](https://docs.astral.sh/uv/) package manager
-
-### Install Dependencies
+Requires Python 3.10 or higher.
 
 ```bash
-# Install uv (if not already installed)
-# Details: https://docs.astral.sh/uv/getting-started/installation/
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-uv sync
+pip install excel2md
+# or with uv
+uv add excel2md
 ```
+
+After installation, the `excel2md` command is available on your `PATH`.
 
 ## Usage
 
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx
+excel2md input.xlsx
 ```
 This generates:
 - `input_csv.md`: CSV markdown format (default)
@@ -71,35 +69,63 @@ This generates:
 
 **Convert with Mermaid flowchart support:**
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx --mermaid-enabled
+excel2md input.xlsx --mermaid-enabled
 ```
 
 **Generate individual files per sheet:**
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx --split-by-sheet
+excel2md input.xlsx --split-by-sheet
 ```
 
 **Specify CSV markdown output directory:**
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx --csv-output-dir ./output
+excel2md input.xlsx --csv-output-dir ./output
 # CSV markdown: ./output/input_csv.md
 # Images: ./output/input_images/
 ```
 
 **Output standard Markdown only (no CSV output):**
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx -o output.md --no-csv-markdown-enabled
+excel2md input.xlsx -o output.md --no-csv-markdown-enabled
 ```
 
 **Plain text hyperlinks (no Markdown syntax):**
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx --hyperlink-mode inline_plain
+excel2md input.xlsx --hyperlink-mode inline_plain
 ```
 
 **Reduce token count (exclude CSV summary section):**
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx --no-csv-include-description
+excel2md input.xlsx --no-csv-include-description
 ```
+
+## Use as a Library
+
+`excel2md` is also usable as a Python library.
+
+```python
+from excel2md import convert_to_markdown
+
+# Pass a path, or raw xlsx bytes (handy for Pyodide / web uploads)
+result = convert_to_markdown("input.xlsx", csv_markdown_enabled=False)
+
+print(result["markdown"])      # Generated Markdown string
+print(result["output_path"])   # Where the .md file was written
+```
+
+CLI options map 1:1 to keyword arguments (e.g. `mermaid_enabled=True`, `split_by_sheet=True`). For multiple conversions sharing the same configuration, use `ConversionConfig` + `ExcelConverter` directly.
+
+
+### From source
+
+```bash
+git clone https://github.com/elvezjp/excel2md.git
+cd excel2md
+uv sync
+```
+
+See [CONTRIBUTING.md](https://github.com/elvezjp/excel2md/blob/main/CONTRIBUTING.md) for the full developer setup.
+
 
 ## Key Options
 
@@ -143,97 +169,13 @@ uv run python v2.2.0/excel_to_md.py input.xlsx --no-csv-include-description
 | `--max-cells-per-table` | 200000 | Maximum cells per table |
 | `--no-print-area-mode` | used_range | Behavior when print area not set |
 
-## Output Examples
 
-### Standard Markdown Output
-
-```markdown
-# Conversion Result: sample.xlsx
-
-- Spec Version: 2.0
-- Sheet Count: 2
-- Sheet List: Sheet1, Summary
-
----
-
-## Sheet1
-
-### Table 1 (A1:C4)
-| Item | Quantity | Notes |
-| --- | ---: | --- |
-| Apple | 10 | [Supplier](https://example.com)[^1] |
-| Orange | 5 |  |
-
-[^1]: https://example.com
-```
-
-### CSV Markdown Output
-
-````markdown
-# CSV Output: sample.xlsx
-
-## Summary
-
-### File Information
-- Original Excel filename: sample.xlsx
-- Sheet count: 2
-- Generated at: 2025-01-05 10:00:00
-
-### About This File
-This CSV markdown file is designed to help AI understand Excel content...
-
----
-
-## Sheet1
-
-```csv
-Item,Quantity,Notes
-Apple,10,Supplier
-Orange,5,
-```
-
----
-
-## Validation Metadata
-
-- **Generated at**: 2025-01-05 10:00:00
-- **Original Excel file**: sample.xlsx
-- **Validation status**: OK
-````
-
-### Image Extraction
-
-Images in Excel files are automatically processed:
-
-1. **Automatic Extraction**: Images from each sheet are saved as external files
-   - Filename format: `{sheet_name}_img_{number}.{extension}`
-   - Example: `Sheet1_img_1.png`, `Sheet1_img_2.jpg`
-
-2. **Save Location**: Output to same directory as CSV markdown
-   - Directory name: `{input_filename}_images/`
-   - Example: `input.xlsx` → `input_images/` directory
-   - Use `--csv-output-dir` option to change output location
-
-3. **Markdown Links**: Generates Markdown image links for cells with images
-   - Format: `![alt text](relative_path)`
-   - Uses cell value as alt text if available
-   - Auto-generates alt text like `Image at A1` if cell is empty
-
-4. **Supported Formats**: PNG, JPEG, GIF
-
-**Example:**
-
-If a company logo image is at cell position (B2):
-- Image file: saved as `input_images/Sheet1_img_1.png`
-- CSV output: `![Company Logo](input_images/Sheet1_img_1.png)`
-- Cell text "Company Logo" is used as alt text
-
-## Advanced Options
+### Advanced Options
 
 List all options:
 
 ```bash
-uv run python v2.2.0/excel_to_md.py --help
+excel2md --help
 ```
 
 Key advanced options:
@@ -243,6 +185,19 @@ Key advanced options:
 - Markdown escape level
 - Hidden row/column policy
 - Locale-specific formatting
+
+
+## Output Examples
+
+Real input / output samples (including images) live under [docs/examples/](https://github.com/elvezjp/excel2md/tree/main/docs/examples). Each version directory contains:
+
+- Input `.xlsx` files
+- `output-default/` — default mode (CSV markdown + image extraction)
+- `output-markdown/` — standard Markdown mode (`--no-csv-markdown-enabled`)
+- `output-mermaid/` — Mermaid flowchart enabled (`--mermaid-enabled`)
+
+The regeneration commands for each pattern are documented in [docs/examples/README.md](https://github.com/elvezjp/excel2md/blob/main/docs/examples/README.md).
+
 
 ## Directory Structure
 

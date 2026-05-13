@@ -4,9 +4,12 @@
 
 [![Elvez](https://img.shields.io/badge/Elvez-Product-3F61A7?style=flat-square)](https://elvez.co.jp/)
 [![IXV Ecosystem](https://img.shields.io/badge/IXV-Ecosystem-3F61A7?style=flat-square)](https://elvez.co.jp/ixv/)
+[![PyPI version](https://img.shields.io/pypi/v/excel2md?style=flat-square)](https://pypi.org/project/excel2md/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](https://opensource.org/licenses/MIT)
 [![Python](https://img.shields.io/badge/Python-3.10+-blue?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![Stars](https://img.shields.io/github/stars/elvezjp/excel2md?style=social)](https://github.com/elvezjp/excel2md/stargazers)
+
+![excel2md 変換例: Excel シートから Markdown / CSV マークダウン / Mermaid フローチャートへ](https://raw.githubusercontent.com/elvezjp/excel2md/main/docs/assets/example.png)
 
 Excel → Markdown 変換ツール。Excelブック（.xlsx/.xlsm）を読み取り、Markdown形式で自動生成します。
 
@@ -37,27 +40,20 @@ Excel → Markdown 変換ツール。Excelブック（.xlsx/.xlsm）を読み取
 - [v2.1.0/spec.md](https://github.com/elvezjp/excel2md/blob/main/v2.1.0/spec.md) - 技術仕様書（v2.1.0, 凍結スナップショット）
 - [v1.8/spec.md](https://github.com/elvezjp/excel2md/blob/main/v1.8/spec.md) - 技術仕様書（v1.8）
 
-## セットアップ
+## インストール
 
-### 必要環境
-
-- Python 3.10 以上
-- [uv](https://docs.astral.sh/uv/) パッケージマネージャー
-
-### 依存関係のインストール
+Python 3.10 以上が必要です。
 
 ```bash
-# uv をインストール（未インストールの場合）
-# 詳細: https://docs.astral.sh/uv/getting-started/installation/
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-uv sync
+pip install excel2md
+# または uv の場合
+uv add excel2md
 ```
 
 ## 使い方
 
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx
+excel2md input.xlsx
 ```
 これにより以下が生成されます:
 - `input_csv.md`: CSVマークダウン形式（デフォルト）
@@ -71,35 +67,63 @@ uv run python v2.2.0/excel_to_md.py input.xlsx
 
 **Mermaidフローチャート対応で変換:**
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx --mermaid-enabled
+excel2md input.xlsx --mermaid-enabled
 ```
 
 **シートごとに個別ファイルを生成:**
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx --split-by-sheet
+excel2md input.xlsx --split-by-sheet
 ```
 
 **CSVマークダウンの出力先を指定:**
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx --csv-output-dir ./output
+excel2md input.xlsx --csv-output-dir ./output
 # CSVマークダウン: ./output/input_csv.md
 # 画像: ./output/input_images/
 ```
 
 **標準Markdownのみ出力（CSV出力なし）:**
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx -o output.md --no-csv-markdown-enabled
+excel2md input.xlsx -o output.md --no-csv-markdown-enabled
 ```
 
 **平文ハイパーリンク（Markdown記法なし）:**
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx --hyperlink-mode inline_plain
+excel2md input.xlsx --hyperlink-mode inline_plain
 ```
 
 **トークン数削減（CSV概要セクション除外）:**
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx --no-csv-include-description
+excel2md input.xlsx --no-csv-include-description
 ```
+
+## ライブラリとしての利用
+
+`excel2md` は Python ライブラリとしても利用できます。
+
+```python
+from excel2md import convert_to_markdown
+
+# パス、または xlsx の bytes を直接渡せる（Pyodide / Web アップロード向け）
+result = convert_to_markdown("input.xlsx", csv_markdown_enabled=False)
+
+print(result["markdown"])      # 生成された Markdown 文字列
+print(result["output_path"])   # .md ファイルが書き出されたパス
+```
+
+CLI オプションはキーワード引数として 1:1 で受け取れます（例: `mermaid_enabled=True`, `split_by_sheet=True`）。同じ設定を使い回す場合は `ConversionConfig` + `ExcelConverter` を直接利用するのが効率的です。
+
+
+### ソースから利用
+
+```bash
+git clone https://github.com/elvezjp/excel2md.git
+cd excel2md
+uv sync
+```
+
+詳細は [CONTRIBUTING_ja.md](https://github.com/elvezjp/excel2md/blob/main/CONTRIBUTING_ja.md) を参照してください。
+
 
 ## 主要オプション
 
@@ -143,97 +167,13 @@ uv run python v2.2.0/excel_to_md.py input.xlsx --no-csv-include-description
 | `--max-cells-per-table` | 200000 | テーブルあたりの最大セル数 |
 | `--no-print-area-mode` | used_range | 印刷領域未設定時の動作 |
 
-## 出力例
 
-### 標準Markdown出力
-
-```markdown
-# 変換結果: sample.xlsx
-
-- 仕様バージョン: 2.0
-- シート数: 2
-- シート一覧: Sheet1, 集計
-
----
-
-## Sheet1
-
-### Table 1 (A1:C4)
-| 品目 | 数量 | 備考 |
-| --- | ---: | --- |
-| りんご | 10 | [発注先](https://example.com)[^1] |
-| みかん | 5 |  |
-
-[^1]: https://example.com
-```
-
-### CSVマークダウン出力
-
-````markdown
-# CSV出力: sample.xlsx
-
-## 概要
-
-### ファイル情報
-- 元のExcelファイル名: sample.xlsx
-- シート数: 2
-- 生成日時: 2025-01-05 10:00:00
-
-### このファイルについて
-このCSVマークダウンファイルは、AIがExcelの内容を理解できるよう...
-
----
-
-## Sheet1
-
-```csv
-品目,数量,備考
-りんご,10,発注先
-みかん,5,
-```
-
----
-
-## 検証用メタデータ
-
-- **生成日時**: 2025-01-05 10:00:00
-- **元Excelファイル**: sample.xlsx
-- **検証ステータス**: OK
-````
-
-### 画像抽出
-
-Excelファイル内の画像は自動的に処理されます:
-
-1. **自動抽出**: 各シートの画像が外部ファイルとして保存されます
-   - ファイル名形式: `{シート名}_img_{連番}.{拡張子}`
-   - 例: `Sheet1_img_1.png`, `Sheet1_img_2.jpg`
-
-2. **保存場所**: CSVマークダウンと同じディレクトリに出力
-   - ディレクトリ名: `{入力ファイル名}_images/`
-   - 例: `input.xlsx` → `input_images/` ディレクトリ
-   - `--csv-output-dir` オプションで出力先を変更可能
-
-3. **Markdownリンク**: 画像が配置されているセルにMarkdown画像リンクを生成
-   - 形式: `![代替テキスト](相対パス)`
-   - セル値がある場合は代替テキストとして使用
-   - セル値がない場合は `Image at A1` のように自動生成
-
-4. **対応形式**: PNG, JPEG, GIF
-
-**例:**
-
-Excelのセル位置 (B2) に会社ロゴ画像がある場合:
-- 画像ファイル: `input_images/Sheet1_img_1.png` として保存
-- CSV出力: `![Company Logo](input_images/Sheet1_img_1.png)`
-- セルに "Company Logo" というテキストがあれば代替テキストとして使用
-
-## 高度なオプション
+### 高度なオプション
 
 全オプションの一覧:
 
 ```bash
-uv run python v2.2.0/excel_to_md.py --help
+excel2md --help
 ```
 
 主な高度なオプション:
@@ -243,6 +183,18 @@ uv run python v2.2.0/excel_to_md.py --help
 - Markdownエスケープレベル
 - 非表示行/列ポリシー
 - ロケール固有のフォーマット
+
+
+## 出力例
+
+実際の入出力サンプル（画像含む）は [docs/examples/](https://github.com/elvezjp/excel2md/tree/main/docs/examples) 配下にあります。各バージョンディレクトリには以下を含みます:
+
+- 入力 `.xlsx` ファイル
+- `output-default/` — デフォルト設定（CSV markdown + 画像抽出）
+- `output-markdown/` — 標準 Markdown モード (`--no-csv-markdown-enabled`)
+- `output-mermaid/` — Mermaid フローチャート有効 (`--mermaid-enabled`)
+
+各パターンの再生成コマンドは [docs/examples/README.md](https://github.com/elvezjp/excel2md/blob/main/docs/examples/README.md) を参照してください。
 
 
 ## ディレクトリ構成
