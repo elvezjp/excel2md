@@ -1,6 +1,6 @@
 # excel2md
 
-[English](./README.md) | [日本語](./README_ja.md)
+[English](https://github.com/elvezjp/excel2md/blob/main/README.md) | [日本語](https://github.com/elvezjp/excel2md/blob/main/README_ja.md)
 
 [![Elvez](https://img.shields.io/badge/Elvez-Product-3F61A7?style=flat-square)](https://elvez.co.jp/)
 [![IXV Ecosystem](https://img.shields.io/badge/IXV-Ecosystem-3F61A7?style=flat-square)](https://elvez.co.jp/ixv/)
@@ -30,12 +30,12 @@ Excel → Markdown 変換ツール。Excelブック（.xlsx/.xlsm）を読み取
 
 ## ドキュメント
 
-- [CHANGELOG_ja.md](CHANGELOG_ja.md) - バージョン履歴
-- [CONTRIBUTING_ja.md](CONTRIBUTING_ja.md) - コントリビューション方法
-- [SECURITY_ja.md](SECURITY_ja.md) - セキュリティポリシーとベストプラクティス
-- [v2.2.0/spec.md](v2.2.0/spec.md) - 技術仕様書（v2.2.0, 最新）
-- [v2.1.0/spec.md](v2.1.0/spec.md) - 技術仕様書（v2.1.0, 凍結スナップショット）
-- [v1.8/spec.md](v1.8/spec.md) - 技術仕様書（v1.8）
+- [CHANGELOG_ja.md](https://github.com/elvezjp/excel2md/blob/main/CHANGELOG_ja.md) - バージョン履歴
+- [CONTRIBUTING_ja.md](https://github.com/elvezjp/excel2md/blob/main/CONTRIBUTING_ja.md) - コントリビューション方法
+- [SECURITY_ja.md](https://github.com/elvezjp/excel2md/blob/main/SECURITY_ja.md) - セキュリティポリシーとベストプラクティス
+- [v2.2.0/spec.md](https://github.com/elvezjp/excel2md/blob/main/v2.2.0/spec.md) - 技術仕様書（v2.2.0, 最新）
+- [v2.1.0/spec.md](https://github.com/elvezjp/excel2md/blob/main/v2.1.0/spec.md) - 技術仕様書（v2.1.0, 凍結スナップショット）
+- [v1.8/spec.md](https://github.com/elvezjp/excel2md/blob/main/v1.8/spec.md) - 技術仕様書（v1.8）
 
 ## セットアップ
 
@@ -278,7 +278,7 @@ excel2md/
 
 ## セキュリティ
 
-セキュリティに関する懸念は [SECURITY_ja.md](SECURITY_ja.md) をご確認ください。
+セキュリティに関する懸念は [SECURITY_ja.md](https://github.com/elvezjp/excel2md/blob/main/SECURITY_ja.md) をご確認ください。
 
 **主要なセキュリティ注意事項:**
 - 信頼できるソースからのExcelファイルのみを処理してください
@@ -288,7 +288,7 @@ excel2md/
 
 ## コントリビューション
 
-コントリビューションを歓迎します！詳細は [CONTRIBUTING_ja.md](CONTRIBUTING_ja.md) をご覧ください。
+コントリビューションを歓迎します！詳細は [CONTRIBUTING_ja.md](https://github.com/elvezjp/excel2md/blob/main/CONTRIBUTING_ja.md) をご覧ください。
 
 - バグ報告は [GitHub Issues](https://github.com/elvezjp/excel2md/issues) へ
 - 改善のためのプルリクエストを提出
@@ -297,7 +297,7 @@ excel2md/
 
 ## 変更履歴
 
-詳細は [CHANGELOG_ja.md](CHANGELOG_ja.md) を参照してください。
+詳細は [CHANGELOG_ja.md](https://github.com/elvezjp/excel2md/blob/main/CHANGELOG_ja.md) を参照してください。
 
 ## 開発の背景
 
@@ -307,7 +307,7 @@ IXVでは、システム開発における日本語の文書について、理�
 
 ## ライセンス
 
-MIT License - 詳細は [LICENSE](LICENSE) を参照してください。
+MIT License - 詳細は [LICENSE](https://github.com/elvezjp/excel2md/blob/main/LICENSE) を参照してください。
 
 ## 問い合わせ先
 

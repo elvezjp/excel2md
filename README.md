@@ -1,6 +1,6 @@
 # excel2md
 
-[English](./README.md) | [日本語](./README_ja.md)
+[English](https://github.com/elvezjp/excel2md/blob/main/README.md) | [日本語](https://github.com/elvezjp/excel2md/blob/main/README_ja.md)
 
 [![Elvez](https://img.shields.io/badge/Elvez-Product-3F61A7?style=flat-square)](https://elvez.co.jp/)
 [![IXV Ecosystem](https://img.shields.io/badge/IXV-Ecosystem-3F61A7?style=flat-square)](https://elvez.co.jp/ixv/)
@@ -30,12 +30,12 @@ Excel to Markdown converter. Reads Excel workbooks (.xlsx/.xlsm) and automatical
 
 ## Documentation
 
-- [CHANGELOG.md](CHANGELOG.md) - Version history
-- [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
-- [SECURITY.md](SECURITY.md) - Security policy and best practices
-- [v2.2.0/spec.md](v2.2.0/spec.md) - Technical specification (v2.2.0, latest)
-- [v2.1.0/spec.md](v2.1.0/spec.md) - Technical specification (v2.1.0, frozen snapshot)
-- [v1.8/spec.md](v1.8/spec.md) - Technical specification (v1.8)
+- [CHANGELOG.md](https://github.com/elvezjp/excel2md/blob/main/CHANGELOG.md) - Version history
+- [CONTRIBUTING.md](https://github.com/elvezjp/excel2md/blob/main/CONTRIBUTING.md) - Contribution guidelines
+- [SECURITY.md](https://github.com/elvezjp/excel2md/blob/main/SECURITY.md) - Security policy and best practices
+- [v2.2.0/spec.md](https://github.com/elvezjp/excel2md/blob/main/v2.2.0/spec.md) - Technical specification (v2.2.0, latest)
+- [v2.1.0/spec.md](https://github.com/elvezjp/excel2md/blob/main/v2.1.0/spec.md) - Technical specification (v2.1.0, frozen snapshot)
+- [v1.8/spec.md](https://github.com/elvezjp/excel2md/blob/main/v1.8/spec.md) - Technical specification (v1.8)
 
 ## Setup
 
@@ -277,7 +277,7 @@ excel2md/
 
 ## Security
 
-For security concerns, please see [SECURITY.md](SECURITY.md).
+For security concerns, please see [SECURITY.md](https://github.com/elvezjp/excel2md/blob/main/SECURITY.md).
 
 **Key security notes:**
 - Only process Excel files from trusted sources
@@ -287,7 +287,7 @@ For security concerns, please see [SECURITY.md](SECURITY.md).
 
 ## Contributing
 
-Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+Contributions are welcome! See [CONTRIBUTING.md](https://github.com/elvezjp/excel2md/blob/main/CONTRIBUTING.md) for details.
 
 - Report bugs via [GitHub Issues](https://github.com/elvezjp/excel2md/issues)
 - Submit pull requests for improvements
@@ -296,7 +296,7 @@ Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for details.
+See [CHANGELOG.md](https://github.com/elvezjp/excel2md/blob/main/CHANGELOG.md) for details.
 
 ## Background
 
@@ -306,7 +306,7 @@ IXV addresses challenges in understanding, structuring, and utilizing Japanese d
 
 ## License
 
-MIT License - See [LICENSE](LICENSE) for details.
+MIT License - See [LICENSE](https://github.com/elvezjp/excel2md/blob/main/LICENSE) for details.
 
 ## Contact
 
