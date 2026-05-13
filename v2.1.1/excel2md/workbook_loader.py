@@ -4,19 +4,24 @@
 仕様書参照: §3.1 入力、§4.1 全体処理フロー
 """
 
+from .exceptions import WorkbookOpenError
 from .output import warn, info
 
 
 def load_workbook_safe(path, read_only=False):
+    """xlsx / xlsm を openpyxl で開く。失敗時は ``WorkbookOpenError`` を送出。
+
+    旧来は ``sys.exit(2)`` でプロセスを落としていたが、Issue #16 のライブラリ
+    化に伴い、ライブラリ利用者のプロセスを巻き込まないよう例外送出に変更
+    (CLI 側は ``cli.main`` で例外を捕まえて exit code 2 を維持する)。
+    """
     try:
         from openpyxl import load_workbook
         # read_only=False で fill 等のスタイル参照を確実化
         wb = load_workbook(filename=path, read_only=read_only, data_only=True)
         return wb
     except Exception as e:
-        import sys
-        print(f"[ERROR] Failed to open workbook: {e}", file=sys.stderr)
-        sys.exit(2)
+        raise WorkbookOpenError(f"Failed to open workbook: {e}") from e
 
 
 def a1_from_rc(r: int, c: int) -> str:

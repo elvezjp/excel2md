@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from excel2md.config import ConversionConfig
 from excel2md.converter import ExcelConverter
+from excel2md.exceptions import ExcelConversionError, WorkbookOpenError
 
 
 # =============================================================
@@ -171,3 +172,52 @@ class TestConvertCsvMarkdownMode:
         result = ExcelConverter().convert(xlsx.read_bytes())
         assert isinstance(result["markdown"], str)
         assert result["markdown"]
+
+
+# =============================================================
+# Error handling — ライブラリ層は SystemExit ではなく例外を上げる
+# (Issue #16 / PR #32 Codex review P1)
+# =============================================================
+
+class TestErrorHandling:
+    """ライブラリとして呼ばれた場合、xlsx 読み込み失敗で
+    プロセスを落とさず ``WorkbookOpenError`` を上げる。"""
+
+    def test_missing_path_raises_workbook_open_error(self, tmp_path):
+        missing = tmp_path / "does-not-exist.xlsx"
+        with pytest.raises(WorkbookOpenError):
+            ExcelConverter().convert(str(missing))
+
+    def test_missing_path_does_not_call_sys_exit(self, tmp_path):
+        """SystemExit に化けていないことを明示的に検査する。"""
+        missing = tmp_path / "nope.xlsx"
+        try:
+            ExcelConverter().convert(str(missing))
+        except SystemExit:
+            pytest.fail("ライブラリ層が SystemExit を投げてはいけない")
+        except WorkbookOpenError:
+            pass
+
+    def test_corrupt_bytes_raises_workbook_open_error(self):
+        with pytest.raises(WorkbookOpenError):
+            ExcelConverter().convert(b"this is not a valid xlsx file")
+
+    def test_workbook_open_error_is_excel_conversion_error(self, tmp_path):
+        """基底 ``ExcelConversionError`` で一括捕捉できる。"""
+        missing = tmp_path / "nope.xlsx"
+        with pytest.raises(ExcelConversionError):
+            ExcelConverter().convert(str(missing))
+
+
+class TestCliExitBehavior:
+    """CLI は従来どおり exit code 2 で死ぬ (例外はライブラリ層で握り、
+    cli.main が exit code に変換する)。"""
+
+    def test_cli_main_exits_with_code_2_on_missing_file(self, tmp_path, capsys):
+        from excel2md.cli import main
+        missing = tmp_path / "no.xlsx"
+        with pytest.raises(SystemExit) as exc_info:
+            main([str(missing)])
+        assert exc_info.value.code == 2
+        captured = capsys.readouterr()
+        assert "Failed to open workbook" in captured.err

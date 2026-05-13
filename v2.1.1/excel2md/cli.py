@@ -5,7 +5,9 @@
 """
 
 import argparse
+import sys
 
+from .exceptions import ExcelConversionError
 from .runner import run
 from . import __version__ as VERSION
 
@@ -84,7 +86,13 @@ def build_argparser():
 def main(argv=None):
     parser = build_argparser()
     args = parser.parse_args(argv)
-    out = run(args.input, args.output, args)
+    try:
+        out = run(args.input, args.output, args)
+    except ExcelConversionError as e:
+        # ライブラリ層は例外を上げるが、CLI としては従来どおり stderr に
+        # メッセージを出して exit code 2 で終える。
+        print(f"[ERROR] {e}", file=sys.stderr)
+        sys.exit(2)
     print(out)
 
 if __name__ == "__main__":
