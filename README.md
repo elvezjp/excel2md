@@ -4,6 +4,7 @@
 
 [![Elvez](https://img.shields.io/badge/Elvez-Product-3F61A7?style=flat-square)](https://elvez.co.jp/)
 [![IXV Ecosystem](https://img.shields.io/badge/IXV-Ecosystem-3F61A7?style=flat-square)](https://elvez.co.jp/ixv/)
+[![PyPI version](https://img.shields.io/pypi/v/excel2md?style=flat-square)](https://pypi.org/project/excel2md/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](https://opensource.org/licenses/MIT)
 [![Python](https://img.shields.io/badge/Python-3.10+-blue?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![Stars](https://img.shields.io/github/stars/elvezjp/excel2md?style=social)](https://github.com/elvezjp/excel2md/stargazers)
@@ -37,27 +38,32 @@ Excel to Markdown converter. Reads Excel workbooks (.xlsx/.xlsm) and automatical
 - [v2.1.0/spec.md](https://github.com/elvezjp/excel2md/blob/main/v2.1.0/spec.md) - Technical specification (v2.1.0, frozen snapshot)
 - [v1.8/spec.md](https://github.com/elvezjp/excel2md/blob/main/v1.8/spec.md) - Technical specification (v1.8)
 
-## Setup
+## Installation
 
-### Requirements
-
-- Python 3.10 or higher
-- [uv](https://docs.astral.sh/uv/) package manager
-
-### Install Dependencies
+Requires Python 3.10 or higher.
 
 ```bash
-# Install uv (if not already installed)
-# Details: https://docs.astral.sh/uv/getting-started/installation/
-curl -LsSf https://astral.sh/uv/install.sh | sh
+pip install excel2md
+# or with uv
+uv add excel2md
+```
 
+After installation, the `excel2md` command is available on your `PATH`.
+
+### From source (for development)
+
+```bash
+git clone https://github.com/elvezjp/excel2md.git
+cd excel2md
 uv sync
 ```
+
+See [CONTRIBUTING.md](https://github.com/elvezjp/excel2md/blob/main/CONTRIBUTING.md) for the full developer setup.
 
 ## Usage
 
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx
+excel2md input.xlsx
 ```
 This generates:
 - `input_csv.md`: CSV markdown format (default)
@@ -71,35 +77,51 @@ This generates:
 
 **Convert with Mermaid flowchart support:**
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx --mermaid-enabled
+excel2md input.xlsx --mermaid-enabled
 ```
 
 **Generate individual files per sheet:**
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx --split-by-sheet
+excel2md input.xlsx --split-by-sheet
 ```
 
 **Specify CSV markdown output directory:**
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx --csv-output-dir ./output
+excel2md input.xlsx --csv-output-dir ./output
 # CSV markdown: ./output/input_csv.md
 # Images: ./output/input_images/
 ```
 
 **Output standard Markdown only (no CSV output):**
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx -o output.md --no-csv-markdown-enabled
+excel2md input.xlsx -o output.md --no-csv-markdown-enabled
 ```
 
 **Plain text hyperlinks (no Markdown syntax):**
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx --hyperlink-mode inline_plain
+excel2md input.xlsx --hyperlink-mode inline_plain
 ```
 
 **Reduce token count (exclude CSV summary section):**
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx --no-csv-include-description
+excel2md input.xlsx --no-csv-include-description
 ```
+
+## Use as a Library
+
+`excel2md` is also usable as a Python library — useful for Pyodide / MCP servers / notebooks / web services.
+
+```python
+from excel2md import convert_to_markdown
+
+# Pass a path, or raw xlsx bytes (handy for Pyodide / web uploads)
+result = convert_to_markdown("input.xlsx", csv_markdown_enabled=False)
+
+print(result["markdown"])      # Generated Markdown string
+print(result["output_path"])   # Where the .md file was written
+```
+
+CLI options map 1:1 to keyword arguments (e.g. `mermaid_enabled=True`, `split_by_sheet=True`). For multiple conversions sharing the same configuration, use `ConversionConfig` + `ExcelConverter` directly.
 
 ## Key Options
 
@@ -233,7 +255,7 @@ If a company logo image is at cell position (B2):
 List all options:
 
 ```bash
-uv run python v2.2.0/excel_to_md.py --help
+excel2md --help
 ```
 
 Key advanced options:

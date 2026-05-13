@@ -4,6 +4,7 @@
 
 [![Elvez](https://img.shields.io/badge/Elvez-Product-3F61A7?style=flat-square)](https://elvez.co.jp/)
 [![IXV Ecosystem](https://img.shields.io/badge/IXV-Ecosystem-3F61A7?style=flat-square)](https://elvez.co.jp/ixv/)
+[![PyPI version](https://img.shields.io/pypi/v/excel2md?style=flat-square)](https://pypi.org/project/excel2md/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](https://opensource.org/licenses/MIT)
 [![Python](https://img.shields.io/badge/Python-3.10+-blue?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![Stars](https://img.shields.io/github/stars/elvezjp/excel2md?style=social)](https://github.com/elvezjp/excel2md/stargazers)
@@ -37,27 +38,32 @@ Excel → Markdown 変換ツール。Excelブック（.xlsx/.xlsm）を読み取
 - [v2.1.0/spec.md](https://github.com/elvezjp/excel2md/blob/main/v2.1.0/spec.md) - 技術仕様書（v2.1.0, 凍結スナップショット）
 - [v1.8/spec.md](https://github.com/elvezjp/excel2md/blob/main/v1.8/spec.md) - 技術仕様書（v1.8）
 
-## セットアップ
+## インストール
 
-### 必要環境
-
-- Python 3.10 以上
-- [uv](https://docs.astral.sh/uv/) パッケージマネージャー
-
-### 依存関係のインストール
+Python 3.10 以上が必要です。
 
 ```bash
-# uv をインストール（未インストールの場合）
-# 詳細: https://docs.astral.sh/uv/getting-started/installation/
-curl -LsSf https://astral.sh/uv/install.sh | sh
+pip install excel2md
+# または uv の場合
+uv add excel2md
+```
 
+インストール後、`excel2md` コマンドが `PATH` に追加されます。
+
+### ソースから（開発者向け）
+
+```bash
+git clone https://github.com/elvezjp/excel2md.git
+cd excel2md
 uv sync
 ```
+
+詳細は [CONTRIBUTING_ja.md](https://github.com/elvezjp/excel2md/blob/main/CONTRIBUTING_ja.md) を参照してください。
 
 ## 使い方
 
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx
+excel2md input.xlsx
 ```
 これにより以下が生成されます:
 - `input_csv.md`: CSVマークダウン形式（デフォルト）
@@ -71,35 +77,51 @@ uv run python v2.2.0/excel_to_md.py input.xlsx
 
 **Mermaidフローチャート対応で変換:**
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx --mermaid-enabled
+excel2md input.xlsx --mermaid-enabled
 ```
 
 **シートごとに個別ファイルを生成:**
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx --split-by-sheet
+excel2md input.xlsx --split-by-sheet
 ```
 
 **CSVマークダウンの出力先を指定:**
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx --csv-output-dir ./output
+excel2md input.xlsx --csv-output-dir ./output
 # CSVマークダウン: ./output/input_csv.md
 # 画像: ./output/input_images/
 ```
 
 **標準Markdownのみ出力（CSV出力なし）:**
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx -o output.md --no-csv-markdown-enabled
+excel2md input.xlsx -o output.md --no-csv-markdown-enabled
 ```
 
 **平文ハイパーリンク（Markdown記法なし）:**
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx --hyperlink-mode inline_plain
+excel2md input.xlsx --hyperlink-mode inline_plain
 ```
 
 **トークン数削減（CSV概要セクション除外）:**
 ```bash
-uv run python v2.2.0/excel_to_md.py input.xlsx --no-csv-include-description
+excel2md input.xlsx --no-csv-include-description
 ```
+
+## ライブラリとしての利用
+
+`excel2md` は Python ライブラリとしても利用できます — Pyodide / MCP サーバー / ノートブック / Web サービスなどから直接呼べます。
+
+```python
+from excel2md import convert_to_markdown
+
+# パス、または xlsx の bytes を直接渡せる（Pyodide / Web アップロード向け）
+result = convert_to_markdown("input.xlsx", csv_markdown_enabled=False)
+
+print(result["markdown"])      # 生成された Markdown 文字列
+print(result["output_path"])   # .md ファイルが書き出されたパス
+```
+
+CLI オプションはキーワード引数として 1:1 で受け取れます（例: `mermaid_enabled=True`, `split_by_sheet=True`）。同じ設定を使い回す場合は `ConversionConfig` + `ExcelConverter` を直接利用するのが効率的です。
 
 ## 主要オプション
 
@@ -233,7 +255,7 @@ Excelのセル位置 (B2) に会社ロゴ画像がある場合:
 全オプションの一覧:
 
 ```bash
-uv run python v2.2.0/excel_to_md.py --help
+excel2md --help
 ```
 
 主な高度なオプション:
