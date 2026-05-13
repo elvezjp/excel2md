@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [
-    {name = "Elvez"}
+    {name = "Elvez", email = "info@elvez.co.jp"}
 ]
 keywords = ["excel", "markdown", "converter", "csv", "openpyxl", "xlsx", "documentation"]
 classifiers = [

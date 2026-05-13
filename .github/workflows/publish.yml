@@ -1,0 +1,79 @@
+name: Publish to PyPI
+
+# tag v* の push をトリガーに、PyPI に sdist と wheel を公開する。
+# API トークン不要、Trusted Publisher (OIDC) で認証する。
+#
+# 事前準備 (管理者作業、PR 本体には含まれない):
+#   1. PyPI 側で elvezjp/excel2md と本 workflow を Trusted Publisher として登録
+#      (https://pypi.org/manage/account/publishing/)
+#   2. GitHub リポ Settings → Environments → "pypi" を作成
+#      (保護ルール: main ブランチ + 特定承認者を推奨)
+# 詳細は docs/20260513_pypi_trusted_publisher_setup.md を参照。
+#
+# リリース手順:
+#   git tag v2.1.1
+#   git push origin v2.1.1
+#   → 本 workflow が起動し、PyPI に excel2md 2.1.1 を公開する
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  # 公開前の防護壁として、テスト全件パスを必須にする。
+  # ci.yml は push/PR でしか走らないので、tag push 経路ではここで明示実行する。
+  test:
+    name: Run tests before publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Install dependencies
+        run: uv sync --all-extras
+      - name: Run tests
+        run: uv run pytest
+
+  build:
+    name: Build distribution
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Build sdist and wheel
+        run: uv build
+      - name: Upload distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/excel2md
+    permissions:
+      id-token: write  # Trusted Publisher (OIDC) のために必要
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
