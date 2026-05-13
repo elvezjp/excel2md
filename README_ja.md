@@ -48,18 +48,6 @@ pip install excel2md
 uv add excel2md
 ```
 
-インストール後、`excel2md` コマンドが `PATH` に追加されます。
-
-### ソースから（開発者向け）
-
-```bash
-git clone https://github.com/elvezjp/excel2md.git
-cd excel2md
-uv sync
-```
-
-詳細は [CONTRIBUTING_ja.md](https://github.com/elvezjp/excel2md/blob/main/CONTRIBUTING_ja.md) を参照してください。
-
 ## 使い方
 
 ```bash
@@ -109,7 +97,7 @@ excel2md input.xlsx --no-csv-include-description
 
 ## ライブラリとしての利用
 
-`excel2md` は Python ライブラリとしても利用できます — Pyodide / MCP サーバー / ノートブック / Web サービスなどから直接呼べます。
+`excel2md` は Python ライブラリとしても利用できます。
 
 ```python
 from excel2md import convert_to_markdown
@@ -122,6 +110,18 @@ print(result["output_path"])   # .md ファイルが書き出されたパス
 ```
 
 CLI オプションはキーワード引数として 1:1 で受け取れます（例: `mermaid_enabled=True`, `split_by_sheet=True`）。同じ設定を使い回す場合は `ConversionConfig` + `ExcelConverter` を直接利用するのが効率的です。
+
+
+### ソースから利用
+
+```bash
+git clone https://github.com/elvezjp/excel2md.git
+cd excel2md
+uv sync
+```
+
+詳細は [CONTRIBUTING_ja.md](https://github.com/elvezjp/excel2md/blob/main/CONTRIBUTING_ja.md) を参照してください。
+
 
 ## 主要オプション
 
@@ -165,18 +165,8 @@ CLI オプションはキーワード引数として 1:1 で受け取れます�
 | `--max-cells-per-table` | 200000 | テーブルあたりの最大セル数 |
 | `--no-print-area-mode` | used_range | 印刷領域未設定時の動作 |
 
-## 出力例
 
-実際の入出力サンプル（画像含む）は [docs/examples/](https://github.com/elvezjp/excel2md/tree/main/docs/examples) 配下にあります。各バージョンディレクトリには以下を含みます:
-
-- 入力 `.xlsx` ファイル
-- `output-default/` — デフォルト設定（CSV markdown + 画像抽出）
-- `output-markdown/` — 標準 Markdown モード (`--no-csv-markdown-enabled`)
-- `output-mermaid/` — Mermaid フローチャート有効 (`--mermaid-enabled`)
-
-各パターンの再生成コマンドは [docs/examples/README.md](https://github.com/elvezjp/excel2md/blob/main/docs/examples/README.md) を参照してください。
-
-## 高度なオプション
+### 高度なオプション
 
 全オプションの一覧:
 
@@ -191,6 +181,18 @@ excel2md --help
 - Markdownエスケープレベル
 - 非表示行/列ポリシー
 - ロケール固有のフォーマット
+
+
+## 出力例
+
+実際の入出力サンプル（画像含む）は [docs/examples/](https://github.com/elvezjp/excel2md/tree/main/docs/examples) 配下にあります。各バージョンディレクトリには以下を含みます:
+
+- 入力 `.xlsx` ファイル
+- `output-default/` — デフォルト設定（CSV markdown + 画像抽出）
+- `output-markdown/` — 標準 Markdown モード (`--no-csv-markdown-enabled`)
+- `output-mermaid/` — Mermaid フローチャート有効 (`--mermaid-enabled`)
+
+各パターンの再生成コマンドは [docs/examples/README.md](https://github.com/elvezjp/excel2md/blob/main/docs/examples/README.md) を参照してください。
 
 
 ## ディレクトリ構成
