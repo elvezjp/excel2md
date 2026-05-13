@@ -167,88 +167,14 @@ CLI オプションはキーワード引数として 1:1 で受け取れます�
 
 ## 出力例
 
-### 標準Markdown出力
+実際の入出力サンプル（画像含む）は [docs/examples/](https://github.com/elvezjp/excel2md/tree/main/docs/examples) 配下にあります。各バージョンディレクトリには以下を含みます:
 
-```markdown
-# 変換結果: sample.xlsx
+- 入力 `.xlsx` ファイル
+- `output-default/` — デフォルト設定（CSV markdown + 画像抽出）
+- `output-markdown/` — 標準 Markdown モード (`--no-csv-markdown-enabled`)
+- `output-mermaid/` — Mermaid フローチャート有効 (`--mermaid-enabled`)
 
-- 仕様バージョン: 2.0
-- シート数: 2
-- シート一覧: Sheet1, 集計
-
----
-
-## Sheet1
-
-### Table 1 (A1:C4)
-| 品目 | 数量 | 備考 |
-| --- | ---: | --- |
-| りんご | 10 | [発注先](https://example.com)[^1] |
-| みかん | 5 |  |
-
-[^1]: https://example.com
-```
-
-### CSVマークダウン出力
-
-````markdown
-# CSV出力: sample.xlsx
-
-## 概要
-
-### ファイル情報
-- 元のExcelファイル名: sample.xlsx
-- シート数: 2
-- 生成日時: 2025-01-05 10:00:00
-
-### このファイルについて
-このCSVマークダウンファイルは、AIがExcelの内容を理解できるよう...
-
----
-
-## Sheet1
-
-```csv
-品目,数量,備考
-りんご,10,発注先
-みかん,5,
-```
-
----
-
-## 検証用メタデータ
-
-- **生成日時**: 2025-01-05 10:00:00
-- **元Excelファイル**: sample.xlsx
-- **検証ステータス**: OK
-````
-
-### 画像抽出
-
-Excelファイル内の画像は自動的に処理されます:
-
-1. **自動抽出**: 各シートの画像が外部ファイルとして保存されます
-   - ファイル名形式: `{シート名}_img_{連番}.{拡張子}`
-   - 例: `Sheet1_img_1.png`, `Sheet1_img_2.jpg`
-
-2. **保存場所**: CSVマークダウンと同じディレクトリに出力
-   - ディレクトリ名: `{入力ファイル名}_images/`
-   - 例: `input.xlsx` → `input_images/` ディレクトリ
-   - `--csv-output-dir` オプションで出力先を変更可能
-
-3. **Markdownリンク**: 画像が配置されているセルにMarkdown画像リンクを生成
-   - 形式: `![代替テキスト](相対パス)`
-   - セル値がある場合は代替テキストとして使用
-   - セル値がない場合は `Image at A1` のように自動生成
-
-4. **対応形式**: PNG, JPEG, GIF
-
-**例:**
-
-Excelのセル位置 (B2) に会社ロゴ画像がある場合:
-- 画像ファイル: `input_images/Sheet1_img_1.png` として保存
-- CSV出力: `![Company Logo](input_images/Sheet1_img_1.png)`
-- セルに "Company Logo" というテキストがあれば代替テキストとして使用
+各パターンの再生成コマンドは [docs/examples/README.md](https://github.com/elvezjp/excel2md/blob/main/docs/examples/README.md) を参照してください。
 
 ## 高度なオプション
 
