@@ -255,9 +255,9 @@ See [CHANGELOG.md](https://github.com/elvezjp/excel2md/blob/main/CHANGELOG.md) f
 
 ## Background
 
-This tool was created during the development of **IXV**, an AI development support tool targeting Japanese development documents and specifications.
+This tool was created during the development of **IXV**, an AI development ecosystem that empowers Japanese software development with AI.
 
-IXV addresses challenges in understanding, structuring, and utilizing Japanese documents in system development. This repository publicly shares a portion of that work.
+IXV addresses challenges in applying AI effectively to real-world Japanese development workflows. This repository publicly shares a portion of that work.
 
 ## License
 
