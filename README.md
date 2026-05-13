@@ -50,16 +50,6 @@ uv add excel2md
 
 After installation, the `excel2md` command is available on your `PATH`.
 
-### From source (for development)
-
-```bash
-git clone https://github.com/elvezjp/excel2md.git
-cd excel2md
-uv sync
-```
-
-See [CONTRIBUTING.md](https://github.com/elvezjp/excel2md/blob/main/CONTRIBUTING.md) for the full developer setup.
-
 ## Usage
 
 ```bash
@@ -109,7 +99,7 @@ excel2md input.xlsx --no-csv-include-description
 
 ## Use as a Library
 
-`excel2md` is also usable as a Python library — useful for Pyodide / MCP servers / notebooks / web services.
+`excel2md` is also usable as a Python library.
 
 ```python
 from excel2md import convert_to_markdown
@@ -122,6 +112,18 @@ print(result["output_path"])   # Where the .md file was written
 ```
 
 CLI options map 1:1 to keyword arguments (e.g. `mermaid_enabled=True`, `split_by_sheet=True`). For multiple conversions sharing the same configuration, use `ConversionConfig` + `ExcelConverter` directly.
+
+
+### From source
+
+```bash
+git clone https://github.com/elvezjp/excel2md.git
+cd excel2md
+uv sync
+```
+
+See [CONTRIBUTING.md](https://github.com/elvezjp/excel2md/blob/main/CONTRIBUTING.md) for the full developer setup.
+
 
 ## Key Options
 
@@ -165,18 +167,8 @@ CLI options map 1:1 to keyword arguments (e.g. `mermaid_enabled=True`, `split_by
 | `--max-cells-per-table` | 200000 | Maximum cells per table |
 | `--no-print-area-mode` | used_range | Behavior when print area not set |
 
-## Output Examples
 
-Real input / output samples (including images) live under [docs/examples/](https://github.com/elvezjp/excel2md/tree/main/docs/examples). Each version directory contains:
-
-- Input `.xlsx` files
-- `output-default/` — default mode (CSV markdown + image extraction)
-- `output-markdown/` — standard Markdown mode (`--no-csv-markdown-enabled`)
-- `output-mermaid/` — Mermaid flowchart enabled (`--mermaid-enabled`)
-
-The regeneration commands for each pattern are documented in [docs/examples/README.md](https://github.com/elvezjp/excel2md/blob/main/docs/examples/README.md).
-
-## Advanced Options
+### Advanced Options
 
 List all options:
 
@@ -191,6 +183,19 @@ Key advanced options:
 - Markdown escape level
 - Hidden row/column policy
 - Locale-specific formatting
+
+
+## Output Examples
+
+Real input / output samples (including images) live under [docs/examples/](https://github.com/elvezjp/excel2md/tree/main/docs/examples). Each version directory contains:
+
+- Input `.xlsx` files
+- `output-default/` — default mode (CSV markdown + image extraction)
+- `output-markdown/` — standard Markdown mode (`--no-csv-markdown-enabled`)
+- `output-mermaid/` — Mermaid flowchart enabled (`--mermaid-enabled`)
+
+The regeneration commands for each pattern are documented in [docs/examples/README.md](https://github.com/elvezjp/excel2md/blob/main/docs/examples/README.md).
+
 
 ## Directory Structure
 
