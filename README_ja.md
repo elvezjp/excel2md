@@ -9,6 +9,8 @@
 [![Python](https://img.shields.io/badge/Python-3.10+-blue?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![Stars](https://img.shields.io/github/stars/elvezjp/excel2md?style=social)](https://github.com/elvezjp/excel2md/stargazers)
 
+![excel2md 変換例: Excel シートから Markdown / CSV マークダウン / Mermaid フローチャートへ](https://raw.githubusercontent.com/elvezjp/excel2md/main/docs/assets/example.png)
+
 Excel → Markdown 変換ツール。Excelブック（.xlsx/.xlsm）を読み取り、Markdown形式で自動生成します。
 
 ## 特徴

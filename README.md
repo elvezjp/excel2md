@@ -9,6 +9,8 @@
 [![Python](https://img.shields.io/badge/Python-3.10+-blue?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![Stars](https://img.shields.io/github/stars/elvezjp/excel2md?style=social)](https://github.com/elvezjp/excel2md/stargazers)
 
+![excel2md conversion example: from Excel sheets to Markdown / CSV markdown / Mermaid flowchart](https://raw.githubusercontent.com/elvezjp/excel2md/main/docs/assets/example.png)
+
 Excel to Markdown converter. Reads Excel workbooks (.xlsx/.xlsm) and automatically generates Markdown format output.
 
 ## Features
