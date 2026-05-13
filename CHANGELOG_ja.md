@@ -24,10 +24,11 @@
 ### 変更
 - `runner.run()` は内部で `argparse.Namespace`（CLI 経路）と `ConversionConfig`（ライブラリ経路）の両方を受け取り、`ConversionConfig` に正規化する。CLI 挙動は不変。従来 inline で組み立てていた options 辞書は `ConversionConfig.to_opts_dict()` への委譲に置換され、roundtrip テストで旧 inline 辞書との完全一致を保証
 - `pyproject.toml` の `authors` に `email = "info@elvez.co.jp"` を追加（PyPI メタデータの連絡先明示）
-- 現役の開発ディレクトリを `v2.1.1/` → `v2.2.0/` にリネーム（リポのバージョン管理ポリシーに準拠）
+- v2.2.0 開発用ディレクトリ `v2.2.0/` を新規追加。`v2.1.1/` は v2.1.1 リリース時点（commit 034fa57）の凍結スナップショットとしてそのまま残す（リポのバージョン管理ポリシーに準拠 — 既存 v*/ は凍結し、新バージョンは新規ディレクトリで作業）
 
 ### 備考
-- `v2.1.1/` は PyPI 公開されていない。`v2.2.0` が PyPI 初公開バージョン
+- `v2.1.1/` は内部バージョン番号として割り振っただけで PyPI には公開されていない。`v2.2.0` が PyPI 初公開バージョン
+- `v2.1.1/` ディレクトリは凍結スナップショットとして残してあるが、本リリースで導入したライブラリ API（`ConversionConfig` / `ExcelConverter` / `convert_to_markdown`）は含まない（v2.2.0 で初導入）
 
 ## [2.1.1] - 2026-05-11
 

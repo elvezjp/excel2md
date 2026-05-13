@@ -254,6 +254,7 @@ excel2md/
 │   ├── tests/                  # Test suite
 │   ├── spec.md                 # Specification
 │   └── spec_appendix.md        # Specification appendix
+├── v2.1.1/                     # Previous version (frozen snapshot, not published to PyPI)
 ├── v2.1.0/                     # Previous version (frozen snapshot)
 ├── v2.0.1/                     # Previous version
 ├── v2.0/                       # Previous version

@@ -24,10 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - `runner.run()` internally normalizes both `argparse.Namespace` (CLI) and `ConversionConfig` (library) inputs. CLI behavior is unchanged; the inline options dictionary was replaced with `ConversionConfig.to_opts_dict()`, with a roundtrip test guaranteeing exact equivalence
 - `pyproject.toml` `authors` now includes `email = "info@elvez.co.jp"` for PyPI metadata
-- Active development directory renamed `v2.1.1/` → `v2.2.0/` per repository versioning policy
+- Added new active development directory `v2.2.0/`. `v2.1.1/` is preserved as a frozen snapshot at the v2.1.1 release point (commit 034fa57), per the repository versioning policy (existing `v*/` directories are frozen; new versions go into a new directory)
 
 ### Notes
-- `v2.1.1/` was never published to PyPI; `v2.2.0` is the first PyPI release
+- `v2.1.1/` was assigned an internal version number only and was never published to PyPI; `v2.2.0` is the first PyPI release
+- The frozen `v2.1.1/` snapshot does **not** contain the library API (`ConversionConfig` / `ExcelConverter` / `convert_to_markdown`) introduced in this release — those are only present in `v2.2.0/`
 
 ## [2.1.1] - 2026-05-11
 
