@@ -189,16 +189,7 @@ def write_csv_markdown(wb, csv_data_dict, excel_file_basename, opts, output_dir)
         # Append validation metadata if enabled (using verify_csv_markdown module)
         if opts.get("csv_include_metadata", True):
             try:
-                # Import verification module to append metadata
-                import sys
-                from pathlib import Path as PathLib
-
-                # Add module directory to path if not already there
-                verify_module_path = PathLib(__file__).parent
-                if str(verify_module_path) not in sys.path:
-                    sys.path.insert(0, str(verify_module_path))
-
-                from verify_csv_markdown import append_verification_metadata_from_data
+                from .verify_csv_markdown import append_verification_metadata_from_data
 
                 # Call verification module to append metadata
                 append_verification_metadata_from_data(
