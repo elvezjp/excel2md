@@ -7,6 +7,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.1] - Unreleased
+
+### Fixed
+- **Fixed CSV markdown leaking content outside the declared print area when out-of-area images existed** ([#14](https://github.com/elvezjp/excel2md/issues/14))
+  - `runner.run()` expanded `union_area` to cover every image position reported by `extract_images_from_sheet`, so an image placed outside the print area dragged the CSV output range with it and pulled in unrelated cell values
+  - The expansion contradicted both the v2.1.0 spec (§"印刷領域内のみが変換対象となる") and the v1.8-and-earlier behavior
+  - Removed the expansion block; `extract_print_area_for_csv()` iterates strictly within the declared print area and out-of-area `cell_to_image` entries are now ignored
+  - Note: `extract_images_from_sheet` is still invoked, so image files outside the print area may still be written to disk. That side effect is tracked separately and out of scope for this fix.
+
+### Changed
+- Added new active development directory `v2.2.1/`. `v2.2.0/` is preserved as a frozen snapshot at the v2.2.0 release point, per the repository versioning policy (existing `v*/` directories are frozen; new versions go into a new directory)
+
+### Tests
+- Added `TestIssue14CsvPrintAreaRespect` to `tests/test_runner_regression.py` covering an A1:B2 print area with an out-of-area image at (5, 5) and out-of-area data cells — asserts the declared range stays `A1:B2` and that neither the outside image link nor the out-of-area cell values leak into the CSV output
+
 ## [2.2.0] - 2026-05-13
 
 ### Added

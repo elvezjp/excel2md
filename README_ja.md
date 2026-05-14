@@ -36,7 +36,7 @@ Excel → Markdown 変換ツール。Excelブック（.xlsx/.xlsm）を読み取
 - [CHANGELOG_ja.md](https://github.com/elvezjp/excel2md/blob/main/CHANGELOG_ja.md) - バージョン履歴
 - [CONTRIBUTING_ja.md](https://github.com/elvezjp/excel2md/blob/main/CONTRIBUTING_ja.md) - コントリビューション方法
 - [SECURITY_ja.md](https://github.com/elvezjp/excel2md/blob/main/SECURITY_ja.md) - セキュリティポリシーとベストプラクティス
-- [v2.2.0/spec.md](https://github.com/elvezjp/excel2md/blob/main/v2.2.0/spec.md) - 技術仕様書（v2.2.0, 最新）
+- [v2.2.1/spec.md](https://github.com/elvezjp/excel2md/blob/main/v2.2.1/spec.md) - 技術仕様書（v2.2.1, 最新）
 - [v2.1.0/spec.md](https://github.com/elvezjp/excel2md/blob/main/v2.1.0/spec.md) - 技術仕様書（v2.1.0, 凍結スナップショット）
 - [v1.8/spec.md](https://github.com/elvezjp/excel2md/blob/main/v1.8/spec.md) - 技術仕様書（v1.8）
 
@@ -201,12 +201,13 @@ excel2md --help
 
 ```
 excel2md/
-├── v2.2.0/                     # 最新バージョン
+├── v2.2.1/                     # 最新バージョン（開発中、PyPI 未公開）
 │   ├── excel_to_md.py          # エントリーポイント
 │   ├── excel2md/               # メインパッケージ
 │   ├── tests/                  # テストスイート
 │   ├── spec.md                 # 仕様書
 │   └── spec_appendix.md        # 仕様書付録
+├── v2.2.0/                     # 旧バージョン（凍結スナップショット、PyPI 公開最新）
 ├── v2.1.1/                     # 旧バージョン（凍結スナップショット、PyPI 未公開）
 ├── v2.1.0/                     # 旧バージョン（凍結スナップショット）
 ├── v2.0.1/                     # 旧バージョン
