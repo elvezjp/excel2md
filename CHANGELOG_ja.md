@@ -9,6 +9,17 @@
 
 ## [2.2.1] - Unreleased
 
+### 追加
+- **ライブラリ層の例外型: `ExcelConversionError` (基底) と `WorkbookOpenError` を新設** ([#36](https://github.com/elvezjp/excel2md/issues/36))
+  - `excel2md` および `excel_to_md` から公開。ライブラリ利用者は文字列マッチに頼らず例外型で変換エラーを捕捉できる
+
+### 変更
+- **`load_workbook_safe()` がオープン失敗時に `sys.exit(2)` を呼ばず、`WorkbookOpenError` を raise するように変更** ([#36](https://github.com/elvezjp/excel2md/issues/36))
+  - 従来は不正なパスや壊れた bytes を `ExcelConverter` / `convert_to_markdown` に渡すと呼び出し元プロセス全体が終了していた。PyPI 公開済みの再利用可能 API としては受け入れがたい挙動 (Pyodide / MCP サーバー / Notebook / Web サービス向け)
+  - 元の openpyxl 例外は `raise ... from e` で保持 (`__cause__` から参照可能)
+  - CLI 挙動は不変: `cli.main()` で `ExcelConversionError` を catch して stderr に `[ERROR] ...` を出力し、exit code 2 で終了する従来挙動を維持
+- `excel2md.__version__` を `"2.2.1"` に更新 (v2.2.0 → v2.2.1 ディレクトリコピー時に `"2.2.0"` のままになっていた)
+
 ### 修正
 - **印刷領域外の画像がある場合に CSV Markdown が印刷領域外のコンテンツを取り込んでしまう問題を修正** ([#14](https://github.com/elvezjp/excel2md/issues/14))
   - `runner.run()` が `extract_images_from_sheet` から返された画像位置をすべて含むように `union_area` を拡張していたため、印刷領域外に置かれた画像が CSV 出力レンジを引きずって広げ、関係のないセル値まで巻き込んでいた

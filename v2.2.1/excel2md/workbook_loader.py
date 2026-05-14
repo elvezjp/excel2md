@@ -4,6 +4,7 @@
 仕様書参照: §3.1 入力、§4.1 全体処理フロー
 """
 
+from .exceptions import WorkbookOpenError
 from .output import warn, info
 
 
@@ -14,9 +15,9 @@ def load_workbook_safe(path, read_only=False):
         wb = load_workbook(filename=path, read_only=read_only, data_only=True)
         return wb
     except Exception as e:
-        import sys
-        print(f"[ERROR] Failed to open workbook: {e}", file=sys.stderr)
-        sys.exit(2)
+        # Issue #36: ライブラリ利用者のプロセスを sys.exit で落とさず、例外で伝播する。
+        # CLI 経路では cli.main() がこの例外を catch して exit code 2 に翻訳する。
+        raise WorkbookOpenError(f"Failed to open workbook: {e}") from e
 
 
 def a1_from_rc(r: int, c: int) -> str:

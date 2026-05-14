@@ -9,6 +9,7 @@ from excel2md.runner import run
 from excel2md import __version__ as VERSION
 from excel2md.config import ConversionConfig
 from excel2md.converter import ExcelConverter, convert_to_markdown
+from excel2md.exceptions import ExcelConversionError, WorkbookOpenError
 from excel2md.output import warn, info
 from excel2md.cell_utils import (
     remove_control_chars,
@@ -68,6 +69,8 @@ __all__ = [
     "ConversionConfig",
     "ExcelConverter",
     "convert_to_markdown",
+    "ExcelConversionError",
+    "WorkbookOpenError",
     "warn",
     "info",
     "remove_control_chars",
