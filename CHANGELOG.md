@@ -29,6 +29,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Added new active development directory `v2.2.1/`. `v2.2.0/` is preserved as a frozen snapshot at the v2.2.0 release point, per the repository versioning policy (existing `v*/` directories are frozen; new versions go into a new directory)
+- **Repository layout: moved past version directories (`v1.7`, `v1.8`, `v2.0`, `v2.0.1`, `v2.1.0`, `v2.1.1`, `v2.2.0`) under `versions/`** ([#11](https://github.com/elvezjp/excel2md/issues/11))
+  - The active development directory (`v2.2.1/`) remains at the repository root
+  - `pyproject.toml`'s sdist `exclude` was consolidated to `versions/**`; the wheel/sdist contents shipped to PyPI are unchanged
+  - All moves are recorded as git renames, preserving history
+- Added `versions/README.md` describing the purpose of the directory and that its contents are not published to PyPI
 
 ### Tests
 - Added `TestIssue14CsvPrintAreaRespect` to `tests/test_runner_regression.py` covering an A1:B2 print area with an out-of-area image at (5, 5) and out-of-area data cells — asserts the declared range stays `A1:B2` and that neither the outside image link nor the out-of-area cell values leak into the CSV output

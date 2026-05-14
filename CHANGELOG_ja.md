@@ -29,6 +29,11 @@
 
 ### 変更
 - 新しい開発用ディレクトリ `v2.2.1/` を追加。`v2.2.0/` は v2.2.0 リリース時点の凍結スナップショットとして保持（リポのバージョン管理ポリシーに準拠 — 既存 v*/ は凍結し、新バージョンは新規ディレクトリで作業）
+- **リポジトリ構成: 過去バージョンディレクトリ（`v1.7` / `v1.8` / `v2.0` / `v2.0.1` / `v2.1.0` / `v2.1.1` / `v2.2.0`）を `versions/` 配下に集約** ([#11](https://github.com/elvezjp/excel2md/issues/11))
+  - 現在開発中のディレクトリ（`v2.2.1/`）はリポジトリルートに残置
+  - `pyproject.toml` の sdist `exclude` を `versions/**` に統合。PyPI に配布される wheel/sdist の中身は不変
+  - 移動はすべて git rename として記録されており、履歴は引き続き辿れる
+- `versions/README.md` を追加し、本ディレクトリの目的と PyPI 配布対象外である旨を明記
 
 ### テスト
 - `tests/test_runner_regression.py` に `TestIssue14CsvPrintAreaRespect` を追加。印刷領域 `A1:B2` + 領域外画像 `(5, 5)` + 領域外セル値 (`C5`, `D6`) の workbook で、出力レンジが `A1:B2` のままで、領域外画像リンクおよび領域外セル値が CSV に混入しないことを assert する

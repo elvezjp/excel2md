@@ -205,10 +205,9 @@ excel2md/
 │   ├── tests/                  # テストスイート
 │   ├── spec.md                 # 仕様書
 │   └── spec_appendix.md        # 仕様書付録
-├── v*/                         # 凍結済みの過去バージョンスナップショット
-│   ├── excel_to_md.py          # メイン変換プログラム
-│   ├── spec.md                 # 仕様書
-│   └── tests/                  # テストスイート
+├── versions/                   # 過去バージョンの凍結スナップショット（PyPI からは除外）
+│   ├── README.md               # 当ディレクトリの説明（日本語）
+│   └── v*/                     # リリース毎のサブディレクトリ
 ├── docs/                   # ドキュメント
 ├── pyproject.toml          # プロジェクトメタデータ
 ├── LICENSE                 # MITライセンス
