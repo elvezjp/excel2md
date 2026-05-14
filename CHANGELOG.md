@@ -32,6 +32,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Tests
 - Added `TestIssue14CsvPrintAreaRespect` to `tests/test_runner_regression.py` covering an A1:B2 print area with an out-of-area image at (5, 5) and out-of-area data cells — asserts the declared range stays `A1:B2` and that neither the outside image link nor the out-of-area cell values leak into the CSV output
+- **Added test coverage for `.xlsm` (macro-enabled workbook) support** ([#43](https://github.com/elvezjp/excel2md/issues/43))
+  - Added `v2.2.1/tests/fixtures/test_macro.xlsm` (basic table + a sheet containing VBA macros)
+  - Added `v2.2.1/tests/test_xlsm_support.py` — regression-checks that the openpyxl default (`keep_vba=False`) discards the VBA binary, that the project's `workbook_loader.load_workbook_safe` opens `.xlsm`, that both path and bytes inputs convert successfully, that the basic table parity-matches an equivalent `.xlsx`, and that no macro-induced side effects appear during conversion
+
+### Documentation
+- Documented `.xlsm` support scope (read-only, VBA discarded, macros not executed) and the new fixture in `v2.2.1/spec.md` §3.1.1 / §11.3 ([#43](https://github.com/elvezjp/excel2md/issues/43))
+- Clarified in `SECURITY.md` / `SECURITY_ja.md` that `.xlsm` files are loaded via `openpyxl.load_workbook(..., keep_vba=False)`, so the VBA binary is discarded and auto-run macros such as `Auto_Open` / `Workbook_Open` are never triggered ([#43](https://github.com/elvezjp/excel2md/issues/43))
+- Added v2.2.1 example outputs under `docs/examples/v2.2.1/` (samples for `test_standard.xlsx`, `test_mermaid.xlsx`, and `test_macro.xlsm`) and updated `docs/examples/README.md` with the `.xlsm` generation commands
 
 ## [2.2.0] - 2026-05-13
 

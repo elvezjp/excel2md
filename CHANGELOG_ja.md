@@ -32,6 +32,14 @@
 
 ### テスト
 - `tests/test_runner_regression.py` に `TestIssue14CsvPrintAreaRespect` を追加。印刷領域 `A1:B2` + 領域外画像 `(5, 5)` + 領域外セル値 (`C5`, `D6`) の workbook で、出力レンジが `A1:B2` のままで、領域外画像リンクおよび領域外セル値が CSV に混入しないことを assert する
+- **`.xlsm`（マクロ有効ブック）を正式サポート対象として試験を追加** ([#43](https://github.com/elvezjp/excel2md/issues/43))
+  - `v2.2.1/tests/fixtures/test_macro.xlsm` を追加（基本テーブル + VBA マクロ入りシート）
+  - `v2.2.1/tests/test_xlsm_support.py` を新設。openpyxl 既定 (`keep_vba=False`) で VBA バイナリが破棄されること、`workbook_loader.load_workbook_safe` 経由で開けること、パス／バイト列入力どちらでも変換が成功すること、同等内容の `.xlsx` とテーブル内容がパリティすること、変換でマクロ起因の副作用が出ないことを回帰確認する
+
+### ドキュメント
+- `v2.2.1/spec.md` §3.1.1 / §11.3 に `.xlsm` のサポート範囲（読み込みのみ・VBA 破棄・マクロ非実行）とフィクスチャ説明を追記 ([#43](https://github.com/elvezjp/excel2md/issues/43))
+- `SECURITY.md` / `SECURITY_ja.md` に `openpyxl.load_workbook(..., keep_vba=False)` で VBA を破棄し、`Auto_Open` / `Workbook_Open` などの自動実行マクロも発火しない旨を明記 ([#43](https://github.com/elvezjp/excel2md/issues/43))
+- `docs/examples/v2.2.1/` に v2.2.1 用の実行サンプル（`test_standard.xlsx` / `test_mermaid.xlsx` / `test_macro.xlsm` の変換例）を追加し、`docs/examples/README.md` に `.xlsm` 経路の生成コマンドを追記
 
 ## [2.2.0] - 2026-05-13
 
