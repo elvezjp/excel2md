@@ -208,7 +208,7 @@ excel2md/
 │   ├── spec.md                 # Specification
 │   └── spec_appendix.md        # Specification appendix
 ├── versions/                   # Frozen historical snapshots (excluded from PyPI)
-│   ├── README.md / _ja.md      # Overview of this directory
+│   ├── README.md               # Overview of this directory (Japanese)
 │   └── v*/                     # One subdirectory per past release
 ├── docs/                   # Documentation
 ├── pyproject.toml          # Project metadata

@@ -206,7 +206,7 @@ excel2md/
 │   ├── spec.md                 # 仕様書
 │   └── spec_appendix.md        # 仕様書付録
 ├── versions/                   # 過去バージョンの凍結スナップショット（PyPI からは除外）
-│   ├── README.md / _ja.md      # 当ディレクトリの説明
+│   ├── README.md               # 当ディレクトリの説明（日本語）
 │   └── v*/                     # リリース毎のサブディレクトリ
 ├── docs/                   # ドキュメント
 ├── pyproject.toml          # プロジェクトメタデータ

@@ -1,26 +1,23 @@
 # versions/
 
-[English](README.md) | [日本語](README_ja.md)
+excel2md の過去リリース時点のソースツリーを凍結保管するディレクトリです。
 
-Frozen historical snapshots of past excel2md releases.
+各 `vX.Y.Z/`（または `vX.Y/`）サブディレクトリには、当該リリース時点のソース
+一式が格納されています。ここに置かれているコードは現行 `main` のビルド対象
+**ではなく**、現役の開発ソースはリポジトリルート直下の `vX.Y.Z/`（`pyproject.toml`
+の `version` と一致するディレクトリ）にあります。PyPI に公開される wheel/sdist
+にはこの現役ディレクトリのみが含まれます。
 
-Each `vX.Y.Z/` (or `vX.Y/`) subdirectory holds the source tree that shipped with
-that release. Directories under this folder are **not** built or published from
-the current `main`; the active development source lives at the repository root
-under `vX.Y.Z/` (matching `pyproject.toml`'s `version` field) and is the only
-tree included in the wheel/sdist on PyPI.
+## このディレクトリを残している理由
 
-## Why these are kept
+- 過去バージョンの参照、bisect 用途
+- リリース時点の状態をいつでも確認できる監査性
+- 既存の「`v*/` を凍結する」運用方針の継承
 
-- Historical reference and bisecting
-- Auditability of past releases
-- Following the existing versioning policy that froze old `v*/` directories
+## 注意事項
 
-## Notes
-
-- Snapshots are intentionally read-only. Bug fixes go into the active version
-  directory, not here.
-- The `pyproject.toml` excludes `versions/**` from the sdist, so these files do
-  not ship to PyPI.
-- For the published release history, see
-  [CHANGELOG.md](../CHANGELOG.md).
+- 凍結ディレクトリには手を入れません。不具合修正は現行バージョンディレクトリ
+  に対して行います。
+- `pyproject.toml` の sdist 設定で `versions/**` は除外されているため、これらの
+  ファイルが PyPI に配布されることはありません。
+- 公開済みリリースの履歴は [CHANGELOG_ja.md](../CHANGELOG_ja.md) を参照してください。
