@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.2.1] - Unreleased
 
+### Added
+- **Library-level exception types: `ExcelConversionError` (base) and `WorkbookOpenError`** ([#36](https://github.com/elvezjp/excel2md/issues/36))
+  - Exposed from both `excel2md` and `excel_to_md` so library consumers can catch conversion errors without inspecting strings
+
+### Changed
+- **`load_workbook_safe()` no longer calls `sys.exit(2)` on open failures; it now raises `WorkbookOpenError` instead** ([#36](https://github.com/elvezjp/excel2md/issues/36))
+  - Previously, passing a bad path or corrupt bytes to `ExcelConverter` / `convert_to_markdown` terminated the caller's entire process — unacceptable for the PyPI-published reusable API (Pyodide / MCP servers / notebooks / web services)
+  - The original openpyxl exception is preserved via `raise ... from e` (accessible as `__cause__`)
+  - CLI behavior is unchanged: `cli.main()` now catches `ExcelConversionError`, prints `[ERROR] ...` to stderr, and exits with code 2 — same user experience as before
+- Bumped `excel2md.__version__` to `"2.2.1"` (was still `"2.2.0"` after the v2.2.0 → v2.2.1 directory copy)
+
 ### Fixed
 - **Fixed CSV markdown leaking content outside the declared print area when out-of-area images existed** ([#14](https://github.com/elvezjp/excel2md/issues/14))
   - `runner.run()` expanded `union_area` to cover every image position reported by `extract_images_from_sheet`, so an image placed outside the print area dragged the CSV output range with it and pulled in unrelated cell values
