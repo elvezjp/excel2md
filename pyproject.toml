@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "excel2md"
-version = "2.2.0"
+version = "2.2.1"
 description = "Excel to Markdown converter with CSV markdown output support"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -47,11 +47,11 @@ test = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["v2.2.0/excel2md"]
+packages = ["v2.2.1/excel2md"]
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "v2.2.0/excel2md/**",
+    "v2.2.1/excel2md/**",
     "README.md",
     "README_ja.md",
     "LICENSE",
@@ -66,14 +66,15 @@ exclude = [
     "v2.0.1/**",
     "v2.1.0/**",
     "v2.1.1/**",
+    "v2.2.0/**",
     "docs/**",
-    "v2.2.0/tests/**",
-    "v2.2.0/spec*.md",
-    "v2.2.0/excel_to_md.py",
+    "v2.2.1/tests/**",
+    "v2.2.1/spec*.md",
+    "v2.2.1/excel_to_md.py",
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["v2.2.0/tests"]
+testpaths = ["v2.2.1/tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -84,8 +85,8 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["v2.2.0"]
-omit = ["v2.2.0/tests/*"]
+source = ["v2.2.1"]
+omit = ["v2.2.1/tests/*"]
 
 [tool.coverage.report]
 exclude_lines = [
