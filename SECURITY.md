@@ -72,10 +72,14 @@ Disable external entity processing in openpyxl configuration.
 
 excel2md processes Excel files that may contain:
 
-- Macros (`.xlsm` files)
+- Macros (`.xlsm` files) — read-only; VBA is discarded on load and **never executed** (see Note below)
 - External links and references
 - Embedded objects
 - Formulas with potential side effects
+
+**Note on `.xlsm` handling:**
+
+`.xlsm` files are loaded via `openpyxl.load_workbook(..., keep_vba=False)` (the default), which discards the VBA binary at load time. Auto-run macros such as `Auto_Open` and `Workbook_Open` are therefore never triggered by excel2md, and no macro code is written into the Markdown output.
 
 **Recommendations:**
 

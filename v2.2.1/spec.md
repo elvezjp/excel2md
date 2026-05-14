@@ -89,7 +89,13 @@ cli.py
 | 形式 | 拡張子 | 備考 |
 |------|--------|------|
 | Excel Open XML Workbook | .xlsx | 標準形式 |
-| Excel Open XML Macro-Enabled Workbook | .xlsm | マクロ有効ブック |
+| Excel Open XML Macro-Enabled Workbook | .xlsm | マクロ有効ブック（読み込みのみ。VBA は破棄しマクロは実行しない） |
+
+`.xlsm` のサポート範囲は次のとおり:
+
+- セル値・スタイル・図形・印刷範囲・ハイパーリンク・画像など、`.xlsx` と同等の読み込み機能を提供する。
+- 読み込みは openpyxl の `load_workbook(..., keep_vba=False)`（既定）で行い、VBA バイナリは破棄される。本ツールはマクロを実行しない。
+- 変換結果の Markdown には VBA／マクロ定義は一切含まれない。
 
 #### 3.1.2 主要設定オプション
 
@@ -687,6 +693,12 @@ uv run pytest v2.2.0/tests --cov=v2.2.0 --cov-report=html  # カバレッジ付�
 **test_mermaid.xlsx** - Mermaidテスト用
 - Sheet1「図形フロー」: フローチャート図形（矩形、ひし形、楕円、コネクタ）
 - Sheet2「テーブルフロー」: From/To/Label列を持つフロー定義テーブル
+
+**test_macro.xlsm** - `.xlsm` サポート確認用（Issue #43）
+- Sheet1「基本テーブル」: 商品名・価格・在庫数の通常テーブル
+- Sheet2「マクロ」: VBA マクロ（`HelloMacro` / `InsertToday`）入りシート
+- 自動テスト `tests/test_xlsm_support.py` で、`.xlsm` の読み込み・変換・
+  VBA 破棄・マクロ非実行を回帰確認する。
 
 #### 11.3.1 CLI基本動作確認
 
