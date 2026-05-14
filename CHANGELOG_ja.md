@@ -7,7 +7,7 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/spec/v2.0.0.html) に準拠しています。
 
-## [2.2.1] - Unreleased
+## [2.2.1] - 2026-05-14
 
 ### 追加
 - **ライブラリ層の例外型: `ExcelConversionError` (基底) と `WorkbookOpenError` を新設** ([#36](https://github.com/elvezjp/excel2md/issues/36))
