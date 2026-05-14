@@ -36,9 +36,7 @@ Excel to Markdown converter. Reads Excel workbooks (.xlsx/.xlsm) and automatical
 - [CHANGELOG.md](https://github.com/elvezjp/excel2md/blob/main/CHANGELOG.md) - Version history
 - [CONTRIBUTING.md](https://github.com/elvezjp/excel2md/blob/main/CONTRIBUTING.md) - Contribution guidelines
 - [SECURITY.md](https://github.com/elvezjp/excel2md/blob/main/SECURITY.md) - Security policy and best practices
-- [v2.2.1/spec.md](https://github.com/elvezjp/excel2md/blob/main/v2.2.1/spec.md) - Technical specification (v2.2.1, latest)
-- [v2.1.0/spec.md](https://github.com/elvezjp/excel2md/blob/main/v2.1.0/spec.md) - Technical specification (v2.1.0, frozen snapshot)
-- [v1.8/spec.md](https://github.com/elvezjp/excel2md/blob/main/v1.8/spec.md) - Technical specification (v1.8)
+- Technical specifications are kept in each version directory as `spec.md` and `spec_appendix.md`
 
 ## Installation
 
@@ -203,22 +201,13 @@ The regeneration commands for each pattern are documented in [docs/examples/READ
 
 ```
 excel2md/
-├── v2.2.1/                     # Latest version (in development, not yet published to PyPI)
+├── v2.2.1/                     # Current package source
 │   ├── excel_to_md.py          # Entry point
 │   ├── excel2md/               # Main package
 │   ├── tests/                  # Test suite
 │   ├── spec.md                 # Specification
 │   └── spec_appendix.md        # Specification appendix
-├── v2.2.0/                     # Previous version (frozen snapshot, latest published to PyPI)
-├── v2.1.1/                     # Previous version (frozen snapshot, not published to PyPI)
-├── v2.1.0/                     # Previous version (frozen snapshot)
-├── v2.0.1/                     # Previous version
-├── v2.0/                       # Previous version
-├── v1.8/                       # Legacy version
-│   ├── excel_to_md.py          # Main conversion program
-│   ├── spec.md                 # Specification
-│   └── tests/                  # Test suite
-├── v1.7/                       # Legacy version
+├── v*/                         # Frozen historical snapshots
 │   ├── excel_to_md.py          # Main conversion program
 │   ├── spec.md                 # Specification
 │   └── tests/                  # Test suite
@@ -237,7 +226,7 @@ For security concerns, please see [SECURITY.md](https://github.com/elvezjp/excel
 
 **Key security notes:**
 - Only process Excel files from trusted sources
-- Use `read_only=True` mode to prevent file modification
+- excel2md does not save changes to input workbooks; use `--read-only` when you prefer openpyxl read-only loading
 - Excel macros are not executed
 - Sanitize Markdown output to prevent injection
 

@@ -11,9 +11,9 @@ name: Publish to PyPI
 # 詳細は docs/20260513_pypi_trusted_publisher_setup.md を参照。
 #
 # リリース手順:
-#   git tag v2.2.0
-#   git push origin v2.2.0
-#   → 本 workflow が起動し、PyPI に excel2md 2.1.1 を公開する
+#   git tag vX.Y.Z
+#   git push origin vX.Y.Z
+#   → 本 workflow が起動し、pyproject.toml の version に対応する配布物を PyPI に公開する
 
 on:
   push:
