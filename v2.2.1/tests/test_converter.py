@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from excel2md.config import ConversionConfig
 from excel2md.converter import ExcelConverter
+from excel2md.exceptions import ExcelConversionError, WorkbookOpenError
 
 
 # =============================================================
@@ -171,3 +172,82 @@ class TestConvertCsvMarkdownMode:
         result = ExcelConverter().convert(xlsx.read_bytes())
         assert isinstance(result["markdown"], str)
         assert result["markdown"]
+
+
+# =============================================================
+# Issue #36: ライブラリ層は SystemExit を出さず、例外を上げる
+# =============================================================
+
+
+class TestErrorHandling:
+    """ライブラリ経由 (ExcelConverter / convert_to_markdown) で workbook
+    オープン失敗が起きた場合、SystemExit ではなく WorkbookOpenError を
+    伝播することを保証する。"""
+
+    def test_missing_path_raises_workbook_open_error(self, tmp_path):
+        missing = tmp_path / "does-not-exist.xlsx"
+        with pytest.raises(WorkbookOpenError):
+            ExcelConverter().convert(str(missing))
+
+    def test_corrupt_bytes_raise_workbook_open_error(self):
+        with pytest.raises(WorkbookOpenError):
+            ExcelConverter().convert(b"not a real xlsx file")
+
+    def test_does_not_raise_system_exit(self, tmp_path):
+        """SystemExit に化けないことを明示的に保証する (Issue #36 リグレッション)。"""
+        missing = tmp_path / "does-not-exist.xlsx"
+        try:
+            ExcelConverter().convert(str(missing))
+        except SystemExit:
+            pytest.fail("ExcelConverter.convert() must not raise SystemExit")
+        except WorkbookOpenError:
+            pass  # expected
+
+    def test_catchable_by_base_class(self, tmp_path):
+        """ExcelConversionError 基底で一括捕捉できる。"""
+        missing = tmp_path / "does-not-exist.xlsx"
+        with pytest.raises(ExcelConversionError):
+            ExcelConverter().convert(str(missing))
+
+    def test_original_exception_is_chained(self, tmp_path):
+        """``raise ... from e`` で元の openpyxl 例外が ``__cause__`` に
+        保持されている。"""
+        missing = tmp_path / "does-not-exist.xlsx"
+        with pytest.raises(WorkbookOpenError) as excinfo:
+            ExcelConverter().convert(str(missing))
+        assert excinfo.value.__cause__ is not None
+
+    def test_convert_to_markdown_propagates_error(self, tmp_path):
+        """ワンショット API (convert_to_markdown) でも同じ例外が上がる。"""
+        from excel2md import convert_to_markdown
+
+        missing = tmp_path / "does-not-exist.xlsx"
+        with pytest.raises(WorkbookOpenError):
+            convert_to_markdown(str(missing))
+
+
+class TestCliExitBehavior:
+    """CLI 経路 (cli.main) からは exit code 2 で死ぬという従来挙動を維持する
+    (Issue #36 では CLI ユーザー体験を変えない方針)。"""
+
+    def test_cli_exits_with_code_2_on_missing_file(self, tmp_path, capsys):
+        from excel2md.cli import main
+
+        missing = tmp_path / "does-not-exist.xlsx"
+        with pytest.raises(SystemExit) as excinfo:
+            main([str(missing)])
+        assert excinfo.value.code == 2
+        captured = capsys.readouterr()
+        assert "[ERROR]" in captured.err
+        assert "Failed to open workbook" in captured.err
+
+    def test_cli_exits_with_code_2_on_corrupt_file(self, tmp_path, capsys):
+        from excel2md.cli import main
+
+        corrupt = tmp_path / "broken.xlsx"
+        corrupt.write_bytes(b"not a real xlsx file")
+        with pytest.raises(SystemExit) as excinfo:
+            main([str(corrupt)])
+        assert excinfo.value.code == 2
+        captured = capsys.readouterr()
+        assert "[ERROR]" in captured.err
