@@ -13,7 +13,7 @@ name: Publish to TestPyPI
 #
 # 注意: TestPyPI は同じバージョン番号での再アップロードを許さないため、
 # リハーサルを繰り返す場合は pyproject.toml の version を
-# 2.1.1.dev0 → 2.1.1.dev1 → ... のように rc / dev サフィックスで
+# X.Y.Z.dev0 → X.Y.Z.dev1 → ... のように rc / dev サフィックスで
 # 進める運用が無難。
 
 on:

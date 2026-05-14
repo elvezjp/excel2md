@@ -36,9 +36,7 @@ Excel → Markdown 変換ツール。Excelブック（.xlsx/.xlsm）を読み取
 - [CHANGELOG_ja.md](https://github.com/elvezjp/excel2md/blob/main/CHANGELOG_ja.md) - バージョン履歴
 - [CONTRIBUTING_ja.md](https://github.com/elvezjp/excel2md/blob/main/CONTRIBUTING_ja.md) - コントリビューション方法
 - [SECURITY_ja.md](https://github.com/elvezjp/excel2md/blob/main/SECURITY_ja.md) - セキュリティポリシーとベストプラクティス
-- [v2.2.1/spec.md](https://github.com/elvezjp/excel2md/blob/main/v2.2.1/spec.md) - 技術仕様書（v2.2.1, 最新）
-- [v2.1.0/spec.md](https://github.com/elvezjp/excel2md/blob/main/v2.1.0/spec.md) - 技術仕様書（v2.1.0, 凍結スナップショット）
-- [v1.8/spec.md](https://github.com/elvezjp/excel2md/blob/main/v1.8/spec.md) - 技術仕様書（v1.8）
+- 技術仕様書は各バージョンディレクトリの `spec.md` / `spec_appendix.md` にあります
 
 ## インストール
 
@@ -201,22 +199,13 @@ excel2md --help
 
 ```
 excel2md/
-├── v2.2.1/                     # 最新バージョン（開発中、PyPI 未公開）
+├── v2.2.1/                     # 現在のパッケージソース
 │   ├── excel_to_md.py          # エントリーポイント
 │   ├── excel2md/               # メインパッケージ
 │   ├── tests/                  # テストスイート
 │   ├── spec.md                 # 仕様書
 │   └── spec_appendix.md        # 仕様書付録
-├── v2.2.0/                     # 旧バージョン（凍結スナップショット、PyPI 公開最新）
-├── v2.1.1/                     # 旧バージョン（凍結スナップショット、PyPI 未公開）
-├── v2.1.0/                     # 旧バージョン（凍結スナップショット）
-├── v2.0.1/                     # 旧バージョン
-├── v2.0/                       # 旧バージョン
-├── v1.8/                       # 旧バージョン
-│   ├── excel_to_md.py          # メイン変換プログラム
-│   ├── spec.md                 # 仕様書
-│   └── tests/                  # テストスイート
-├── v1.7/                       # 旧バージョン
+├── v*/                         # 凍結済みの過去バージョンスナップショット
 │   ├── excel_to_md.py          # メイン変換プログラム
 │   ├── spec.md                 # 仕様書
 │   └── tests/                  # テストスイート
@@ -235,7 +224,7 @@ excel2md/
 
 **主要なセキュリティ注意事項:**
 - 信頼できるソースからのExcelファイルのみを処理してください
-- `read_only=True` モードを使用してファイル変更を防止
+- excel2md は入力ブックを保存しません。openpyxl の読み取り専用ロードを優先する場合は `--read-only` を使用してください
 - Excelマクロは実行しません
 - Markdown出力をサニタイズしてインジェクションを防止
 

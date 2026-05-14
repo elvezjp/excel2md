@@ -92,8 +92,9 @@ excel2md processes Excel files that may contain:
 
 excel2md includes the following security measures:
 
-- Uses `read_only=True` mode in openpyxl to prevent file modification
-- Uses `data_only=True` to avoid formula execution
+- Does not save changes back to input workbooks
+- Uses `data_only=True` to read cached formula results instead of formula expressions
+- Provides `--read-only` for openpyxl read-only loading when preferred
 - Limits cell processing with the `max_cells_per_table` option
 - Sanitizes Markdown output to prevent injection attacks
 

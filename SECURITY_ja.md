@@ -92,8 +92,9 @@ excel2md は以下を含む可能性のある Excel ファイルを処理しま�
 
 excel2md には以下のセキュリティ対策が含まれています：
 
-- openpyxl で `read_only=True` モードを使用してファイルの変更を防止
-- `data_only=True` を使用して数式の実行を回避
+- 入力ブックに変更を保存しません
+- `data_only=True` を使用して数式そのものではなくキャッシュ済みの計算結果を読み取ります
+- openpyxl の読み取り専用ロードを優先する場合に `--read-only` を指定できます
 - `max_cells_per_table` オプションでセル処理を制限
 - インジェクション攻撃を防ぐため Markdown 出力をサニタイズ
 
