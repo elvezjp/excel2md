@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
-"""excel2md package (v2.3.0)."""
+"""excel2md package."""
 
-__version__ = "2.3.0"
+from importlib.metadata import PackageNotFoundError, version
+
+try:
+    __version__ = version("excel2md")
+except PackageNotFoundError:  # pragma: no cover - source tree without installed metadata
+    __version__ = "0+unknown"
 
 # ライブラリとしての公開 API (issue #16)
 from .config import ConversionConfig
