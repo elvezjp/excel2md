@@ -11,6 +11,7 @@ both ``excel2md`` and ``excel_to_md``.
 """
 import sys
 from pathlib import Path
+from importlib.metadata import version
 
 import openpyxl
 import pytest
@@ -23,6 +24,12 @@ _JAVA_ROWS = [
     ["    private int value;"],
     ["}"],
 ]
+
+
+def test_package_version_matches_installed_metadata():
+    import excel2md
+
+    assert excel2md.__version__ == version("excel2md")
 
 
 def test_is_code_block_importable_from_excel2md_package():
