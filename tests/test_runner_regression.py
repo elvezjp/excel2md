@@ -200,7 +200,7 @@ class TestIssue14CsvPrintAreaRespect:
             inside_path = "out/inside.png"
             outside_path = "out/outside.png"
 
-            def fake_extract_images(ws, output_dir, sheet_name, md_basename, opts, xlsx_path=None):
+            def fake_extract_images(ws, output_dir, sheet_name, md_basename, opts, xlsx_path=None, drawing_index=None):
                 # One image inside the print area (B2) and one outside (E5).
                 return {(2, 2): inside_path, (5, 5): outside_path}
 
@@ -284,7 +284,7 @@ class TestIssue26CsvOnlySkipsNormalMarkdown:
 
             calls = {"count": 0}
 
-            def fake_shapes_mermaid(input_path, ws, opts):
+            def fake_shapes_mermaid(input_path, ws, opts, drawing_index=None):
                 calls["count"] += 1
                 return "```mermaid\nflowchart TD\n  A --> B\n```"
 

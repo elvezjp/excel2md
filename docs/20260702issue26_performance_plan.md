@@ -66,16 +66,18 @@ v2.2.1 の実装確認により、Issue #26 の指摘が現在も有効である
 | 3 | ベンチマーク追加 | 生成 fixture + 区間タイマーの簡易ベンチマークスクリプトを追加し、改善前ベースラインを計測 | 完了 |
 | 4 | 実装① | CSV専用経路スキップ + shapes Mermaid 1回化 | 完了 |
 | 5 | 実装② | `build_merged_lookup()` の再利用 | 完了 |
-| 6 | 実装③ | `WorkbookDrawingIndex` 導入 | 未着手 |
-| 7 | 効果計測 | 改善後ベンチマークを計測し本ドキュメントに記録 | 未着手 |
+| 6 | 実装③ | `WorkbookDrawingIndex` 導入 | 完了 |
+| 7 | 効果計測 | 改善後ベンチマークを計測し本ドキュメントに記録 | 完了 |
 | 8 | ドキュメント更新 | v2.3.0 として CHANGELOG / CHANGELOG_ja / spec.md / README / `__version__` / pyproject.toml を更新 | 未着手 |
 
 ## 受け入れ条件（Issue #26 より）
 
-- [ ] CSV Markdown のみ出力する既定ケースで、通常 Markdown 用整形処理が実行されない
-- [ ] 既存の CSV Markdown 出力内容が変わらない
-- [ ] `uv run pytest` が通る
-- [ ] ベンチマークで処理時間の改善を確認できる
+- [x] CSV Markdown のみ出力する既定ケースで、通常 Markdown 用整形処理が実行されない
+      （回帰テスト `TestIssue26CsvOnlySkipsNormalMarkdown` で担保）
+- [x] 既存の CSV Markdown 出力内容が変わらない
+      （凍結スナップショット v2.2.1 と全 fixture の変換出力一致を確認。生成日時行を除く）
+- [x] `uv run pytest` が通る（336件通過）
+- [x] ベンチマークで処理時間の改善を確認できる（下記計測記録参照。50k〜200kセルで約6割短縮）
 
 ## 計測記録
 
@@ -100,9 +102,19 @@ v2.2.1 の実装確認により、Issue #26 の指摘が現在も有効である
 | multi_sheet_mermaid | 2.009s | 2.016s |
 | mermaid_fixture | 0.169s | 0.169s |
 
-### 改善後
+### 改善後（実装①②③適用後）
 
-（ステップ7で記載）
+| ケース | best | median | ベースライン比 (best) |
+|--------|------|--------|----------------------|
+| 50k_cells | 0.445s | 0.446s | -57% |
+| 200k_cells | 1.876s | 1.927s | -61% |
+| merged_cells | 0.457s | 0.458s | -56% |
+| multi_sheet_mermaid | 0.877s | 0.883s | -56% |
+| mermaid_fixture | 0.120s | 0.121s | -29% |
+
+- 効果の大部分は実装①（CSV専用経路スキップ + Mermaid 1回化）による。
+- 実装③は DrawingML 系ケース（mermaid_fixture 0.134s→0.120s、multi_sheet_mermaid 0.907s→0.877s）にさらに効いた。
+- 実装②の単独効果は計測誤差の範囲内（結合セルの多寡によらず数%程度）だが、重複構築の解消としてコード意図が明確になった。
 
 ## 進捗記録
 
@@ -111,3 +123,4 @@ v2.2.1 の実装確認により、Issue #26 の指摘が現在も有効である
 - 2026-07-02: `scripts/benchmark_issue26.py` を追加し、改善前ベースラインを計測・記録（ステップ3完了）
 - 2026-07-02: 実装①完了（ステップ4完了）。`runner.run()` に `emit_normal_md` フラグを導入し、CSV Markdown 出力時（デフォルト）は通常 Markdown 用の組み立て（テーブル検出・抽出・形式判定・整形・脚注管理）をスキップ。shapes モードの Mermaid 抽出はシートごとに1回だけ実行し通常/CSV 両経路で共用。回帰テスト3件追加（計330件通過）。凍結スナップショット v2.2.1 と全 fixture の変換出力が一致（生成日時行を除く）することを確認。この時点の計測: 50k_cells 0.446s / 200k_cells 1.844s / merged_cells 0.448s / multi_sheet_mermaid 0.907s / mermaid_fixture 0.134s
 - 2026-07-02: 実装②完了（ステップ5完了）。`grid_to_tables()` に `merged_lookup` 引数を追加し、runner で構築済みの lookup を再利用（未指定時は従来どおり内部構築、既存呼び出し互換）。実装①で通常MD経路とCSV経路が排他になったため、残っていた重複は「runner構築 → grid_to_tables 内部で再構築」の2重構築であり、これを解消。テスト330件通過
+- 2026-07-02: 実装③完了（ステップ6完了）。`excel2md/drawing_index.py` に `WorkbookDrawingIndex` を新設し、workbook.xml / workbook.xml.rels / sheet rels の解析をワークブック単位で1回に集約。image_extraction / mermaid_generator の重複実装（各約60行）を索引参照に置換し、runner が索引のライフサイクル（生成・close）を管理。図形の無いシートではセルグリッド構築を省くよう判定順も改善。索引のユニットテスト6件を追加（計336件通過）。凍結スナップショット v2.2.1 との出力一致を再確認。改善後ベンチマークを計測・記録（ステップ7完了）

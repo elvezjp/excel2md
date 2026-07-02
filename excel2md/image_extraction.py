@@ -4,12 +4,11 @@
 仕様書参照: §8 画像抽出規約
 """
 
-import re
-import zipfile as _zipfile
-import xml.etree.ElementTree as _ET
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
+import xml.etree.ElementTree as _ET
 
+from .drawing_index import WorkbookDrawingIndex
 from .output import warn, info
 
 # DrawingML名前空間
@@ -18,7 +17,7 @@ _DRAWINGML_NS = {
     "xdr": "http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing",
 }
 
-def extract_images_from_xlsx_drawing(xlsx_path: str, ws, output_dir: Path, sheet_name: str, md_basename: str, opts) -> Dict[Tuple[int, int], str]:
+def extract_images_from_xlsx_drawing(xlsx_path: str, ws, output_dir: Path, sheet_name: str, md_basename: str, opts, drawing_index: Optional[WorkbookDrawingIndex] = None) -> Dict[Tuple[int, int], str]:
     """Extract images directly from xlsx ZIP archive using DrawingML.
 
     This function reads the xlsx file as a ZIP archive and extracts embedded images
@@ -32,6 +31,10 @@ def extract_images_from_xlsx_drawing(xlsx_path: str, ws, output_dir: Path, sheet
         sheet_name: Name of the current sheet
         md_basename: Base name of the markdown file (used as subdirectory name)
         opts: Options dictionary
+        drawing_index: Optional pre-built WorkbookDrawingIndex. Pass it in to reuse
+                       the workbook-level DrawingML parse across sheets and across
+                       image/Mermaid extraction (Issue #26); built (and closed)
+                       internally when omitted.
 
     Returns:
         Dict mapping (row, col) tuples to relative image paths.
@@ -43,98 +46,18 @@ def extract_images_from_xlsx_drawing(xlsx_path: str, ws, output_dir: Path, sheet
     """
     cell_to_image = {}
 
+    index = drawing_index if drawing_index is not None else WorkbookDrawingIndex(xlsx_path)
     try:
-        z = _zipfile.ZipFile(xlsx_path, 'r')
-    except Exception as e:
-        warn(f"Failed to open xlsx file as ZIP: {e}")
-        return cell_to_image
-
-    try:
-        # 1. Find sheet ID from workbook.xml
-        sheet_id = None
-        try:
-            wb_xml = z.read('xl/workbook.xml').decode('utf-8')
-            wb_root = _ET.fromstring(wb_xml)
-            ns_wb = {'main': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main',
-                     'r': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'}
-            sheets = wb_root.findall('.//main:sheet', ns_wb)
-            for sheet in sheets:
-                if sheet.get('name') == ws.title:
-                    r_id = sheet.get('{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id')
-                    if r_id:
-                        wb_rels_xml = z.read('xl/_rels/workbook.xml.rels').decode('utf-8')
-                        wb_rels_root = _ET.fromstring(wb_rels_xml)
-                        ns_rel = {'r': 'http://schemas.openxmlformats.org/package/2006/relationships'}
-                        for rel in wb_rels_root.findall('.//r:Relationship', ns_rel):
-                            if rel.get('Id') == r_id:
-                                target = rel.get('Target')
-                                match = re.search(r'sheet(\d+)\.xml', target)
-                                if match:
-                                    sheet_id = match.group(1)
-                                break
-                    break
-        except Exception as e:
-            warn(f"Failed to find sheet ID for '{ws.title}': {e}")
+        drawing_path = index.drawing_path(ws.title)
+        if not drawing_path:
             return cell_to_image
 
-        if not sheet_id:
-            return cell_to_image
-
-        # 2. Find drawing file from sheet relationship file
-        sheet_rel_path = f"xl/worksheets/_rels/sheet{sheet_id}.xml.rels"
-        if sheet_rel_path not in z.namelist():
-            return cell_to_image
-
-        drawing_path = None
-        drawing_rels_path = None
-        try:
-            rels_xml = z.read(sheet_rel_path)
-            rels_root = _ET.fromstring(rels_xml)
-            ns_rel = {'r': 'http://schemas.openxmlformats.org/package/2006/relationships'}
-            for rel in rels_root.findall('.//r:Relationship', ns_rel):
-                if rel.get('Type') == 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing':
-                    target = rel.get('Target')
-                    if target.startswith('../'):
-                        drawing_path = target.replace('../', 'xl/')
-                    else:
-                        drawing_path = f"xl/worksheets/{target}"
-                    # Calculate drawing rels path
-                    drawing_filename = drawing_path.split('/')[-1]
-                    drawing_dir = '/'.join(drawing_path.split('/')[:-1])
-                    drawing_rels_path = f"{drawing_dir}/_rels/{drawing_filename}.rels"
-                    break
-        except Exception as e:
-            warn(f"Failed to parse relationship file '{sheet_rel_path}': {e}")
-            return cell_to_image
-
-        if not drawing_path or drawing_path not in z.namelist():
-            return cell_to_image
-
-        # 3. Parse drawing relationship file to get image paths
-        image_rels = {}  # rId -> image path in zip
-        if drawing_rels_path and drawing_rels_path in z.namelist():
-            try:
-                drawing_rels_xml = z.read(drawing_rels_path)
-                drawing_rels_root = _ET.fromstring(drawing_rels_xml)
-                ns_rel = {'r': 'http://schemas.openxmlformats.org/package/2006/relationships'}
-                for rel in drawing_rels_root.findall('.//r:Relationship', ns_rel):
-                    if 'image' in rel.get('Type', '').lower():
-                        target = rel.get('Target')
-                        r_id = rel.get('Id')
-                        if target.startswith('../'):
-                            image_path = 'xl/' + target.replace('../', '')
-                        else:
-                            image_path = target
-                        image_rels[r_id] = image_path
-            except Exception as e:
-                warn(f"Failed to parse drawing rels '{drawing_rels_path}': {e}")
-
+        image_rels = index.image_rels(ws.title)  # rId -> image path in zip
         if not image_rels:
             return cell_to_image
 
-        # 4. Parse drawing XML to get image positions
-        drawing_xml = z.read(drawing_path)
-        drawing_root = _ET.fromstring(drawing_xml)
+        # Parse drawing XML to get image positions
+        drawing_root = _ET.fromstring(index.read(drawing_path))
 
         ns = {
             'xdr': 'http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing',
@@ -183,12 +106,12 @@ def extract_images_from_xlsx_drawing(xlsx_path: str, ws, output_dir: Path, sheet
             # Extract and save image
             img_idx += 1
             image_zip_path = image_rels[embed_id]
-            if image_zip_path not in z.namelist():
+            if not index.exists(image_zip_path):
                 warn(f"Image file not found in xlsx: {image_zip_path}")
                 continue
 
             try:
-                img_data = z.read(image_zip_path)
+                img_data = index.read(image_zip_path)
 
                 # Determine extension from path or magic bytes
                 file_extension = image_zip_path.split('.')[-1].lower()
@@ -218,12 +141,13 @@ def extract_images_from_xlsx_drawing(xlsx_path: str, ws, output_dir: Path, sheet
                 continue
 
     finally:
-        z.close()
+        if drawing_index is None:
+            index.close()
 
     return cell_to_image
 
 
-def extract_images_from_sheet(ws, output_dir: Path, sheet_name: str, md_basename: str, opts, xlsx_path: str = None) -> Dict[Tuple[int, int], str]:
+def extract_images_from_sheet(ws, output_dir: Path, sheet_name: str, md_basename: str, opts, xlsx_path: str = None, drawing_index: Optional[WorkbookDrawingIndex] = None) -> Dict[Tuple[int, int], str]:
     """Extract images from worksheet and save to external files.
 
     This function first tries to use the new DrawingML-based extraction (which works
@@ -239,6 +163,8 @@ def extract_images_from_sheet(ws, output_dir: Path, sheet_name: str, md_basename
         md_basename: Base name of the markdown file (used as subdirectory name)
         opts: Options dictionary (for future extensibility)
         xlsx_path: Path to the Excel file (required for DrawingML extraction)
+        drawing_index: Optional pre-built WorkbookDrawingIndex (see
+                       extract_images_from_xlsx_drawing)
 
     Returns:
         Dict mapping (row, col) tuples to relative image paths.
@@ -254,7 +180,8 @@ def extract_images_from_sheet(ws, output_dir: Path, sheet_name: str, md_basename
     # Try DrawingML-based extraction first (works with all Excel files)
     if xlsx_path:
         cell_to_image = extract_images_from_xlsx_drawing(
-            xlsx_path, ws, output_dir, sheet_name, md_basename, opts
+            xlsx_path, ws, output_dir, sheet_name, md_basename, opts,
+            drawing_index=drawing_index,
         )
         if cell_to_image:
             return cell_to_image
