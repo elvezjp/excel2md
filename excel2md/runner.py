@@ -140,8 +140,8 @@ def run(input_path: str, output_path: Optional[str], args):
                 # 結合セルマップ作成
                 merged_lookup = build_merged_lookup(ws, union_area)
 
-                # テーブル分割検出
-                tables = grid_to_tables(ws, union_area, hidden_policy=opts["hidden_policy"], opts=opts)
+                # テーブル分割検出（結合セルマップは構築済みのものを再利用）
+                tables = grid_to_tables(ws, union_area, hidden_policy=opts["hidden_policy"], opts=opts, merged_lookup=merged_lookup)
                 if not tables:
                     continue
 

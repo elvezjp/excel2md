@@ -65,7 +65,7 @@ v2.2.1 の実装確認により、Issue #26 の指摘が現在も有効である
 | 2 | ルートへコピー | `v2.2.1/` の内容（excel2md/, tests/, excel_to_md.py, spec.md, spec_appendix.md）をリポジトリルートへコピーし、pyproject.toml のパス参照をルートに変更 | 完了 |
 | 3 | ベンチマーク追加 | 生成 fixture + 区間タイマーの簡易ベンチマークスクリプトを追加し、改善前ベースラインを計測 | 完了 |
 | 4 | 実装① | CSV専用経路スキップ + shapes Mermaid 1回化 | 完了 |
-| 5 | 実装② | `build_merged_lookup()` の再利用 | 未着手 |
+| 5 | 実装② | `build_merged_lookup()` の再利用 | 完了 |
 | 6 | 実装③ | `WorkbookDrawingIndex` 導入 | 未着手 |
 | 7 | 効果計測 | 改善後ベンチマークを計測し本ドキュメントに記録 | 未着手 |
 | 8 | ドキュメント更新 | v2.3.0 として CHANGELOG / CHANGELOG_ja / spec.md / README / `__version__` / pyproject.toml を更新 | 未着手 |
@@ -110,3 +110,4 @@ v2.2.1 の実装確認により、Issue #26 の指摘が現在も有効である
 - 2026-07-02: v2.2.1 の内容をリポジトリルートへコピーし、pyproject.toml のパス参照（wheel packages / sdist include・exclude / pytest testpaths / coverage）をルートに変更。`uv run --extra test pytest` で327件全件通過を確認（ステップ2完了）
 - 2026-07-02: `scripts/benchmark_issue26.py` を追加し、改善前ベースラインを計測・記録（ステップ3完了）
 - 2026-07-02: 実装①完了（ステップ4完了）。`runner.run()` に `emit_normal_md` フラグを導入し、CSV Markdown 出力時（デフォルト）は通常 Markdown 用の組み立て（テーブル検出・抽出・形式判定・整形・脚注管理）をスキップ。shapes モードの Mermaid 抽出はシートごとに1回だけ実行し通常/CSV 両経路で共用。回帰テスト3件追加（計330件通過）。凍結スナップショット v2.2.1 と全 fixture の変換出力が一致（生成日時行を除く）することを確認。この時点の計測: 50k_cells 0.446s / 200k_cells 1.844s / merged_cells 0.448s / multi_sheet_mermaid 0.907s / mermaid_fixture 0.134s
+- 2026-07-02: 実装②完了（ステップ5完了）。`grid_to_tables()` に `merged_lookup` 引数を追加し、runner で構築済みの lookup を再利用（未指定時は従来どおり内部構築、既存呼び出し互換）。実装①で通常MD経路とCSV経路が排他になったため、残っていた重複は「runner構築 → grid_to_tables 内部で再構築」の2重構築であり、これを解消。テスト330件通過
