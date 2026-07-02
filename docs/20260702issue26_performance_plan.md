@@ -62,8 +62,8 @@ v2.2.1 の実装確認により、Issue #26 の指摘が現在も有効である
 | # | ステップ | 内容 | 状態 |
 |---|---------|------|------|
 | 1 | 計画書作成 | 本ドキュメントの作成 | 完了 |
-| 2 | ルートへコピー | `v2.2.1/` の内容（excel2md/, tests/, excel_to_md.py, spec.md, spec_appendix.md）をリポジトリルートへコピーし、pyproject.toml のパス参照をルートに変更 | 未着手 |
-| 3 | ベンチマーク追加 | 生成 fixture + 区間タイマーの簡易ベンチマークスクリプトを追加し、改善前ベースラインを計測 | 未着手 |
+| 2 | ルートへコピー | `v2.2.1/` の内容（excel2md/, tests/, excel_to_md.py, spec.md, spec_appendix.md）をリポジトリルートへコピーし、pyproject.toml のパス参照をルートに変更 | 完了 |
+| 3 | ベンチマーク追加 | 生成 fixture + 区間タイマーの簡易ベンチマークスクリプトを追加し、改善前ベースラインを計測 | 完了 |
 | 4 | 実装① | CSV専用経路スキップ + shapes Mermaid 1回化 | 未着手 |
 | 5 | 実装② | `build_merged_lookup()` の再利用 | 未着手 |
 | 6 | 実装③ | `WorkbookDrawingIndex` 導入 | 未着手 |
@@ -81,11 +81,24 @@ v2.2.1 の実装確認により、Issue #26 の指摘が現在も有効である
 
 ### 計測環境・ケース
 
-（ステップ3で記載）
+- スクリプト: `scripts/benchmark_issue26.py`（`uv run python scripts/benchmark_issue26.py`）
+- 計測値は3回実行の best / median（秒）。変換全体（`runner.run()`、出力書き込み含む）を計測。
+- ケース:
+  - `50k_cells`: 500行 × 100列（デフォルト設定 = CSV Markdown 出力）
+  - `200k_cells`: 2000行 × 100列（同上）
+  - `merged_cells`: 500行 × 100列 + 結合セル多数（同上）
+  - `multi_sheet_mermaid`: 10シート × 100行 × 100列、mermaid shapes モード有効
+  - `mermaid_fixture`: tests/fixtures/test_mermaid.xlsx × 30回、mermaid 有効
 
 ### 改善前ベースライン
 
-（ステップ3で記載）
+| ケース | best | median |
+|--------|------|--------|
+| 50k_cells | 1.045s | 1.049s |
+| 200k_cells | 4.865s | 4.891s |
+| merged_cells | 1.042s | 1.058s |
+| multi_sheet_mermaid | 2.009s | 2.016s |
+| mermaid_fixture | 0.169s | 0.169s |
 
 ### 改善後
 
@@ -94,3 +107,5 @@ v2.2.1 の実装確認により、Issue #26 の指摘が現在も有効である
 ## 進捗記録
 
 - 2026-07-02: 計画書作成（ステップ1完了）
+- 2026-07-02: v2.2.1 の内容をリポジトリルートへコピーし、pyproject.toml のパス参照（wheel packages / sdist include・exclude / pytest testpaths / coverage）をルートに変更。`uv run --extra test pytest` で327件全件通過を確認（ステップ2完了）
+- 2026-07-02: `scripts/benchmark_issue26.py` を追加し、改善前ベースラインを計測・記録（ステップ3完了）
