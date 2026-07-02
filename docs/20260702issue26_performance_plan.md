@@ -68,7 +68,7 @@ v2.2.1 の実装確認により、Issue #26 の指摘が現在も有効である
 | 5 | 実装② | `build_merged_lookup()` の再利用 | 完了 |
 | 6 | 実装③ | `WorkbookDrawingIndex` 導入 | 完了 |
 | 7 | 効果計測 | 改善後ベンチマークを計測し本ドキュメントに記録 | 完了 |
-| 8 | ドキュメント更新 | v2.3.0 として CHANGELOG / CHANGELOG_ja / spec.md / README / `__version__` / pyproject.toml を更新 | 未着手 |
+| 8 | ドキュメント更新 | v2.3.0 として CHANGELOG / CHANGELOG_ja / spec.md / README / `__version__` / pyproject.toml を更新 | 完了 |
 
 ## 受け入れ条件（Issue #26 より）
 
@@ -124,3 +124,4 @@ v2.2.1 の実装確認により、Issue #26 の指摘が現在も有効である
 - 2026-07-02: 実装①完了（ステップ4完了）。`runner.run()` に `emit_normal_md` フラグを導入し、CSV Markdown 出力時（デフォルト）は通常 Markdown 用の組み立て（テーブル検出・抽出・形式判定・整形・脚注管理）をスキップ。shapes モードの Mermaid 抽出はシートごとに1回だけ実行し通常/CSV 両経路で共用。回帰テスト3件追加（計330件通過）。凍結スナップショット v2.2.1 と全 fixture の変換出力が一致（生成日時行を除く）することを確認。この時点の計測: 50k_cells 0.446s / 200k_cells 1.844s / merged_cells 0.448s / multi_sheet_mermaid 0.907s / mermaid_fixture 0.134s
 - 2026-07-02: 実装②完了（ステップ5完了）。`grid_to_tables()` に `merged_lookup` 引数を追加し、runner で構築済みの lookup を再利用（未指定時は従来どおり内部構築、既存呼び出し互換）。実装①で通常MD経路とCSV経路が排他になったため、残っていた重複は「runner構築 → grid_to_tables 内部で再構築」の2重構築であり、これを解消。テスト330件通過
 - 2026-07-02: 実装③完了（ステップ6完了）。`excel2md/drawing_index.py` に `WorkbookDrawingIndex` を新設し、workbook.xml / workbook.xml.rels / sheet rels の解析をワークブック単位で1回に集約。image_extraction / mermaid_generator の重複実装（各約60行）を索引参照に置換し、runner が索引のライフサイクル（生成・close）を管理。図形の無いシートではセルグリッド構築を省くよう判定順も改善。索引のユニットテスト6件を追加（計336件通過）。凍結スナップショット v2.2.1 との出力一致を再確認。改善後ベンチマークを計測・記録（ステップ7完了）
+- 2026-07-02: ドキュメント更新完了（ステップ8完了）。`excel2md.__version__` / pyproject.toml を 2.3.0 に更新。CHANGELOG / CHANGELOG_ja に 2.3.0 エントリと末尾バージョン一覧表（2.2.0/2.2.1 の欠落分含む）を追加。spec.md を v2.3 に更新（モジュール一覧・依存関係・§4.1 全体処理フロー・ルート基準のコマンド表記）。README / README_ja のディレクトリ構成図をルート配置に更新。`uv build` で sdist/wheel がルートの excel2md/ を含み v2.2.1/・versions/ を除外することを確認。全336テスト通過

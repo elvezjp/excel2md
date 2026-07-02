@@ -206,6 +206,7 @@ excel2md/
 ├── tests/                  # Test suite
 ├── spec.md                 # Specification
 ├── spec_appendix.md        # Specification appendix
+├── scripts/                # Development scripts (benchmarks, etc.)
 ├── docs/                   # Documentation
 ├── pyproject.toml          # Project metadata
 ├── LICENSE                 # MIT License
