@@ -113,20 +113,7 @@ This project depends on:
 
 - `openpyxl >= 3.1.5`: Excel file processing
 
-We monitor security advisories for these dependencies and update as needed.
-
-### Dependabot Alert Policy
-
-This repository keeps snapshots of older versions under `versions/`, so Dependabot alerts may also fire against those archived lockfiles. We operate Dependabot alerts according to the following policy.
-
-**Malware tab**: Always remediate, regardless of where the alert originates.
-
-**Vulnerable**: Follow the table below.
-
-| Target | Action |
-|--------|--------|
-| Latest version | **Remediate** (dependency update / PR). If only a dependency package version needs updating, the tool version is not bumped |
-| Older versions (`versions/`) | **Dismiss**. Confirm no impact and close |
+We monitor security advisories for these dependencies and update as needed. Dependabot alerts are remediated via dependency update / PR; if only a dependency package version needs updating, the tool version is not bumped.
 
 ## Security Best Practices
 

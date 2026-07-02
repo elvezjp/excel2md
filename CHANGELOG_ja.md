@@ -7,6 +7,11 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/spec/v2.0.0.html) に準拠しています。
 
+## [2.3.0] - 2026-07-02
+
+### 変更
+- リポジトリ構成: バージョン番号入りのソースディレクトリ（`v2.2.1/`）と `versions/` スナップショットアーカイブを廃止し、リポジトリ直下のフラットな構成に変更。過去のリリースはgit履歴とこのCHANGELOGに引き続き保持されている。`docs/examples/` も同様にフラット化。`versions/` 廃止により重複しなくなったため、SECURITY.md の「旧バージョンのDependabotアラートはDismissする」という運用方針は削除（[#11](https://github.com/elvezjp/excel2md/issues/11)）
+
 ## [2.2.1] - 2026-05-14
 
 ### 追加
