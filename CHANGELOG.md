@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 - Added the implementation plan and measurement record at `docs/20260702issue26_performance_plan.md`
 - Updated `spec.md` to v2.3 (module list, dependency graph, overall processing flow, root-relative commands)
+- Regenerated the example outputs under `docs/examples/` with v2.3.0; contents match the previous outputs except for generation timestamps and the version line, confirming the performance changes do not affect conversion output. Documented the `mkdir -p` prerequisite for the `-o` regeneration commands in `docs/examples/README.md`
 
 ## [2.2.1] - 2026-05-14
 
