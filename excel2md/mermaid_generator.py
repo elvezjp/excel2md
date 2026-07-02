@@ -5,12 +5,12 @@
 """
 
 from .output import warn
+from .drawing_index import WorkbookDrawingIndex
 from .image_extraction import _DRAWINGML_NS
 from .table_formatting import is_code_block
 
 import re as _re
 import unicodedata as _unicodedata
-import zipfile as _zipfile
 import xml.etree.ElementTree as _ET
 from typing import Dict, Tuple, Optional, List, Set, Any
 
@@ -50,91 +50,42 @@ def _v14_resolve_columns_by_name(header_row, mapping):
         return None
     return index
 
-def _v14_extract_shapes_to_mermaid(xlsx_path: str, ws, opts) -> Optional[str]:
+def _v14_extract_shapes_to_mermaid(xlsx_path: str, ws, opts, drawing_index: Optional[WorkbookDrawingIndex] = None) -> Optional[str]:
     """Extract shapes from DrawingML and build Mermaid flowchart.
 
     Args:
         xlsx_path: Path to Excel file
         ws: Worksheet object
         opts: Options dictionary
+        drawing_index: Optional pre-built WorkbookDrawingIndex. Pass it in to reuse
+                       the workbook-level DrawingML parse across sheets and across
+                       image/Mermaid extraction (Issue #26); built (and closed)
+                       internally when omitted.
 
     Returns:
         Mermaid code block string or None if no shapes detected
     """
     try:
+        # Find and read the DrawingML file corresponding to this sheet.
+        # 図形の無いシートでは後続のセルグリッド構築を省くため、先に判定する。
+        index = drawing_index if drawing_index is not None else WorkbookDrawingIndex(xlsx_path)
+        try:
+            drawing_path = index.drawing_path(ws.title)
+            if not drawing_path:
+                return None  # No drawing file for this sheet
+            xml_data = index.read(drawing_path)
+        finally:
+            if drawing_index is None:
+                index.close()
+
+        root = _ET.fromstring(xml_data)
+
         # Build cell grid {(row, col): value} (0-based)
         grid: Dict[Tuple[int, int], str] = {}
         for r_idx, row in enumerate(ws.iter_rows(values_only=True), start=1):
             for c_idx, val in enumerate(row, start=1):
                 if val is not None and str(val).strip():
                     grid[(r_idx-1, c_idx-1)] = str(val).strip()  # 0-based
-
-        # Open Excel as ZIP and find DrawingML files
-        z = _zipfile.ZipFile(xlsx_path, 'r')
-
-        # Find the drawing file corresponding to this sheet
-        # 1. Get sheet name from worksheet object
-        sheet_name = ws.title
-
-        # 2. Find sheet ID from workbook.xml
-        sheet_id = None
-        try:
-            wb_xml = z.read('xl/workbook.xml').decode('utf-8')
-            wb_root = _ET.fromstring(wb_xml)
-            ns_wb = {'main': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main',
-                     'r': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'}
-            sheets = wb_root.findall('.//main:sheet', ns_wb)
-            for sheet in sheets:
-                if sheet.get('name') == sheet_name:
-                    # Get rId from relationship
-                    r_id = sheet.get('{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id')
-                    if r_id:
-                        # Find sheet index from workbook.xml.rels
-                        wb_rels_xml = z.read('xl/_rels/workbook.xml.rels').decode('utf-8')
-                        wb_rels_root = _ET.fromstring(wb_rels_xml)
-                        ns_rel = {'r': 'http://schemas.openxmlformats.org/package/2006/relationships'}
-                        for rel in wb_rels_root.findall('.//r:Relationship', ns_rel):
-                            if rel.get('Id') == r_id:
-                                target = rel.get('Target')
-                                # Extract sheet number from target (e.g., "worksheets/sheet1.xml" -> "1")
-                                if 'sheet' in target:
-                                    # Find the number after "sheet" and before ".xml"
-                                    match = _re.search(r'sheet(\d+)\.xml', target)
-                                    if match:
-                                        sheet_id = match.group(1)
-                                break
-                    break
-        except Exception as e:
-            warn(f"Failed to find sheet ID for '{sheet_name}': {e}")
-
-        # 3. Find drawing file from sheet relationship file
-        drawing_path = None
-        if sheet_id:
-            sheet_rel_path = f"xl/worksheets/_rels/sheet{sheet_id}.xml.rels"
-            if sheet_rel_path in z.namelist():
-                try:
-                    rels_xml = z.read(sheet_rel_path)
-                    rels_root = _ET.fromstring(rels_xml)
-                    ns_rel = {'r': 'http://schemas.openxmlformats.org/package/2006/relationships'}
-                    for rel in rels_root.findall('.//r:Relationship', ns_rel):
-                        if rel.get('Type') == 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing':
-                            target = rel.get('Target')
-                            # Resolve relative path (xl/worksheets/基準)
-                            if target.startswith('../'):
-                                drawing_path = target.replace('../', 'xl/')
-                            else:
-                                drawing_path = f"xl/worksheets/{target}"
-                            break
-                except Exception as e:
-                    warn(f"Failed to parse relationship file '{sheet_rel_path}': {e}")
-
-        if not drawing_path or drawing_path not in z.namelist():
-            z.close()
-            return None  # No drawing file for this sheet
-
-        # 4. Parse the corresponding DrawingML file
-        xml_data = z.read(drawing_path)
-        root = _ET.fromstring(xml_data)
 
         nodes: List[Dict[str, Any]] = []
         edges: List[Dict[str, Any]] = []
@@ -254,8 +205,6 @@ def _v14_extract_shapes_to_mermaid(xlsx_path: str, ws, opts) -> Optional[str]:
                 ed_id = f"s{ed.get('id')}" if ed is not None and ed.get("id") else None
                 if st_id and ed_id:
                     edges.append({"from": st_id, "to": ed_id})
-
-        z.close()
 
         if not nodes:
             return None

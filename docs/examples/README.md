@@ -33,6 +33,8 @@ docs/examples/
 
 ## 生成方法
 
+なお、`-o` で出力先を指定するコマンドは出力ディレクトリを自動作成しない（存在しないと `FileNotFoundError` になる）ため、出力ディレクトリを削除した状態から再生成する場合は先に `mkdir -p docs/examples/output-markdown docs/examples/output-macro` で作成しておく。`--csv-output-dir` 指定時は自動作成される。
+
 ```bash
 # デフォルト設定 (CSV markdown + 画像抽出)
 excel2md docs/examples/test_standard.xlsx \

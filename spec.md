@@ -1,4 +1,4 @@
-# excel2md v2.1 仕様書
+# excel2md v2.3 仕様書
 
 ## 1. 目的・概要
 
@@ -41,6 +41,7 @@ excel2md/
 ├── table_formatting.py   # テーブル形式判定・Markdown生成
 ├── mermaid_generator.py  # Mermaidフローチャート生成
 ├── image_extraction.py   # 画像抽出・ファイル出力
+├── drawing_index.py      # DrawingML索引（ワークブック単位のZIP/XML解析集約）
 └── csv_export.py         # CSV Markdown出力
 ```
 
@@ -56,8 +57,11 @@ cli.py
         │     └─→ cell_utils.py
         ├─→ table_formatting.py
         ├─→ mermaid_generator.py
-        │     └─→ table_formatting.py
+        │     ├─→ table_formatting.py
+        │     └─→ drawing_index.py
         ├─→ image_extraction.py
+        │     └─→ drawing_index.py
+        ├─→ drawing_index.py
         └─→ csv_export.py
               └─→ output.py
 ```
@@ -75,6 +79,7 @@ cli.py
 | table_formatting.py | 出力形式（コード/Mermaid/テキスト/ネスト/テーブル）の判定と生成 |
 | mermaid_generator.py | Mermaidコードの生成（図形検出、ヒューリスティック検出対応） |
 | image_extraction.py | DrawingML解析による画像抽出、ファイル出力 |
+| drawing_index.py | xlsx ZIPと関係ファイル（workbook.xml / rels）のワークブック単位での一括解析、シート名→drawingパス・画像リレーションの索引提供 |
 | csv_export.py | CSV形式Markdown出力、検証用メタデータ生成 |
 | output.py | 警告・情報メッセージの標準エラー出力 |
 
@@ -225,55 +230,74 @@ csv_markdown_enabled=false 時の出力形式。
          ↓
     ワークブック読み込み
          ↓
+    DrawingML索引構築（画像抽出/shapes Mermaidを使う場合のみ、
+    ワークブックにつき1回。以降のシートループで共用）
+         ↓
     ┌─────────────────┐
     │ シート単位ループ │
     └────────┬────────┘
              ↓
         保護状態チェック
              ↓
-    ┌──────────────────────┐
-    │ shapes検出モード時    │→ DrawingML図形からMermaid生成
-    └──────────────────────┘
+    ┌────────────────────────────┐
+    │ 通常Markdown出力時のみ      │→ shapes検出モード時:
+    │ （CSV Markdown無効時）      │   DrawingML図形からMermaid生成
+    └────────────────────────────┘
              ↓
         印刷領域取得
              ↓
         矩形和集合計算
              ↓
-    ┌──────────────────────┐
-    │ CSV Markdown有効時    │→ 画像抽出
-    └──────────────────────┘
+    ┌────────────────────────────────────────────┐
+    │ 通常Markdown出力時のみ（CSV Markdown無効時） │
+    │                                            │
+    │  ┌───────────────────────┐                 │
+    │  │ 矩形・テーブル単位ループ │                │
+    │  └─────────┬─────────────┘                 │
+    │            ↓                               │
+    │       結合セルマップ作成                     │
+    │            ↓                               │
+    │       テーブル分割検出                       │
+    │       （結合セルマップを再利用）              │
+    │            ↓                               │
+    │  ┌─────────────────────┐                   │
+    │  │ 各テーブル単位ループ  │                   │
+    │  └────────┬────────────┘                   │
+    │           ↓                                │
+    │      テーブルタイトル検出                     │
+    │           ↓                                │
+    │      テーブル抽出                            │
+    │      ・セル値取得・正規化                     │
+    │      ・ハイパーリンク処理                     │
+    │      ・Markdownエスケープ                    │
+    │      ・脚注生成                              │
+    │           ↓                                │
+    │      テーブル形式判定・出力                   │
+    │      ① コード形式判定                        │
+    │      ② Mermaidフロー判定                     │
+    │      ③ 単一行テキスト判定                     │
+    │      ④ ネスト形式判定                        │
+    │      ⑤ 通常テーブル形式                      │
+    └────────────────────────────────────────────┘
              ↓
-    ┌───────────────────────┐
-    │ 矩形・テーブル単位ループ │
-    └─────────┬─────────────┘
-              ↓
-         結合セルマップ作成
-              ↓
-         テーブル分割検出
-              ↓
-    ┌─────────────────────┐
-    │ 各テーブル単位ループ  │
-    └────────┬────────────┘
+    ┌────────────────────────────────────────────┐
+    │ CSV Markdown有効時（デフォルト）             │
+    │  画像抽出（DrawingML索引を参照）             │
+    │       ↓                                    │
+    │  CSVデータ収集（結合セルマップ作成を含む）     │
+    │       ↓                                    │
+    │  shapes検出モード時: Mermaid抽出             │
+    │  （通常Markdown用の抽出結果があれば再利用）    │
+    └────────────────────────────────────────────┘
              ↓
-        テーブルタイトル検出
-             ↓
-        テーブル抽出
-        ・セル値取得・正規化
-        ・ハイパーリンク処理
-        ・Markdownエスケープ
-        ・脚注生成
-             ↓
-        テーブル形式判定・出力
-        ① コード形式判定
-        ② Mermaidフロー判定
-        ③ 単一行テキスト判定
-        ④ ネスト形式判定
-        ⑤ 通常テーブル形式
-             ↓
-    脚注処理（footnote_scope設定に基づく）
+    脚注処理（footnote_scope設定に基づく・通常Markdown出力時のみ）
          ↓
 [出力] CSV Markdown / 通常Markdown
 ```
+
+CSV Markdown出力が有効な場合（デフォルト）、通常Markdownは最終出力に含まれないため、
+通常Markdown用のテーブル検出・抽出・整形・脚注処理はスキップされる（Issue #26）。
+出力内容はスキップ導入前と同一である。
 
 ### 4.2 テーブル検出フロー
 
@@ -635,9 +659,9 @@ excel2md/
 #### 11.1.3 テスト実行方法
 
 ```bash
-uv run pytest v2.2.0/tests -v                    # 全テスト実行
-uv run pytest v2.2.0/tests/test_cell_utils.py -v  # 特定ファイルのみ
-uv run pytest v2.2.0/tests --cov=v2.2.0 --cov-report=html  # カバレッジ付き
+uv run pytest tests -v                    # 全テスト実行
+uv run pytest tests/test_cell_utils.py -v  # 特定ファイルのみ
+uv run pytest tests --cov=excel2md --cov-report=html  # カバレッジ付き
 ```
 
 ### 11.2 テスト方針
@@ -681,7 +705,7 @@ uv run pytest v2.2.0/tests --cov=v2.2.0 --cov-report=html  # カバレッジ付�
 
 #### 必要なテスト用Excelファイル
 
-以下のExcelファイルを `v2.2.0/tests/fixtures/` ディレクトリに準備する。
+以下のExcelファイルを `tests/fixtures/` ディレクトリに準備する。
 
 **test_standard.xlsx** - 標準テスト用（複数シート構成）
 - Sheet1「基本テーブル」: 通常のテーブル（ヘッダー行あり、数値・文字列混在）
@@ -703,8 +727,8 @@ uv run pytest v2.2.0/tests --cov=v2.2.0 --cov-report=html  # カバレッジ付�
 #### 11.3.1 CLI基本動作確認
 
 ```bash
-uv run python v2.2.0/excel_to_md.py --help
-uv run python v2.2.0/excel_to_md.py nonexistent.xlsx
+uv run python excel_to_md.py --help
+uv run python excel_to_md.py nonexistent.xlsx
 ```
 
 - [ ] `--help` で全オプションの説明が表示される
@@ -714,7 +738,7 @@ uv run python v2.2.0/excel_to_md.py nonexistent.xlsx
 
 **基本変換**
 ```bash
-uv run python v2.2.0/excel_to_md.py test_standard.xlsx
+uv run python excel_to_md.py test_standard.xlsx
 ```
 - [ ] エラーなく `test_standard_csv.md` が生成される
 - [ ] 5シート分のCSVコードブロックが出力される
@@ -722,9 +746,9 @@ uv run python v2.2.0/excel_to_md.py test_standard.xlsx
 
 **出力形式オプション**
 ```bash
-uv run python v2.2.0/excel_to_md.py test_standard.xlsx --no-csv-markdown-enabled -o out.md
-uv run python v2.2.0/excel_to_md.py test_standard.xlsx --split-by-sheet
-uv run python v2.2.0/excel_to_md.py test_standard.xlsx --csv-output-dir ./output
+uv run python excel_to_md.py test_standard.xlsx --no-csv-markdown-enabled -o out.md
+uv run python excel_to_md.py test_standard.xlsx --split-by-sheet
+uv run python excel_to_md.py test_standard.xlsx --csv-output-dir ./output
 ```
 - [ ] `--no-csv-markdown-enabled -o out.md` でGFMテーブル形式のMarkdownが出力される
 - [ ] `--split-by-sheet` でシートごとに個別ファイル（5ファイル）が生成される
@@ -744,9 +768,9 @@ uv run python v2.2.0/excel_to_md.py test_standard.xlsx --csv-output-dir ./output
 
 **Sheet4「ハイパーリンク」の確認**
 ```bash
-uv run python v2.2.0/excel_to_md.py test_standard.xlsx --hyperlink-mode inline
-uv run python v2.2.0/excel_to_md.py test_standard.xlsx --hyperlink-mode inline_plain
-uv run python v2.2.0/excel_to_md.py test_standard.xlsx --hyperlink-mode footnote
+uv run python excel_to_md.py test_standard.xlsx --hyperlink-mode inline
+uv run python excel_to_md.py test_standard.xlsx --hyperlink-mode inline_plain
+uv run python excel_to_md.py test_standard.xlsx --hyperlink-mode footnote
 ```
 - [ ] `inline` モードで `[テキスト](URL)` 形式で出力される
 - [ ] `inline_plain` モードで `テキスト (URL)` 形式で出力される
@@ -761,7 +785,7 @@ uv run python v2.2.0/excel_to_md.py test_standard.xlsx --hyperlink-mode footnote
 - [ ] CSVに `![alt](test_standard_images/...)` 形式でリンクが出力される
 
 ```bash
-uv run python v2.2.0/excel_to_md.py test_standard.xlsx --no-image-extraction
+uv run python excel_to_md.py test_standard.xlsx --no-image-extraction
 ```
 - [ ] `--no-image-extraction` で画像が抽出されない
 
@@ -769,8 +793,8 @@ uv run python v2.2.0/excel_to_md.py test_standard.xlsx --no-image-extraction
 
 **Sheet1「図形フロー」の確認**
 ```bash
-uv run python v2.2.0/excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermaid-detect-mode shapes
-uv run python v2.2.0/excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermaid-detect-mode shapes --mermaid-direction LR
+uv run python excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermaid-detect-mode shapes
+uv run python excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermaid-detect-mode shapes --mermaid-direction LR
 ```
 - [ ] フローチャート図形からMermaidコードが生成される
 - [ ] 矩形が `[テキスト]`、ひし形が `{テキスト}`、楕円が `([テキスト])` で出力される
@@ -779,8 +803,8 @@ uv run python v2.2.0/excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermai
 
 **Sheet2「テーブルフロー」の確認**
 ```bash
-uv run python v2.2.0/excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermaid-detect-mode column_headers
-uv run python v2.2.0/excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermaid-detect-mode column_headers --no-mermaid-keep-source-table
+uv run python excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermaid-detect-mode column_headers
+uv run python excel_to_md.py test_mermaid.xlsx --mermaid-enabled --mermaid-detect-mode column_headers --no-mermaid-keep-source-table
 ```
 - [ ] From/To/Label列からMermaidコードが生成される
 - [ ] `--no-mermaid-keep-source-table` で元テーブルが出力されない

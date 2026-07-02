@@ -9,8 +9,31 @@
 
 ## [2.3.0] - 2026-07-02
 
+### パフォーマンス
+- **CSV Markdown出力有効時（デフォルト）に通常Markdown処理をスキップ** ([#26](https://github.com/elvezjp/excel2md/issues/26), [#10](https://github.com/elvezjp/excel2md/issues/10))
+  - 従来の `runner.run()` は CSV Markdown 出力時にもシートごとにテーブル検出・抽出・形式判定・整形・脚注管理を実行し、結果を破棄していた
+  - 変換出力は不変。ベンチマーク: 50,000セル 1.05秒→0.45秒、200,000セル 4.87秒→1.88秒（約6割短縮）
+- **shapesモードのMermaid抽出をシートごとに1回化** ([#26](https://github.com/elvezjp/excel2md/issues/26))
+  - 従来は同一引数で2回実行され（破棄される通常Markdown用とCSV Markdown用）、その都度 xlsx ZIP のオープンと全セルグリッド構築が発生していた
+- **`grid_to_tables()` に構築済み `merged_lookup` を渡せるように変更** ([#26](https://github.com/elvezjp/excel2md/issues/26))
+  - 同一印刷領域に対する結合セルマップの再構築を解消。未指定時は従来どおり内部構築するため既存の呼び出しに影響なし
+
+### 追加
+- **`excel2md.drawing_index.WorkbookDrawingIndex`** — xlsx ZIP（workbook.xml / workbook.xml.rels / sheet rels）をワークブックにつき1回だけ解析し、シート名→drawingパス・画像リレーションを解決する索引 ([#26](https://github.com/elvezjp/excel2md/issues/26))
+  - `image_extraction.py` と `mermaid_generator.py` に重複実装されシートごとに ZIP を開き直していた約60行×2箇所の解決ロジックを置き換え
+  - 図形の無いシートでは Mermaid 用セルグリッド構築を省略するように改善
+- 生成 fixture（5万/20万セル、結合セル、複数シートMermaid）で変換時間を計測するベンチマークスクリプト `scripts/benchmark_issue26.py`
+
 ### 変更
 - リポジトリ構成: バージョン番号入りのソースディレクトリ（`v2.2.1/`）と `versions/` スナップショットアーカイブを廃止し、リポジトリ直下のフラットな構成に変更。過去のリリースはgit履歴とこのCHANGELOGに引き続き保持されている。`docs/examples/` も同様にフラット化。`versions/` 廃止により重複しなくなったため、SECURITY.md の「旧バージョンのDependabotアラートはDismissする」という運用方針は削除（[#11](https://github.com/elvezjp/excel2md/issues/11)）
+
+### テスト
+- `TestIssue26CsvOnlySkipsNormalMarkdown`（CSV専用経路でテーブル検出・抽出が実行されないこと、shapes Mermaid がシートごとに1回だけ実行されること）と `tests/test_drawing_index.py`（6件）を追加 — 計336件
+
+### ドキュメント
+- 実施計画書・計測記録を `docs/20260702issue26_performance_plan.md` に追加
+- `spec.md` を v2.3 に更新（モジュール一覧・依存関係・全体処理フロー・ルート基準のコマンド表記）
+- `docs/examples/` 配下の実行例を v2.3.0 で再生成。生成日時とバージョン表記を除き従来の出力と一致し、性能改善が変換出力へ影響しないことを確認。`-o` 指定の再生成コマンドに必要な `mkdir -p` の前提を `docs/examples/README.md` に追記
 
 ## [2.2.1] - 2026-05-14
 
@@ -305,6 +328,9 @@
 
 | バージョン | 主な機能 |
 |------------|----------|
+| 2.3.0      | 性能改善: CSV出力時の通常Markdown処理スキップ、ワークブック単位DrawingML索引 (#26, #10)、ソースをリポジトリルートへ移動 |
+| 2.2.1      | ライブラリ例外 (`ExcelConversionError` / `WorkbookOpenError`) (#36)、CSV印刷領域の修正 (#14)、`.xlsm` テスト整備 (#43)、旧バージョンを `versions/` へ移動 |
+| 2.2.0      | ライブラリAPI (`ConversionConfig` / `ExcelConverter` / `convert_to_markdown`) (#16)、PyPI 初回公開 (#19) |
 | 2.1.1      | バグ修正: v1.x re-export (#15)、打ち切り戻り値 (#24)、脚注番号 (#25) |
 | 2.1.0      | 最低 Python バージョンを 3.10 に引き上げ、セキュリティ更新（pytest・Pygments） |
 | 2.0.1      | mermaid_generator.py のバグ修正（import 漏れ・重複解消） |

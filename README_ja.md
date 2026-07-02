@@ -204,6 +204,7 @@ excel2md/
 ├── tests/                  # テストスイート
 ├── spec.md                 # 仕様書
 ├── spec_appendix.md        # 仕様書付録
+├── scripts/                # 開発用スクリプト（ベンチマーク等）
 ├── docs/                   # ドキュメント
 ├── pyproject.toml          # プロジェクトメタデータ
 ├── LICENSE                 # MITライセンス

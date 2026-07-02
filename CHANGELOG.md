@@ -9,8 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.3.0] - 2026-07-02
 
+### Performance
+- **Skipped the normal-Markdown pipeline when CSV markdown output is enabled (the default)** ([#26](https://github.com/elvezjp/excel2md/issues/26), [#10](https://github.com/elvezjp/excel2md/issues/10))
+  - `runner.run()` used to run table detection, extraction, format dispatch, Markdown formatting, and footnote management for every sheet and then discard the result whenever CSV markdown output was enabled
+  - Conversion output is unchanged; benchmark: 50,000 cells 1.05s → 0.45s, 200,000 cells 4.87s → 1.88s (about 60% faster)
+- **Shapes-mode Mermaid extraction now runs once per sheet** ([#26](https://github.com/elvezjp/excel2md/issues/26))
+  - Previously executed twice with identical arguments (once for the discarded normal Markdown, once for CSV markdown), each opening the xlsx ZIP and building a full-sheet cell grid
+- **`grid_to_tables()` accepts a pre-built `merged_lookup`** ([#26](https://github.com/elvezjp/excel2md/issues/26))
+  - Eliminates rebuilding the same merged-cell lookup for the same print area; built internally when omitted, so existing callers are unaffected
+
+### Added
+- **`excel2md.drawing_index.WorkbookDrawingIndex`** — parses the xlsx ZIP (workbook.xml / workbook.xml.rels / sheet rels) once per workbook and resolves sheet name → drawing path / image relationships ([#26](https://github.com/elvezjp/excel2md/issues/26))
+  - Replaces the nearly identical ~60-line resolution logic that was duplicated in `image_extraction.py` and `mermaid_generator.py`, each of which reopened the ZIP per sheet
+  - Sheets without drawings now skip the Mermaid cell-grid construction entirely
+- Benchmark script `scripts/benchmark_issue26.py` for measuring conversion time on generated fixtures (50k/200k cells, merged cells, multi-sheet Mermaid)
+
 ### Changed
 - Repository layout: replaced the version-numbered source directory (`v2.2.1/`) and the `versions/` snapshot archive with a flat layout at repo root; past releases are still fully preserved in git history and documented in this changelog. `docs/examples/` was flattened the same way. Removed the now-obsolete Dependabot "older versions" dismissal policy from SECURITY.md since duplicate alerts no longer occur ([#11](https://github.com/elvezjp/excel2md/issues/11))
+
+### Tests
+- Added `TestIssue26CsvOnlySkipsNormalMarkdown` (CSV-only path must not run table detection/extraction; shapes Mermaid runs exactly once per sheet) and `tests/test_drawing_index.py` (6 cases) — 336 tests total
+
+### Documentation
+- Added the implementation plan and measurement record at `docs/20260702issue26_performance_plan.md`
+- Updated `spec.md` to v2.3 (module list, dependency graph, overall processing flow, root-relative commands)
+- Regenerated the example outputs under `docs/examples/` with v2.3.0; contents match the previous outputs except for generation timestamps and the version line, confirming the performance changes do not affect conversion output. Documented the `mkdir -p` prerequisite for the `-o` regeneration commands in `docs/examples/README.md`
 
 ## [2.2.1] - 2026-05-14
 
@@ -305,6 +328,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Key Features |
 |---------|-------------|
+| 2.3.0   | Performance: skip normal-Markdown pipeline for CSV output, workbook-level DrawingML index (#26, #10); source moved to repository root |
+| 2.2.1   | Library exceptions (`ExcelConversionError` / `WorkbookOpenError`) (#36), CSV print-area fix (#14), `.xlsm` test coverage (#43), past versions moved under `versions/` |
+| 2.2.0   | Library API (`ConversionConfig` / `ExcelConverter` / `convert_to_markdown`) (#16), first PyPI release (#19) |
 | 2.1.1   | Bug fixes: v1.x re-exports (#15), truncation arity (#24), footnote numbering (#25) |
 | 2.1.0   | Raised minimum Python to 3.10, security updates (pytest, Pygments) |
 | 2.0.1   | Bug fix in mermaid_generator.py (missing import, duplicate resolution) |

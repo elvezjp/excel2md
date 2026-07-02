@@ -206,8 +206,14 @@ def union_rects(rects: List[Tuple[int,int,int,int]]) -> List[Tuple[int,int,int,i
             prev_spans = [(s,e) for s,e in spans]
     return out_rects
 
-def grid_to_tables(ws, area, hidden_policy="ignore", opts=None):
-    """Return list of logical tables; each table: dict with 'rects' (list of sheet-coord rects) and 'bbox'"""
+def grid_to_tables(ws, area, hidden_policy="ignore", opts=None, merged_lookup=None):
+    """Return list of logical tables; each table: dict with 'rects' (list of sheet-coord rects) and 'bbox'
+
+    Args:
+        merged_lookup: Optional pre-built lookup from build_merged_lookup(ws, area).
+                       Pass it in to avoid rebuilding the same lookup (Issue #26);
+                       built internally when omitted.
+    """
     if opts is None:
         opts = {}
     grid, r0, c0, r1, c1 = build_nonempty_grid(ws, area, hidden_policy=hidden_policy, opts=opts)
@@ -222,7 +228,8 @@ def grid_to_tables(ws, area, hidden_policy="ignore", opts=None):
     # 1. Cell value (text) - must be empty or whitespace only
     # 2. Cell fill - white fill is treated as no fill (same as blank)
     #    Any other color means the cell is not empty
-    merged_lookup = build_merged_lookup(ws, area)
+    if merged_lookup is None:
+        merged_lookup = build_merged_lookup(ws, area)
 
     empty_rows = set()
     for r in range(R):
