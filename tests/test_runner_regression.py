@@ -225,3 +225,84 @@ class TestIssue14CsvPrintAreaRespect:
             # Out-of-area data cells must not leak into the CSV output either.
             assert "leak-c5" not in text
             assert "leak-d6" not in text
+
+
+class TestIssue26CsvOnlySkipsNormalMarkdown:
+    """Issue #26: the default CSV-only path must not run the normal-Markdown
+    pipeline (table detection/extraction/formatting), and shapes-mode Mermaid
+    extraction must run at most once per sheet."""
+
+    def test_csv_default_skips_table_detection_and_extraction(self, monkeypatch):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            xlsx = Path(tmpdir) / "book.xlsx"
+            _make_two_table_workbook(xlsx, with_links=False)
+
+            def fail_grid_to_tables(*a, **kw):
+                raise AssertionError("grid_to_tables must not run in CSV-only mode")
+
+            def fail_extract_table(*a, **kw):
+                raise AssertionError("extract_table must not run in CSV-only mode")
+
+            monkeypatch.setattr(runner_module, "grid_to_tables", fail_grid_to_tables)
+            monkeypatch.setattr(runner_module, "extract_table", fail_extract_table)
+
+            args = _parse_args([str(xlsx), "--csv-output-dir", tmpdir])
+            result = run(str(xlsx), None, args)
+            assert result is not None
+
+            out_files = list(Path(tmpdir).glob("*_csv.md"))
+            assert out_files, "expected CSV markdown output file"
+            text = out_files[0].read_text(encoding="utf-8")
+            assert "Data1" in text
+            assert "Data2" in text
+
+    def test_normal_markdown_mode_still_runs_pipeline(self, monkeypatch):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            xlsx = Path(tmpdir) / "book.xlsx"
+            _make_two_table_workbook(xlsx, with_links=False)
+
+            calls = {"grid_to_tables": 0}
+            real_grid_to_tables = runner_module.grid_to_tables
+
+            def counting_grid_to_tables(*a, **kw):
+                calls["grid_to_tables"] += 1
+                return real_grid_to_tables(*a, **kw)
+
+            monkeypatch.setattr(runner_module, "grid_to_tables", counting_grid_to_tables)
+
+            out_md = Path(tmpdir) / "out.md"
+            args = _parse_args([str(xlsx), "--no-csv-markdown-enabled"])
+            result = run(str(xlsx), str(out_md), args)
+            assert result == str(out_md)
+            assert calls["grid_to_tables"] > 0
+            assert "Data1" in out_md.read_text(encoding="utf-8")
+
+    def test_shapes_mermaid_extracted_once_per_sheet(self, monkeypatch):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            xlsx = Path(tmpdir) / "book.xlsx"
+            _make_two_table_workbook(xlsx, with_links=False)
+
+            calls = {"count": 0}
+
+            def fake_shapes_mermaid(input_path, ws, opts):
+                calls["count"] += 1
+                return "```mermaid\nflowchart TD\n  A --> B\n```"
+
+            monkeypatch.setattr(runner_module, "_v14_extract_shapes_to_mermaid", fake_shapes_mermaid)
+
+            args = _parse_args([
+                str(xlsx),
+                "--mermaid-enabled",
+                "--csv-output-dir", tmpdir,
+            ])
+            result = run(str(xlsx), None, args)
+            assert result is not None
+
+            # Single sheet: extraction must run exactly once (previously twice —
+            # once for the discarded normal Markdown and once for CSV markdown).
+            assert calls["count"] == 1
+
+            out_files = list(Path(tmpdir).glob("*_csv.md"))
+            assert out_files
+            text = out_files[0].read_text(encoding="utf-8")
+            assert "```mermaid" in text

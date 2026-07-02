@@ -64,6 +64,11 @@ def run(input_path: str, output_path: Optional[str], args):
     csv_basename = Path(input_path).stem
     csv_markdown_data = {}
 
+    # CSV Markdown出力が有効な場合、通常Markdownは最終的に出力されず破棄されるため、
+    # 通常Markdown用の組み立て（テーブル検出・抽出・形式判定・整形・脚注管理）を
+    # シートループごとスキップする (Issue #26)
+    emit_normal_md = not opts.get("csv_markdown_enabled", True)
+
     # シート単位ループ
     for sname in sheets:
         sheet_counter += 1
@@ -73,34 +78,40 @@ def run(input_path: str, output_path: Optional[str], args):
         if getattr(getattr(ws, "protection", None), "sheet", False):
             info(f"Sheet '{sname}' is protected (read-only); proceeding with read-only extraction.")
 
-        # シートごとのMarkdown行を初期化
-        if split_by_sheet:
-            current_md_lines = []
-            current_md_lines.append(f"# {sname}")
-            current_md_lines.append("")
-            current_md_lines.append(f"- 仕様バージョン: {VERSION}")
-            current_md_lines.append(f"- 元ファイル: {Path(input_path).name}")
-            current_md_lines.append("\n---\n")
-            sheet_md_dict[sname] = current_md_lines
-            sheet_footnotes_dict[sname] = []
-            # split_by_sheetモードではシート単位で脚注を独立管理
-            if opts["footnote_scope"] == "book":
-                footnotes = []
-                global_footnote_start = 1
-        else:
-            current_md_lines = md_lines
+        # シートごとのMarkdown行を初期化（通常Markdown出力時のみ）
+        if emit_normal_md:
+            if split_by_sheet:
+                current_md_lines = []
+                current_md_lines.append(f"# {sname}")
+                current_md_lines.append("")
+                current_md_lines.append(f"- 仕様バージョン: {VERSION}")
+                current_md_lines.append(f"- 元ファイル: {Path(input_path).name}")
+                current_md_lines.append("\n---\n")
+                sheet_md_dict[sname] = current_md_lines
+                sheet_footnotes_dict[sname] = []
+                # split_by_sheetモードではシート単位で脚注を独立管理
+                if opts["footnote_scope"] == "book":
+                    footnotes = []
+                    global_footnote_start = 1
+            else:
+                current_md_lines = md_lines
 
         if opts["max_sheet_count"] and sheet_counter > opts["max_sheet_count"]:
-            current_md_lines.append(f"## {sname}\n（シート数上限によりスキップ）\n\n---\n")
+            if emit_normal_md:
+                current_md_lines.append(f"## {sname}\n（シート数上限によりスキップ）\n\n---\n")
             continue
 
-        if not split_by_sheet:
+        if emit_normal_md and not split_by_sheet:
             current_md_lines.append(f"## {sname}\n")
 
         # shapes検出モード時のMermaid生成
+        # 通常Markdown用とCSV Markdown用で同一の結果になるため、シートごとに
+        # 1回だけ抽出して両方で使い回す (Issue #26)
         shapes_mermaid = None
-        if opts.get("mermaid_enabled", False) and opts.get("mermaid_detect_mode") == "shapes":
+        shapes_mermaid_ready = False
+        if emit_normal_md and opts.get("mermaid_enabled", False) and opts.get("mermaid_detect_mode") == "shapes":
             shapes_mermaid = _v14_extract_shapes_to_mermaid(input_path, ws, opts)
+            shapes_mermaid_ready = True
             if shapes_mermaid:
                 current_md_lines.append(shapes_mermaid + "\n")
                 current_md_lines.append("\n---\n")
@@ -108,75 +119,78 @@ def run(input_path: str, output_path: Optional[str], args):
         # 印刷領域取得
         areas = get_print_areas(ws, opts["no_print_area_mode"])
         if not areas:
-            current_md_lines.append("（テーブルなし）\n\n---\n")
+            if emit_normal_md:
+                current_md_lines.append("（テーブルなし）\n\n---\n")
             continue
 
         # 矩形和集合計算
         unioned = union_rects(areas)
 
-        # 脚注スコープ処理
-        if opts["footnote_scope"] == "sheet":
-            footnotes = []
-            global_footnote_start = 1
+        # 通常Markdown用のテーブル検出・抽出・整形
+        if emit_normal_md:
+            # 脚注スコープ処理
+            if opts["footnote_scope"] == "sheet":
+                footnotes = []
+                global_footnote_start = 1
 
-        table_id = 0
+            table_id = 0
 
-        # 矩形・テーブル単位ループ
-        for union_area in unioned:
-            # 結合セルマップ作成
-            merged_lookup = build_merged_lookup(ws, union_area)
+            # 矩形・テーブル単位ループ
+            for union_area in unioned:
+                # 結合セルマップ作成
+                merged_lookup = build_merged_lookup(ws, union_area)
 
-            # テーブル分割検出
-            tables = grid_to_tables(ws, union_area, hidden_policy=opts["hidden_policy"], opts=opts)
-            if not tables:
-                continue
-
-            # 各テーブル単位ループ
-            for tbl in tables:
-                table_id += 1
-
-                # テーブル抽出
-                md_rows, note_refs, truncated, table_title = extract_table(ws, tbl, opts, footnotes, global_footnote_start, merged_lookup, print_area=union_area)
-
-                if table_title:
-                    current_md_lines.append(f"### {table_title}")
-                else:
-                    current_md_lines.append(f"### Table {table_id}")
-                for (n, txt) in note_refs:
-                    footnotes.append((n, txt))
-                global_footnote_start += len(note_refs)
-
-                if not md_rows:
-                    current_md_lines.append("（テーブルなし）\n")
+                # テーブル分割検出
+                tables = grid_to_tables(ws, union_area, hidden_policy=opts["hidden_policy"], opts=opts)
+                if not tables:
                     continue
 
-                # テーブル形式判定・出力
-                format_type, formatted_output = dispatch_table_output(ws, tbl, md_rows, opts, merged_lookup, xlsx_path=input_path)
+                # 各テーブル単位ループ
+                for tbl in tables:
+                    table_id += 1
 
-                if format_type == "text":
-                    current_md_lines.append(formatted_output + "\n")
-                elif format_type == "nested":
-                    current_md_lines.append(formatted_output + "\n")
-                elif format_type == "code":
-                    current_md_lines.append(formatted_output + "\n")
-                elif format_type == "mermaid":
-                    current_md_lines.append(formatted_output + "\n")
-                elif format_type == "empty":
-                    current_md_lines.append("\n")
-                else:
-                    # 通常テーブル形式
-                    hdr = opts.get("header_detection", True)
-                    table_md = make_markdown_table(
-                        md_rows,
-                        header_detection=hdr,
-                        align_detect=opts["align_detection"],
-                        align_threshold=opts["numbers_right_threshold"],
-                    )
-                    current_md_lines.append(table_md + "\n")
-                    if truncated:
-                        current_md_lines.append("_※ このテーブルは max_cells_per_table 制限により途中で打ち切られました。_\n")
+                    # テーブル抽出
+                    md_rows, note_refs, truncated, table_title = extract_table(ws, tbl, opts, footnotes, global_footnote_start, merged_lookup, print_area=union_area)
 
-            current_md_lines.append("\n---\n")
+                    if table_title:
+                        current_md_lines.append(f"### {table_title}")
+                    else:
+                        current_md_lines.append(f"### Table {table_id}")
+                    for (n, txt) in note_refs:
+                        footnotes.append((n, txt))
+                    global_footnote_start += len(note_refs)
+
+                    if not md_rows:
+                        current_md_lines.append("（テーブルなし）\n")
+                        continue
+
+                    # テーブル形式判定・出力
+                    format_type, formatted_output = dispatch_table_output(ws, tbl, md_rows, opts, merged_lookup, xlsx_path=input_path)
+
+                    if format_type == "text":
+                        current_md_lines.append(formatted_output + "\n")
+                    elif format_type == "nested":
+                        current_md_lines.append(formatted_output + "\n")
+                    elif format_type == "code":
+                        current_md_lines.append(formatted_output + "\n")
+                    elif format_type == "mermaid":
+                        current_md_lines.append(formatted_output + "\n")
+                    elif format_type == "empty":
+                        current_md_lines.append("\n")
+                    else:
+                        # 通常テーブル形式
+                        hdr = opts.get("header_detection", True)
+                        table_md = make_markdown_table(
+                            md_rows,
+                            header_detection=hdr,
+                            align_detect=opts["align_detection"],
+                            align_threshold=opts["numbers_right_threshold"],
+                        )
+                        current_md_lines.append(table_md + "\n")
+                        if truncated:
+                            current_md_lines.append("_※ このテーブルは max_cells_per_table 制限により途中で打ち切られました。_\n")
+
+                current_md_lines.append("\n---\n")
 
         # CSV Markdown出力処理
         if opts.get("csv_markdown_enabled", True):
@@ -204,22 +218,21 @@ def run(input_path: str, output_path: Optional[str], args):
                 except Exception as e:
                     warn(f"CSV data extraction failed for sheet '{sname}': {e}")
 
-            # CSV Markdown用Mermaid抽出
+            # CSV Markdown用Mermaid抽出（通常Markdown用に抽出済みならその結果を再利用）
             if opts.get("mermaid_enabled", False) and sname in csv_markdown_data:
                 detect_mode = opts.get("mermaid_detect_mode", "shapes")
                 if detect_mode == "shapes":
-                    try:
-                        csv_mermaid = _v14_extract_shapes_to_mermaid(input_path, ws, opts)
-                        if csv_mermaid:
-                            csv_markdown_data[sname]["mermaid"] = csv_mermaid
-                    except Exception as e:
-                        warn(f"Mermaid extraction for CSV markdown failed for sheet '{sname}': {e}")
+                    if not shapes_mermaid_ready:
+                        shapes_mermaid = _v14_extract_shapes_to_mermaid(input_path, ws, opts)
+                        shapes_mermaid_ready = True
+                    if shapes_mermaid:
+                        csv_markdown_data[sname]["mermaid"] = shapes_mermaid
                 elif detect_mode in ("column_headers", "heuristic"):
                     # CSV Markdownではcolumn_headers/heuristicモード非対応（テーブル分割なしのため）
                     warn(f"mermaid_detect_mode='{detect_mode}' is not supported for CSV markdown output (only 'shapes' is supported). Mermaid output will be skipped for sheet '{sname}'.")
 
-        # シート単位スコープの脚注を保存・出力
-        if split_by_sheet or opts["footnote_scope"] == "sheet":
+        # シート単位スコープの脚注を保存・出力（通常Markdown出力時のみ）
+        if emit_normal_md and (split_by_sheet or opts["footnote_scope"] == "sheet"):
             if split_by_sheet:
                 sheet_footnotes_dict[sname] = list(footnotes)
             if footnotes and opts["hyperlink_mode"] in ("footnote", "both"):
@@ -229,7 +242,7 @@ def run(input_path: str, output_path: Optional[str], args):
                     current_md_lines.append(f"[^{idx}]: {txt}")
 
     # 通常モード: ドキュメント末尾に脚注を追加
-    if not split_by_sheet:
+    if emit_normal_md and not split_by_sheet:
         if opts["footnote_scope"] != "sheet" and footnotes and opts["hyperlink_mode"] in ("footnote", "both"):
             footnotes_sorted = sorted(set(footnotes), key=lambda x: x[0])
             md_lines.append("\n")
