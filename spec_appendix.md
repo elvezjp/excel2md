@@ -1,4 +1,4 @@
-# excel2md v2.1 仕様書 付録
+# excel2md 仕様書 付録
 
 > 本文書は [spec.md](spec.md) の付録です。
 
