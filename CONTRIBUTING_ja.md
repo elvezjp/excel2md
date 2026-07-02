@@ -42,10 +42,10 @@
 3. 変更に対する**テストを作成**
    ```bash
    # テストを実行
-   uv run pytest v2.2.1/tests
+   uv run pytest tests
 
    # カバレッジ付きでテストを実行
-   uv run pytest v2.2.1/tests --cov=v2.2.1 --cov-report=html
+   uv run pytest tests --cov=excel2md --cov-report=html
    ```
 
 4. 必要に応じて**ドキュメントを更新**
@@ -91,13 +91,13 @@ uv sync --extra test
 
 ```bash
 # すべてのテストを実行
-uv run pytest v2.2.1/tests
+uv run pytest tests
 
 # 特定のテストファイルを実行
-uv run pytest v2.2.1/tests/test_csv_markdown.py
+uv run pytest tests/test_csv_markdown.py
 
 # カバレッジ付きで実行
-uv run pytest v2.2.1/tests --cov=v2.2.1 --cov-report=html
+uv run pytest tests --cov=excel2md --cov-report=html
 ```
 
 ### 変更のテスト
@@ -145,7 +145,7 @@ Closes #123
 ## バージョン管理
 
 貢献する際は：
-- 最新バージョン（`v2.2.1/`）に焦点を当てる
+- `main` ブランチに焦点を当てる。過去リリースは専用ディレクトリを持たず、CHANGELOG.md と git のコミット履歴から参照できる
 - 可能な限り後方互換性を維持する
 - 破壊的変更は明確にドキュメント化する
 

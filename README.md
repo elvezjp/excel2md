@@ -36,7 +36,7 @@ Excel to Markdown converter. Reads Excel workbooks (.xlsx/.xlsm) and automatical
 - [CHANGELOG.md](https://github.com/elvezjp/excel2md/blob/main/CHANGELOG.md) - Version history
 - [CONTRIBUTING.md](https://github.com/elvezjp/excel2md/blob/main/CONTRIBUTING.md) - Contribution guidelines
 - [SECURITY.md](https://github.com/elvezjp/excel2md/blob/main/SECURITY.md) - Security policy and best practices
-- Technical specifications are kept in each version directory as `spec.md` and `spec_appendix.md`
+- Technical specifications are kept at the repository root as `spec.md` and `spec_appendix.md`
 
 ## Installation
 
@@ -187,7 +187,7 @@ Key advanced options:
 
 ## Output Examples
 
-Real input / output samples (including images) live under [docs/examples/](https://github.com/elvezjp/excel2md/tree/main/docs/examples). Each version directory contains:
+Real input / output samples (including images) live under [docs/examples/](https://github.com/elvezjp/excel2md/tree/main/docs/examples). It contains:
 
 - Input `.xlsx` files
 - `output-default/` — default mode (CSV markdown + image extraction)
@@ -201,15 +201,11 @@ The regeneration commands for each pattern are documented in [docs/examples/READ
 
 ```
 excel2md/
-├── v2.2.1/                     # Current package source
-│   ├── excel_to_md.py          # Entry point
-│   ├── excel2md/               # Main package
-│   ├── tests/                  # Test suite
-│   ├── spec.md                 # Specification
-│   └── spec_appendix.md        # Specification appendix
-├── versions/                   # Frozen historical snapshots (excluded from PyPI)
-│   ├── README.md               # Overview of this directory (Japanese)
-│   └── v*/                     # One subdirectory per past release
+├── excel_to_md.py          # Entry point
+├── excel2md/               # Main package
+├── tests/                  # Test suite
+├── spec.md                 # Specification
+├── spec_appendix.md        # Specification appendix
 ├── docs/                   # Documentation
 ├── pyproject.toml          # Project metadata
 ├── LICENSE                 # MIT License
@@ -218,6 +214,8 @@ excel2md/
 ├── SECURITY.md / _ja.md   # Security policy (English / Japanese)
 └── CHANGELOG.md / _ja.md  # Version history (English / Japanese)
 ```
+
+Past release source trees are no longer kept as directories. See [CHANGELOG.md](https://github.com/elvezjp/excel2md/blob/main/CHANGELOG.md) for the version history, or the git commit history if you need the actual source of an older release.
 
 ## Security
 

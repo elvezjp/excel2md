@@ -36,7 +36,7 @@ Excel → Markdown 変換ツール。Excelブック（.xlsx/.xlsm）を読み取
 - [CHANGELOG_ja.md](https://github.com/elvezjp/excel2md/blob/main/CHANGELOG_ja.md) - バージョン履歴
 - [CONTRIBUTING_ja.md](https://github.com/elvezjp/excel2md/blob/main/CONTRIBUTING_ja.md) - コントリビューション方法
 - [SECURITY_ja.md](https://github.com/elvezjp/excel2md/blob/main/SECURITY_ja.md) - セキュリティポリシーとベストプラクティス
-- 技術仕様書は各バージョンディレクトリの `spec.md` / `spec_appendix.md` にあります
+- 技術仕様書はリポジトリ直下の `spec.md` / `spec_appendix.md` にあります
 
 ## インストール
 
@@ -185,7 +185,7 @@ excel2md --help
 
 ## 出力例
 
-実際の入出力サンプル（画像含む）は [docs/examples/](https://github.com/elvezjp/excel2md/tree/main/docs/examples) 配下にあります。各バージョンディレクトリには以下を含みます:
+実際の入出力サンプル（画像含む）は [docs/examples/](https://github.com/elvezjp/excel2md/tree/main/docs/examples) 配下にあります。以下を含みます:
 
 - 入力 `.xlsx` ファイル
 - `output-default/` — デフォルト設定（CSV markdown + 画像抽出）
@@ -199,15 +199,11 @@ excel2md --help
 
 ```
 excel2md/
-├── v2.2.1/                     # 現在のパッケージソース
-│   ├── excel_to_md.py          # エントリーポイント
-│   ├── excel2md/               # メインパッケージ
-│   ├── tests/                  # テストスイート
-│   ├── spec.md                 # 仕様書
-│   └── spec_appendix.md        # 仕様書付録
-├── versions/                   # 過去バージョンの凍結スナップショット（PyPI からは除外）
-│   ├── README.md               # 当ディレクトリの説明（日本語）
-│   └── v*/                     # リリース毎のサブディレクトリ
+├── excel_to_md.py          # エントリーポイント
+├── excel2md/               # メインパッケージ
+├── tests/                  # テストスイート
+├── spec.md                 # 仕様書
+├── spec_appendix.md        # 仕様書付録
 ├── docs/                   # ドキュメント
 ├── pyproject.toml          # プロジェクトメタデータ
 ├── LICENSE                 # MITライセンス
@@ -216,6 +212,8 @@ excel2md/
 ├── SECURITY.md / _ja.md   # セキュリティポリシー（英語 / 日本語）
 └── CHANGELOG.md / _ja.md  # バージョン履歴（英語 / 日本語）
 ```
+
+過去バージョンのソースはディレクトリとしては保持していません。[CHANGELOG_ja.md](https://github.com/elvezjp/excel2md/blob/main/CHANGELOG_ja.md) で変更履歴を確認し、必要であれば git のコミット履歴から参照してください。
 
 ## セキュリティ
 

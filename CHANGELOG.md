@@ -7,6 +7,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-07-02
+
+### Changed
+- Repository layout: replaced the version-numbered source directory (`v2.2.1/`) and the `versions/` snapshot archive with a flat layout at repo root; past releases are still fully preserved in git history and documented in this changelog. `docs/examples/` was flattened the same way. Removed the now-obsolete Dependabot "older versions" dismissal policy from SECURITY.md since duplicate alerts no longer occur ([#11](https://github.com/elvezjp/excel2md/issues/11))
+
 ## [2.2.1] - 2026-05-14
 
 ### Added
